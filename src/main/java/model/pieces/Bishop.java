@@ -1,46 +1,28 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.Move;
+import main.java.model.SquareModel;
 
 import java.util.ArrayList;
 
-public class Bishop extends Piece {
+public class Bishop extends LongMovingPiece {
 
     public Bishop(byte color, ChessCoordinate coordinate) {
         super(color, coordinate);
     }
 
     @Override
-    public ArrayList<ChessCoordinate> getPossibleMoves() {
-        ArrayList<ChessCoordinate> possibleMoves = new ArrayList<>();
+    public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
+        ArrayList<Move> possibleMoves = new ArrayList<>();
 
-        int squaresTraveled = 1;
-        int column = coordinate.getColumn();
-        int row = coordinate.getRow();
-
-        // Loop while column and row +- squaresTraveled are both between 0 and 7 inclusive
-        while (0 <= column - squaresTraveled || column + squaresTraveled <= 7 || 0 <= row - squaresTraveled || row + squaresTraveled <= 7) {
-            if (0 <= column - squaresTraveled) {
-                if (0 <= row - squaresTraveled) {
-                    // Check if Down and Left is on board, if yes, add it to possibleMoves
-                    possibleMoves.add(new ChessCoordinate(column - squaresTraveled, row - squaresTraveled));
-                }
-                if (row + squaresTraveled <= 7) {
-                    // Check if Up and Left is on board, if yes, add it to possibleMoves
-                    possibleMoves.add(new ChessCoordinate(column - squaresTraveled, row + squaresTraveled));
-                }
+        // Loop through each direction (Down left or Up Right)
+        for (int colDirection = -1; colDirection <= 1; colDirection += 2) {
+            for (int rowDirection = -1; rowDirection <= 1; rowDirection += 2) {
+                possibleMoves.addAll(getMovesAlongDirection(colDirection, rowDirection, gameModel.getBoardModel()));
             }
-            if (column + squaresTraveled <= 7) {
-                if (0 <= row - squaresTraveled) {
-                    // Check if Down and Right is on board, if yes, add it to possibleMoves
-                    possibleMoves.add(new ChessCoordinate(column + squaresTraveled, row - squaresTraveled));
-                }
-                if (row + squaresTraveled <= 7) {
-                    // Check if Up and Right is on board, if yes, add it to possibleMoves
-                    possibleMoves.add(new ChessCoordinate(column + squaresTraveled, row + squaresTraveled));
-                }
-            }
-            squaresTraveled += 1;
         }
         return possibleMoves;
     }

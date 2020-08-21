@@ -1,6 +1,9 @@
-package main.java.tests;
+package test.java;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.SquareModel;
 import main.java.model.pieces.Knight;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +15,6 @@ class KnightTest {
     void getPossibleMoves() {
         Knight testKnight = new Knight((byte) 0, new ChessCoordinate(3, 3));
 
-        assertEquals(8, testKnight.getPossibleMoves().size(), "Wrong number of possible moves.");
+        assertEquals(6, testKnight.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
     }
 }

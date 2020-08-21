@@ -25,11 +25,23 @@ public class BoardModel {
         initializeBoard();
     }
 
-    public void movePiece(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
-        Piece movedPiece = board[startCoordinate.getColumn()][startCoordinate.getRow()].getPiece();
-        movedPiece.setCoordinate(endCoordinate);
-        board[endCoordinate.getColumn()][endCoordinate.getRow()].setPiece(movedPiece);
-        board[startCoordinate.getColumn()][startCoordinate.getRow()].setPiece(null);
+    public void makeMove(Move move) {
+        Piece movingPiece = move.getMovedPiece();
+        movingPiece.moveTo(move.getEndingCoordinate());
+
+        board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(movingPiece);
+        board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
+        if (move.getTypeOfMove() == Move.EN_PASSANT) {
+            board[move.getEndingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
+        } else if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
+            Rook leftRook = (Rook) board[0][move.getStartingCoordinate().getRow()].getPiece();
+            makeMove(new Move(leftRook, leftRook.getCoordinate(),
+                    new ChessCoordinate(3, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+        } else if (move.getTypeOfMove() == Move.CASTLING_RIGHT) {
+            Rook rightRook = (Rook) board[7][move.getStartingCoordinate().getRow()].getPiece();
+            makeMove(new Move(rightRook, rightRook.getCoordinate(),
+                    new ChessCoordinate(5, rightRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+        }
     }
 
     public void setPieceOnSquare(Piece piece) {

@@ -1,18 +1,21 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.Move;
 
 import java.util.ArrayList;
 
-public class Queen extends Piece {
+public class Queen extends LongMovingPiece {
 
     public Queen(byte color, ChessCoordinate coordinate) {
         super(color, coordinate);
     }
 
     @Override
-    public ArrayList<ChessCoordinate> getPossibleMoves() {
-        ArrayList<ChessCoordinate> possibleMoves = new ArrayList<>();
+    public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
+        ArrayList<Move> possibleMoves = new ArrayList<>();
 
         // Loop through each direction the queen can go
         for (int colDirection = -1; colDirection <= 1; colDirection++) {
@@ -21,16 +24,9 @@ public class Queen extends Piece {
                 if (colDirection == 0 && rowDirection == 0) {
                     continue;
                 }
-
-                // Make a new coordinate that the queen could go to, then check if the coordinate is in the board.
-                ChessCoordinate possibleMove = new ChessCoordinate(coordinate.getColumn() + colDirection, coordinate.getRow() + rowDirection);
-                while (possibleMove.isInBounds()) {
-                    possibleMoves.add(possibleMove);
-                    possibleMove = new ChessCoordinate(possibleMove.getColumn() + colDirection, possibleMove.getRow() + rowDirection);
-                }
+                possibleMoves.addAll(getMovesAlongDirection(colDirection, rowDirection, gameModel.getBoardModel()));
             }
         }
-
         return possibleMoves;
     }
 }

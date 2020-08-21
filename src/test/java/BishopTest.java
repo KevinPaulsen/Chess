@@ -1,10 +1,11 @@
-package main.java.tests;
+package test.java;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.SquareModel;
 import main.java.model.pieces.Bishop;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,6 +15,6 @@ class BishopTest {
     void getPossibleMoves() {
         Bishop testBishop = new Bishop((byte) 0, new ChessCoordinate(3, 3));
 
-        assertEquals(13, testBishop.getPossibleMoves().size(), "Wrong number of possible moves");
+        assertEquals(8, testBishop.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves");
     }
 }

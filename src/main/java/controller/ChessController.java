@@ -41,7 +41,8 @@ public class ChessController implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        e.getComponent().setLocation(e.getX() + e.getComponent().getX() - xOnSquare, e.getY() + e.getComponent().getY() - yOnSquare);
+        e.getComponent().setLocation(e.getX() + e.getComponent().getX() - xOnSquare,
+                e.getY() + e.getComponent().getY() - yOnSquare);
     }
 
     @Override
@@ -64,9 +65,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
         // Check that start coordinate and end coordinate are different, and that there is a piece on start coordinate.
         if (!startCoordinate.equals(endCoordinate) && gameModel.getBoardModel().getPieceOnSquare(startCoordinate) != null) {
             // Check if it can move there
-            if (gameModel.canMakeMove(startCoordinate, endCoordinate)) {
-                gameModel.move(startCoordinate, endCoordinate);
-            }
+            gameModel.move(startCoordinate, endCoordinate);
         }
         boardView.updateScreen();
     }

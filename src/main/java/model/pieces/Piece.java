@@ -1,12 +1,17 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.Move;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public abstract class Piece {
 
-    private final byte color;
+    protected final byte color;
+    protected boolean hasMoved = false;
     protected ChessCoordinate coordinate;
 
     Piece(byte color, ChessCoordinate coordinate) {
@@ -20,7 +25,17 @@ public abstract class Piece {
      *
      * @return List of possible Moves.
      */
-    public abstract ArrayList<ChessCoordinate> getPossibleMoves();
+    public abstract ArrayList<Move> getPossibleMoves(GameModel gameModel);
+
+    /**
+     * Updates the required field when a piece moves
+     *
+     * @param coordinate coordinate the piece will move to.
+     */
+    public void moveTo(ChessCoordinate coordinate) {
+        this.coordinate = coordinate;
+        hasMoved = true;
+    }
 
     public byte getColor() {
         return color;
@@ -32,5 +47,20 @@ public abstract class Piece {
 
     public void setCoordinate(ChessCoordinate coordinate) {
         this.coordinate = coordinate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Piece piece = (Piece) o;
+        return color == piece.color &&
+                hasMoved == piece.hasMoved &&
+                coordinate.equals(piece.coordinate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(color, hasMoved, coordinate);
     }
 }

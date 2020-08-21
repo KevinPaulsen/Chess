@@ -1,6 +1,9 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
+import main.java.model.GameModel;
+import main.java.model.Move;
 
 import java.util.ArrayList;
 
@@ -11,8 +14,8 @@ public class Knight extends Piece {
     }
 
     @Override
-    public ArrayList<ChessCoordinate> getPossibleMoves() {
-        ArrayList<ChessCoordinate> possibleMoves = new ArrayList<>();
+    public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
+        ArrayList<Move> possibleMoves = new ArrayList<>();
 
         // Loop from 2 columns left of coordinate to two columns right of coordinate
         for (int relativeCol = -2; relativeCol <= 2; relativeCol++) {
@@ -22,16 +25,22 @@ public class Knight extends Piece {
             }
 
             // Make two possible coordinates, one up and one down on current column.
-            ChessCoordinate possibleCoordinateUp = new ChessCoordinate(coordinate.getColumn() + relativeCol,
-                    coordinate.getRow() + (3 - Math.abs(relativeCol)));
-            ChessCoordinate possibleCoordinateDown = new ChessCoordinate(coordinate.getColumn() + relativeCol,
-                    coordinate.getRow() - (3 - Math.abs(relativeCol)));
+            Move possibleMoveUp = new Move(this, coordinate,
+                    new ChessCoordinate(coordinate.getColumn() + relativeCol,
+                            coordinate.getRow() + (3 - Math.abs(relativeCol))), Move.NORMAL_MOVE);
+            Move possibleMoveDown = new Move(this, coordinate,
+                    new ChessCoordinate(coordinate.getColumn() + relativeCol,
+                            coordinate.getRow() - (3 - Math.abs(relativeCol))), Move.NORMAL_MOVE);
             // If possible coordinates are in bounds, add them to possibleMoves.
-            if (possibleCoordinateUp.isInBounds()) {
-                possibleMoves.add(possibleCoordinateUp);
+            if (possibleMoveUp.getEndingCoordinate().isInBounds()
+                    && (gameModel.getBoardModel().getPieceOnSquare(possibleMoveUp.getEndingCoordinate()) == null ||
+                    gameModel.getBoardModel().getPieceOnSquare(possibleMoveUp.getEndingCoordinate()).getColor() != color)) {
+                possibleMoves.add(possibleMoveUp);
             }
-            if (possibleCoordinateDown.isInBounds()) {
-                possibleMoves.add(possibleCoordinateDown);
+            if (possibleMoveDown.getEndingCoordinate().isInBounds()
+                    && (gameModel.getBoardModel().getPieceOnSquare(possibleMoveDown.getEndingCoordinate()) == null ||
+                    gameModel.getBoardModel().getPieceOnSquare(possibleMoveDown.getEndingCoordinate()).getColor() != color)) {
+                possibleMoves.add(possibleMoveDown);
             }
         }
 
