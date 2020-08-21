@@ -19,7 +19,7 @@ public abstract class LongMovingPiece extends Piece {
      *
      * @param colDirection the column offset when moving one space.
      * @param rowDirection the Row offset when moving one space.
-     * @param board the Model that contains the board data.
+     * @param board        the Model that contains the board data.
      * @return Arraylist of all moves along that path.
      */
     protected ArrayList<Move> getMovesAlongDirection(int colDirection, int rowDirection, BoardModel board) {

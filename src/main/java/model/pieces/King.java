@@ -4,7 +4,6 @@ import main.java.ChessCoordinate;
 import main.java.model.BoardModel;
 import main.java.model.GameModel;
 import main.java.model.Move;
-import main.java.model.SquareModel;
 
 import java.util.ArrayList;
 
@@ -18,7 +17,7 @@ public class King extends Piece {
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
 
-        for (int relativeRow = - 1; relativeRow <= 1; relativeRow++) {
+        for (int relativeRow = -1; relativeRow <= 1; relativeRow++) {
             for (int relativeCol = -1; relativeCol <= 1; relativeCol++) {
                 if (relativeRow == 0 && relativeCol == 0) {
                     continue;
@@ -56,5 +55,10 @@ public class King extends Piece {
         }
 
         return possibleMoves;
+    }
+
+    @Override
+    public String toString() {
+        return "King";
     }
 }

@@ -1,10 +1,8 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
-import main.java.model.BoardModel;
 import main.java.model.GameModel;
 import main.java.model.Move;
-import main.java.model.SquareModel;
 
 import java.util.ArrayList;
 
@@ -25,5 +23,10 @@ public class Bishop extends LongMovingPiece {
             }
         }
         return possibleMoves;
+    }
+
+    @Override
+    public String toString() {
+        return "Bishop";
     }
 }

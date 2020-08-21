@@ -22,4 +22,9 @@ public class Rook extends LongMovingPiece {
         possibleMoves.addAll(getMovesAlongDirection(0, -1, gameModel.getBoardModel()));
         return possibleMoves;
     }
+
+    @Override
+    public String toString() {
+        return "Rook";
+    }
 }

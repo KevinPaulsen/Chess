@@ -25,6 +25,14 @@ public class BoardModel {
         initializeBoard();
     }
 
+    public static int getWidth() {
+        return width;
+    }
+
+    public static int getHeight() {
+        return height;
+    }
+
     public void makeMove(Move move) {
         Piece movingPiece = move.getMovedPiece();
         movingPiece.moveTo(move.getEndingCoordinate());
@@ -87,18 +95,6 @@ public class BoardModel {
         // Kings
         setPieceOnSquare(new King((byte) 0, new ChessCoordinate(4, 0)));
         setPieceOnSquare(new King((byte) 1, new ChessCoordinate(4, 7)));
-    }
-
-    public int getColorOnSquare(int column, int row) {
-        return board[column][row].getColor();
-    }
-
-    public static int getWidth() {
-        return width;
-    }
-
-    public static int getHeight() {
-        return height;
     }
 
     public SquareModel[][] getBoard() {

@@ -1,13 +1,11 @@
 package test.java;
 
 import main.java.ChessCoordinate;
-import main.java.model.BoardModel;
 import main.java.model.GameModel;
-import main.java.model.SquareModel;
 import main.java.model.pieces.Rook;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RookTest {
 

@@ -55,4 +55,9 @@ public class Move {
     public int hashCode() {
         return Objects.hash(movedPiece, startingCoordinate, endingCoordinate, typeOfMove);
     }
+
+    @Override
+    public String toString() {
+        return movedPiece.toString() + " to " + endingCoordinate.toString();
+    }
 }

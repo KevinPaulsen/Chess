@@ -9,7 +9,7 @@ import java.util.Objects;
 public class ChessCoordinate {
 
     private char charColumn; // Letter from a - h
-    private int charRow;
+    private int charRow; // Number from 1 - 8
     private int column; // number from 0 - 7
     private int row; // number from 0 - 7
 
@@ -54,6 +54,7 @@ public class ChessCoordinate {
     /**
      * Checks to make sure row is between 0 and 7 inclusive, and
      * sets row to that value if true. If false, sets it to -1.
+     *
      * @param row row coordinate value ranging from 0 to 7.
      */
     public void setRow(int row) {

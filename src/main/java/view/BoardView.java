@@ -1,8 +1,8 @@
 package main.java.view;
 
 import main.java.ChessCoordinate;
-import main.java.model.SquareModel;
 import main.java.controller.ChessController;
+import main.java.model.SquareModel;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;

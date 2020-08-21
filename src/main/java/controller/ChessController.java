@@ -2,7 +2,9 @@ package main.java.controller;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
+import main.java.model.Move;
 import main.java.model.SquareModel;
+import main.java.model.pieces.Piece;
 import main.java.view.BoardView;
 
 import java.awt.event.MouseEvent;
@@ -23,13 +25,13 @@ public class ChessController implements MouseListener, MouseMotionListener {
     private int xOnScreen; // y Pos of mouse relative to the frame
     private int yOnScreen; // y Pos of mouse relative to the frame
 
-    public static void main(String[] args) {
-        new ChessController();
-    }
-
     private ChessController() {
         gameModel = new GameModel();
         boardView = new BoardView(this);
+    }
+
+    public static void main(String[] args) {
+        new ChessController();
     }
 
     /**
@@ -51,6 +53,15 @@ public class ChessController implements MouseListener, MouseMotionListener {
         yOnSquare = e.getY();
         xOnScreen = e.getXOnScreen();
         yOnScreen = e.getYOnScreen() - boardView.getTopBarSize();
+
+        if (e.getButton() == MouseEvent.BUTTON3) {
+            Piece piece = gameModel.getBoardModel().getPieceOnSquare(boardView.getSquareFromPixel(xOnScreen, yOnScreen));
+            System.out.println(piece.toString());
+            System.out.println("Moves: ");
+            for (Move move : piece.getPossibleMoves(gameModel)) {
+                System.out.println(move.toString() + ", ");
+            }
+        }
     }
 
     @Override
@@ -71,15 +82,19 @@ public class ChessController implements MouseListener, MouseMotionListener {
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
     @Override
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
     @Override
-    public void mouseMoved(MouseEvent e) {}
+    public void mouseMoved(MouseEvent e) {
+    }
 
     @Override
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+    }
 }
 

@@ -1,7 +1,6 @@
 package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
-import main.java.model.BoardModel;
 import main.java.model.GameModel;
 import main.java.model.Move;
 
@@ -45,5 +44,10 @@ public class Knight extends Piece {
         }
 
         return possibleMoves;
+    }
+
+    @Override
+    public String toString() {
+        return "Knight";
     }
 }
