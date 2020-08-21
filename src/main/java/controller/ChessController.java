@@ -17,6 +17,8 @@ import java.awt.event.MouseMotionListener;
  */
 public class ChessController implements MouseListener, MouseMotionListener {
 
+    private static final boolean RIGHT_CLICK_DEBUG = true;
+
     private final GameModel gameModel;
     private final BoardView boardView;
 
@@ -54,7 +56,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
         xOnScreen = e.getXOnScreen();
         yOnScreen = e.getYOnScreen() - boardView.getTopBarSize();
 
-        if (e.getButton() == MouseEvent.BUTTON3) {
+        if (RIGHT_CLICK_DEBUG && e.getButton() == MouseEvent.BUTTON3) {
             Piece piece = gameModel.getBoardModel().getPieceOnSquare(boardView.getSquareFromPixel(xOnScreen, yOnScreen));
             System.out.println(piece.toString());
             System.out.println("Moves: ");

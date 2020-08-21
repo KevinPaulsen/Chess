@@ -22,6 +22,7 @@ public class GameModel {
         if (legalMove != null) {
             moves.add(legalMove);
             boardModel.makeMove(legalMove);
+            turn++;
         }
     }
 
@@ -31,6 +32,10 @@ public class GameModel {
 
     public Move getLegalMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         Piece movingPiece = boardModel.getPieceOnSquare(startCoordinate);
+        if (movingPiece.getColor() != turn % 2) {
+            return null;
+        }
+
         ArrayList<Move> possibleMoves = movingPiece.getPossibleMoves(this);
         Move normalMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.NORMAL_MOVE);
         Move enPassantMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.EN_PASSANT);
