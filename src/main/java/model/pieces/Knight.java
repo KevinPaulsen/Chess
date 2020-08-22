@@ -24,22 +24,15 @@ public class Knight extends Piece {
             }
 
             // Make two possible coordinates, one up and one down on current column.
-            Move possibleMoveUp = new Move(this, coordinate,
-                    new ChessCoordinate(coordinate.getColumn() + relativeCol,
-                            coordinate.getRow() + (3 - Math.abs(relativeCol))), Move.NORMAL_MOVE);
-            Move possibleMoveDown = new Move(this, coordinate,
-                    new ChessCoordinate(coordinate.getColumn() + relativeCol,
-                            coordinate.getRow() - (3 - Math.abs(relativeCol))), Move.NORMAL_MOVE);
-            // If possible coordinates are in bounds, add them to possibleMoves.
-            if (possibleMoveUp.getEndingCoordinate().isInBounds()
-                    && (gameModel.getBoardModel().getPieceOnSquare(possibleMoveUp.getEndingCoordinate()) == null ||
-                    gameModel.getBoardModel().getPieceOnSquare(possibleMoveUp.getEndingCoordinate()).getColor() != color)) {
-                possibleMoves.add(possibleMoveUp);
-            }
-            if (possibleMoveDown.getEndingCoordinate().isInBounds()
-                    && (gameModel.getBoardModel().getPieceOnSquare(possibleMoveDown.getEndingCoordinate()) == null ||
-                    gameModel.getBoardModel().getPieceOnSquare(possibleMoveDown.getEndingCoordinate()).getColor() != color)) {
-                possibleMoves.add(possibleMoveDown);
+            for (int direction = -1; direction <= 1; direction += 2) {
+                ChessCoordinate endingCoordinate = new ChessCoordinate(coordinate.getColumn() + relativeCol,
+                        coordinate.getRow() + (direction * (3 - Math.abs(relativeCol))));
+                Move possibleMove = new Move(this, gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate, Move.NORMAL_MOVE);
+                if (possibleMove.getEndingCoordinate().isInBounds()
+                        && (possibleMove.getCapturedPiece() == null
+                        || possibleMove.getCapturedPiece().getColor() != color)) {
+                    possibleMoves.add(possibleMove);
+                }
             }
         }
 

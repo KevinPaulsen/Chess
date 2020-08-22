@@ -26,24 +26,26 @@ public abstract class LongMovingPiece extends Piece {
         ArrayList<Move> possibleMoves = new ArrayList<>();
 
         // Make possible move in specified direction
-        Move possibleMove = new Move(this, coordinate,
-                new ChessCoordinate(coordinate.getColumn() + colDirection,
-                        coordinate.getRow() + rowDirection), Move.NORMAL_MOVE);
+        ChessCoordinate endingCoordinate = new ChessCoordinate(coordinate.getColumn() + colDirection,
+                coordinate.getRow() + rowDirection);
+        Move possibleMove = new Move(this, board.getPieceOnSquare(endingCoordinate), coordinate,
+                endingCoordinate, Move.NORMAL_MOVE);
 
         // While the possible is still in bounds, keep looping.
         while (possibleMove.getEndingCoordinate().isInBounds()) {
             // If The desired ending coordinate has a piece either capture, or break.
             if (board.getPieceOnSquare(possibleMove.getEndingCoordinate()) != null) {
-                if (board.getPieceOnSquare(possibleMove.getEndingCoordinate()).getColor() != color) {
+                if (possibleMove.getCapturedPiece().getColor() != color) {
                     possibleMoves.add(possibleMove);
                 }
                 break;
             }
             // Add move to list, then get next move along the specified direction.
             possibleMoves.add(possibleMove);
-            possibleMove = new Move(this, coordinate,
-                    new ChessCoordinate(possibleMove.getEndingCoordinate().getColumn() + colDirection,
-                            possibleMove.getEndingCoordinate().getRow() + rowDirection), Move.NORMAL_MOVE);
+            endingCoordinate = new ChessCoordinate(possibleMove.getEndingCoordinate().getColumn() + colDirection,
+                    possibleMove.getEndingCoordinate().getRow() + rowDirection);
+            possibleMove = new Move(this, board.getPieceOnSquare(endingCoordinate), coordinate,
+                    endingCoordinate, Move.NORMAL_MOVE);
         }
         return possibleMoves;
     }

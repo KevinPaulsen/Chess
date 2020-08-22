@@ -23,6 +23,8 @@ public class GameModel {
             moves.add(legalMove);
             boardModel.makeMove(legalMove);
             turn++;
+
+            // Check if checkmate
         }
     }
 
@@ -32,26 +34,30 @@ public class GameModel {
 
     public Move getLegalMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         Piece movingPiece = boardModel.getPieceOnSquare(startCoordinate);
+        // Check that it is our turn
         if (movingPiece.getColor() != turn % 2) {
             return null;
         }
 
         ArrayList<Move> possibleMoves = movingPiece.getPossibleMoves(this);
-        Move normalMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.NORMAL_MOVE);
-        Move enPassantMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.EN_PASSANT);
-        Move castlingLeftMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.CASTLING_LEFT);
-        Move castlingRightMove = new Move(movingPiece, startCoordinate, endCoordinate, Move.CASTLING_RIGHT);
-
-        if (possibleMoves.contains(normalMove)) {
-            return normalMove;
-        } else if (possibleMoves.contains(enPassantMove)) {
-            return enPassantMove;
-        } else if (possibleMoves.contains(castlingLeftMove)) {
-            return castlingLeftMove;
-        } else if (possibleMoves.contains(castlingRightMove)) {
-            return castlingRightMove;
+        Move idealMove = null;
+        for (int moveType = 0; moveType < 4; moveType ++) {
+            Move attemptedMove = new Move(movingPiece, boardModel.getPieceOnSquare(endCoordinate), startCoordinate,
+                    endCoordinate, moveType);
+            if (possibleMoves.contains(attemptedMove)) {
+                idealMove = attemptedMove;
+                break;
+            }
         }
-        return null;
+
+        boardModel.makeMove(idealMove);
+        if ((turn % 2 == 0) ? boardModel.getWhiteKing().isAttacked() : boardModel.getBlackKing().isAttacked()) {
+            boardModel.undoMove(idealMove);
+            return null;
+        }
+        boardModel.undoMove(idealMove);
+
+        return idealMove;
     }
 
     public ArrayList<Move> getMoves() {

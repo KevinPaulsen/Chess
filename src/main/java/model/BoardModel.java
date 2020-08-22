@@ -15,6 +15,8 @@ public class BoardModel {
     private static final int height = 8;
 
     private final SquareModel[][] board = new SquareModel[width][height];
+    private King whiteKing;
+    private King blackKing;
 
     public BoardModel() {
         for (int width = 0; width < BoardModel.width; width++) {
@@ -34,21 +36,48 @@ public class BoardModel {
     }
 
     public void makeMove(Move move) {
+        if (move == null) {
+            return;
+        }
         Piece movingPiece = move.getMovedPiece();
         movingPiece.moveTo(move.getEndingCoordinate());
 
         board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(movingPiece);
         board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
+
         if (move.getTypeOfMove() == Move.EN_PASSANT) {
             board[move.getEndingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
         } else if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
             Rook leftRook = (Rook) board[0][move.getStartingCoordinate().getRow()].getPiece();
-            makeMove(new Move(leftRook, leftRook.getCoordinate(),
+            makeMove(new Move(leftRook, null, leftRook.getCoordinate(),
                     new ChessCoordinate(3, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
         } else if (move.getTypeOfMove() == Move.CASTLING_RIGHT) {
             Rook rightRook = (Rook) board[7][move.getStartingCoordinate().getRow()].getPiece();
-            makeMove(new Move(rightRook, rightRook.getCoordinate(),
+            makeMove(new Move(rightRook, null, rightRook.getCoordinate(),
                     new ChessCoordinate(5, rightRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+        }
+        whiteKing.updateAttacked(this);
+        blackKing.updateAttacked(this);
+    }
+
+    public void undoMove(Move move) {
+        if (move == null) {
+            return;
+        }
+        Piece movedPiece = move.getMovedPiece();
+        movedPiece.moveTo(move.getStartingCoordinate());
+
+        board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(movedPiece);
+        board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(move.getCapturedPiece());
+
+        if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
+            Rook leftRook = (Rook) board[3][move.getStartingCoordinate().getRow()].getPiece();
+            makeMove(new Move(leftRook, null, leftRook.getCoordinate(),
+                    new ChessCoordinate(0, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+        } else if (move.getTypeOfMove() == Move.CASTLING_RIGHT) {
+            Rook leftRook = (Rook) board[5][move.getStartingCoordinate().getRow()].getPiece();
+            makeMove(new Move(leftRook, null, leftRook.getCoordinate(),
+                    new ChessCoordinate(7, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
         }
     }
 
@@ -57,6 +86,9 @@ public class BoardModel {
     }
 
     public Piece getPieceOnSquare(ChessCoordinate coordinate) {
+        if (!coordinate.isInBounds()) {
+            return null;
+        }
         return board[coordinate.getColumn()][coordinate.getRow()].getPiece();
     }
 
@@ -93,11 +125,21 @@ public class BoardModel {
         setPieceOnSquare(new Queen((byte) 1, new ChessCoordinate(3, 7)));
 
         // Kings
-        setPieceOnSquare(new King((byte) 0, new ChessCoordinate(4, 0)));
-        setPieceOnSquare(new King((byte) 1, new ChessCoordinate(4, 7)));
+        whiteKing = new King((byte) 0, new ChessCoordinate(4, 0));
+        blackKing = new King((byte) 1, new ChessCoordinate(4, 7));
+        setPieceOnSquare(whiteKing);
+        setPieceOnSquare(blackKing);
     }
 
     public SquareModel[][] getBoard() {
         return board;
+    }
+
+    public King getWhiteKing() {
+        return whiteKing;
+    }
+
+    public King getBlackKing() {
+        return blackKing;
     }
 }

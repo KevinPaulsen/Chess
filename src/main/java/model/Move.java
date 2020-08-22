@@ -13,12 +13,14 @@ public class Move {
     public static final int CASTLING_RIGHT = 3;
 
     private final Piece movedPiece;
+    private final Piece capturedPiece;
     private final ChessCoordinate startingCoordinate;
     private final ChessCoordinate endingCoordinate;
     private final int typeOfMove; // 0-Normal 1-En Passant 2-Castling
 
-    public Move(Piece movedPiece, ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, int typeOfMove) {
+    public Move(Piece movedPiece, Piece capturedPiece, ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, int typeOfMove) {
         this.movedPiece = movedPiece;
+        this.capturedPiece = capturedPiece;
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.typeOfMove = typeOfMove;
@@ -38,6 +40,10 @@ public class Move {
 
     public ChessCoordinate getEndingCoordinate() {
         return endingCoordinate;
+    }
+
+    public Piece getCapturedPiece() {
+        return capturedPiece;
     }
 
     @Override
