@@ -64,6 +64,8 @@ public class BoardModel {
         }
         whiteKing.updateAttacked(this);
         blackKing.updateAttacked(this);
+        updateKingColorSquare(move, whiteKing);
+        updateKingColorSquare(move, blackKing);
     }
 
     public void undoMove(Move move) {
@@ -74,17 +76,37 @@ public class BoardModel {
         movedPiece.moveBackTo(move.getStartingCoordinate());
 
         board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(movedPiece);
-        board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(move.getCapturedPiece());
 
-        if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
+        if (move.getTypeOfMove() == Move.NORMAL_MOVE) {
+            board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(move.getCapturedPiece());
+        } else if (move.getTypeOfMove() == Move.EN_PASSANT) {
+            board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(null);
+            board[move.getEndingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(move.getCapturedPiece());
+        } else if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
+            board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(move.getCapturedPiece());
             Rook leftRook = (Rook) board[3][move.getStartingCoordinate().getRow()].getPiece();
             undoMove(new Move(leftRook, null, leftRook.getCoordinate(),
                     new ChessCoordinate(0, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
         } else if (move.getTypeOfMove() == Move.CASTLING_RIGHT) {
+            board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(move.getCapturedPiece());
             Rook rightRook = (Rook) board[5][move.getStartingCoordinate().getRow()].getPiece();
             undoMove(new Move(rightRook, null,
                     new ChessCoordinate(7, rightRook.getCoordinate().getRow()), rightRook.getCoordinate(),
                     Move.NORMAL_MOVE));
+        }
+        whiteKing.updateAttacked(this);
+        blackKing.updateAttacked(this);
+        updateKingColorSquare(move, whiteKing);
+        updateKingColorSquare(move, blackKing);
+    }
+
+    private void updateKingColorSquare(Move move, King blackKing) {
+        if (blackKing.isAttacked()) {
+            board[blackKing.getCoordinate().getColumn()][blackKing.getCoordinate().getRow()].setColor(2);
+        } else {
+            board[blackKing.getCoordinate().getColumn()][blackKing.getCoordinate().getRow()].resetColor();
+            board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].resetColor();
+            board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].resetColor();
         }
     }
 

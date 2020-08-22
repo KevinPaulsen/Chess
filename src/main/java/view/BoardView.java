@@ -18,11 +18,13 @@ public class BoardView extends JFrame {
 
     private final ChessController controller;
     private final JPanel piecePanel;
+    private final JPanel squaresPanel;
 
     public BoardView(ChessController controller) {
         super("Chess Board");
         this.controller = controller;
         piecePanel = new JPanel();
+        squaresPanel = new JPanel();
 
         //Setup Board
         JPanel topLevelPanel = new JPanel();
@@ -51,7 +53,6 @@ public class BoardView extends JFrame {
      */
     private void initializeSquaresWithPieces(JPanel panel) {
         // Create Squares panel
-        JPanel squaresPanel = new JPanel();
         squaresPanel.setBackground(Color.black);
         squaresPanel.setBorder(BorderFactory.createEmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE));
         squaresPanel.setLayout(new GridLayout(8, 8));
@@ -66,12 +67,9 @@ public class BoardView extends JFrame {
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
                 // Create 'squareView' or the panel for the square
-                JPanel squareView = new JPanel();
-                squareView.setBackground((board[col][row].getColor() == 0) ? Color.darkGray : Color.lightGray);
+                JPanel squareView = createSquareView(board[col][row]);
                 // Create 'pieceView' or the label that displays the piece.
-                PieceView pieceView = new PieceView(board[col][row].getPiece());
-                pieceView.addMouseListener(controller);
-                pieceView.addMouseMotionListener(controller);
+                PieceView pieceView = createPieceView(board[col][row]);
 
                 // Add each component to their respective panels.
                 squaresPanel.add(squareView);
@@ -83,6 +81,30 @@ public class BoardView extends JFrame {
         panel.add(squaresPanel);
     }
 
+    private PieceView createPieceView(SquareModel squareModel) {
+        PieceView pieceView = new PieceView(squareModel.getPiece());
+        pieceView.addMouseListener(controller);
+        pieceView.addMouseMotionListener(controller);
+        return pieceView;
+    }
+
+    private JPanel createSquareView(SquareModel squareModel) {
+        JPanel squareView = new JPanel();
+        squareView.setBackground(squareModel.getColor() == 0 ? Color.darkGray : Color.lightGray);
+        switch (squareModel.getColor()) {
+            case 0:
+                squareView.setBackground(Color.darkGray);
+                break;
+            case 1:
+                squareView.setBackground(Color.lightGray);
+                break;
+            case 2:
+                squareView.setBackground(Color.red);
+                break;
+        }
+        return squareView;
+    }
+
     public void updateScreen() {
         updatePieces();
         this.repaint();
@@ -91,14 +113,16 @@ public class BoardView extends JFrame {
 
     private void updatePieces() {
         piecePanel.removeAll();
+        squaresPanel.removeAll();
 
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
+                // Create 'squareView' or the panel for the square
+                JPanel squareView = createSquareView(controller.getBoard()[col][row]);
                 // Create 'pieceView' or the label that displays the piece.
-                PieceView pieceView = new PieceView(controller.getBoard()[col][row].getPiece());
-                pieceView.addMouseListener(controller);
-                pieceView.addMouseMotionListener(controller);
+                PieceView pieceView = createPieceView(controller.getBoard()[col][row]);
 
+                squaresPanel.add(squareView);
                 piecePanel.add(pieceView);
             }
         }

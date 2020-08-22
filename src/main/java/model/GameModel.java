@@ -59,8 +59,11 @@ public class GameModel {
         ArrayList<Move> possibleMoves = movingPiece.getPossibleMoves(this);
         Move idealMove = null;
         for (int moveType = 0; moveType < 4; moveType ++) {
-            Move attemptedMove = new Move(movingPiece, boardModel.getPieceOnSquare(endCoordinate), startCoordinate,
-                    endCoordinate, moveType);
+            Move attemptedMove = (moveType != Move.EN_PASSANT) ?
+                    new Move(movingPiece, boardModel.getPieceOnSquare(endCoordinate), startCoordinate, endCoordinate,
+                            moveType) : new Move(movingPiece, boardModel.getPieceOnSquare(
+                                    new ChessCoordinate(endCoordinate.getColumn(), endCoordinate.getRow()
+                                            + (turn == 0 ? 1 : -1))), startCoordinate, endCoordinate, moveType);
             if (possibleMoves.contains(attemptedMove)) {
                 idealMove = attemptedMove;
                 break;
