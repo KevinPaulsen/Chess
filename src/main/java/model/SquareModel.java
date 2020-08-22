@@ -11,6 +11,11 @@ public class SquareModel {
         this.color = color;
     }
 
+    public SquareModel(int color, Piece piece) {
+        this.color = color;
+        this.piece = piece;
+    }
+
     public int getColor() {
         return color;
     }

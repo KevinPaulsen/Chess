@@ -64,6 +64,10 @@ public class Move {
 
     @Override
     public String toString() {
-        return movedPiece.toString() + " to " + endingCoordinate.toString();
+        if (capturedPiece == null) {
+            return movedPiece.toString() + " " + endingCoordinate.toString();
+        } else {
+            return movedPiece.toString() + " X " + endingCoordinate.toString() + " (" + capturedPiece.toString() + ")";
+        }
     }
 }

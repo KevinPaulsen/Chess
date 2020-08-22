@@ -1,18 +1,48 @@
 package test.java;
 
 import main.java.ChessCoordinate;
+import main.java.controller.ChessController;
 import main.java.model.GameModel;
+import main.java.model.Move;
 import main.java.model.pieces.King;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class KingTest {
 
+    private final int[][] normalBoard = {
+            {1, 0, -1, -1, -1, -1, 6, 7},
+            {2, 0, -1, -1, -1, -1, 6, 8},
+            {3, 0, -1, -1, -1, -1, 6, 9},
+            {5, 0, -1, -1, -1, -1, 6, 11},
+            {4, 0, -1, -1, -1, -1, 6, 10},
+            {3, 0, -1, -1, -1, -1, 6, 9},
+            {2, 0, -1, -1, -1, -1, 6, 8},
+            {1, 0, -1, -1, -1, -1, 6, 7},
+    };
+
+    private final int[][] kingAttackerBoard = {
+            {-1, -1, -1, -1, -1, -1, -1, -1,},
+            {-1, -1, -1, -1, -1, -1, -1, -1,},
+            {-1, -1, -1, -1, -1, -1, -1, -1,},
+            {-1, -1, -1, -1,  5, -1, -1, -1,},
+            {-1, -1,  7, -1, -1, -1,  9, -1,},
+            {-1, -1, -1, -1,  8, -1, -1, -1,},
+            {-1, -1, -1, -1, -1, -1, -1, -1,},
+            {-1, -1, -1, -1, -1, 10, -1, 11,},
+    };
+
     @Test
     void getPossibleMoves() {
-        King testKing = new King((byte) 0, new ChessCoordinate(4, 0));
+        GameModel normalGame = CustomChessGameGenerator.makeGameModel(normalBoard);
+        GameModel kingAttackerGame = CustomChessGameGenerator.makeGameModel(kingAttackerBoard);
 
-        assertEquals(0, testKing.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
+        assert normalGame != null;
+        assertEquals(0, normalGame.getBoardModel().getWhiteKing().getPossibleMoves(normalGame).size());
+        assert kingAttackerGame != null;
+        assertEquals(8, kingAttackerGame.getBoardModel().getWhiteKing().getPossibleMoves(kingAttackerGame).size());
     }
 }

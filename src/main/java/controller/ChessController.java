@@ -6,6 +6,7 @@ import main.java.model.Move;
 import main.java.model.SquareModel;
 import main.java.model.pieces.Piece;
 import main.java.view.BoardView;
+import test.java.CustomChessGameGenerator;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

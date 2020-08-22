@@ -40,7 +40,7 @@ public class ChessCoordinate {
      * @param column column coordinate ranging from 0 to 7
      */
     public void setColumn(int column) {
-        this.charColumn = (0 <= column && column <= 7) ? (char) (column + 65) : '0';
+        this.charColumn = (0 <= column && column <= 7) ? (char) (column + 97) : '0';
         this.column = (0 <= column && column <= 7) ? column : -1;
     }
 
@@ -68,7 +68,7 @@ public class ChessCoordinate {
 
     @Override
     public String toString() {
-        return "(" + charColumn + ", " + charRow + ")";
+        return charColumn + Integer.toString(charRow);
     }
 
     @Override

@@ -3,6 +3,7 @@ package main.java.model.pieces;
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
 import main.java.model.Move;
+import org.xml.sax.helpers.AttributesImpl;
 
 import java.util.ArrayList;
 
@@ -24,7 +25,7 @@ public class Pawn extends Piece {
         if (oneForward.getEndingCoordinate().isInBounds()
                 && (gameModel.getBoardModel().getPieceOnSquare(oneForward.getEndingCoordinate()) == null)) {
             possibleMoves.add(oneForward);
-            if (!hasMoved) {
+            if (timesMoved == 0) {
                 Move twoForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
                         coordinate.getRow() + 2 * direction), Move.NORMAL_MOVE);
                 if (twoForward.getEndingCoordinate().isInBounds()

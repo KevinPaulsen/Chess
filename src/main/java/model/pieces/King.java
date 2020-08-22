@@ -40,11 +40,11 @@ public class King extends Piece {
             }
         }
         // Check if can Castle
-        if (!hasMoved) {
+        if (timesMoved == 0) {
             BoardModel model = gameModel.getBoardModel();
             // Check Left
             if (model.getPieceOnSquare(new ChessCoordinate(0, coordinate.getRow())) != null
-                    && !model.getPieceOnSquare(new ChessCoordinate(0, coordinate.getRow())).hasMoved
+                    && model.getPieceOnSquare(new ChessCoordinate(0, coordinate.getRow())).timesMoved == 0
                     && model.getPieceOnSquare(new ChessCoordinate(1, coordinate.getRow())) == null
                     && model.getPieceOnSquare(new ChessCoordinate(2, coordinate.getRow())) == null
                     && model.getPieceOnSquare(new ChessCoordinate(3, coordinate.getRow())) == null) {
@@ -58,7 +58,7 @@ public class King extends Piece {
             }
             // Check Right
             if (model.getPieceOnSquare(new ChessCoordinate(7, coordinate.getRow())) != null
-                    && !model.getPieceOnSquare(new ChessCoordinate(7, coordinate.getRow())).hasMoved
+                    && model.getPieceOnSquare(new ChessCoordinate(7, coordinate.getRow())).timesMoved == 0
                     && model.getPieceOnSquare(new ChessCoordinate(6, coordinate.getRow())) == null
                     && model.getPieceOnSquare(new ChessCoordinate(5, coordinate.getRow())) == null) {
                 if (!isInCheck(new ChessCoordinate(4, coordinate.getRow()), gameModel.getBoardModel())

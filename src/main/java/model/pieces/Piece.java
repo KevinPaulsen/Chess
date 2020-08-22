@@ -10,7 +10,7 @@ import java.util.Objects;
 public abstract class Piece {
 
     protected final byte color;
-    protected boolean hasMoved = false;
+    protected int timesMoved = 0;
     protected ChessCoordinate coordinate;
 
     Piece(byte color, ChessCoordinate coordinate) {
@@ -33,7 +33,12 @@ public abstract class Piece {
      */
     public void moveTo(ChessCoordinate coordinate) {
         this.coordinate = coordinate;
-        hasMoved = true;
+        timesMoved++;
+    }
+
+    public void moveBackTo(ChessCoordinate coordinate) {
+        this.coordinate = coordinate;
+        timesMoved--;
     }
 
     public byte getColor() {
@@ -54,12 +59,12 @@ public abstract class Piece {
         if (o == null || getClass() != o.getClass()) return false;
         Piece piece = (Piece) o;
         return color == piece.color &&
-                hasMoved == piece.hasMoved &&
+                timesMoved == piece.timesMoved &&
                 coordinate.equals(piece.coordinate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(color, hasMoved, coordinate);
+        return Objects.hash(color, timesMoved, coordinate);
     }
 }
