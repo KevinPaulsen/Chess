@@ -10,6 +10,7 @@ public class GameModel {
     private final BoardModel boardModel;
     private final ArrayList<Move> moves;
     int turn = 0;
+    boolean isOver = false;
 
     public GameModel() {
         boardModel = new BoardModel();
@@ -23,6 +24,9 @@ public class GameModel {
 
 
     public void move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+        if (isOver) {
+            return;
+        }
         Move legalMove = getLegalMove(startCoordinate, endCoordinate);
         if (legalMove != null) {
             moves.add(legalMove);
@@ -30,6 +34,9 @@ public class GameModel {
             turn++;
 
             // Check if checkmate
+            if (getAllLegalMoves().size() == 0) {
+                isOver = true;
+            }
         }
     }
 
@@ -50,38 +57,41 @@ public class GameModel {
      */
     public Move getLegalMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         Piece movingPiece = boardModel.getPieceOnSquare(startCoordinate);
+
         // Check that it is our turn
         if (movingPiece.getColor() != turn % 2) {
             return null;
         }
 
-        // Find what kind of move it is (normal or special)
-        ArrayList<Move> possibleMoves = movingPiece.getPossibleMoves(this);
-        Move idealMove = null;
-        for (int moveType = 0; moveType < 4; moveType ++) {
-            Move attemptedMove = (moveType != Move.EN_PASSANT) ?
-                    new Move(movingPiece, boardModel.getPieceOnSquare(endCoordinate), startCoordinate, endCoordinate,
-                            moveType) : new Move(movingPiece, boardModel.getPieceOnSquare(
-                                    new ChessCoordinate(endCoordinate.getColumn(), endCoordinate.getRow()
-                                            + (turn == 0 ? 1 : -1))), startCoordinate, endCoordinate, moveType);
-            if (possibleMoves.contains(attemptedMove)) {
-                idealMove = attemptedMove;
-                break;
+        for (Move move : movingPiece.getPossibleMoves(this)) {
+            if (move.getEndingCoordinate().equals(endCoordinate)) {
+                return move;
             }
         }
+        return null;
+    }
 
-        // Attempt to make the move, then check if the king is being attacked at the end of the move.
-        boardModel.makeMove(idealMove);
-        if ((turn % 2 == 0) ? boardModel.getWhiteKing().isAttacked() : boardModel.getBlackKing().isAttacked()) {
-            boardModel.undoMove(idealMove);
-            return null;
+    public ArrayList<Move> getAllLegalMoves() {
+        ArrayList<Move> moves = new ArrayList<>();
+
+        for (Piece piece : boardModel.getWhitePieces()) {
+            moves.addAll(piece.getPossibleMoves(this));
         }
-        boardModel.undoMove(idealMove);
-
-        return idealMove;
+        for (Piece piece : boardModel.getBlackPieces()) {
+            moves.addAll(piece.getPossibleMoves(this));
+        }
+        return moves;
     }
 
     public ArrayList<Move> getMoves() {
         return moves;
+    }
+
+    public int getTurn() {
+        return turn;
+    }
+
+    public boolean isOver() {
+        return isOver;
     }
 }

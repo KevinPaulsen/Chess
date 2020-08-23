@@ -18,7 +18,19 @@ import java.awt.event.MouseMotionListener;
  */
 public class ChessController implements MouseListener, MouseMotionListener {
 
+    private static final int[][] normalBoard = {
+            {1, 0, -1, -1, -1, -1, 6, 7},
+            {2, 0, -1, -1, -1, -1, 6, 8},
+            {3, 0, -1, -1, -1, -1, 6, 9},
+            {4, 0, -1, -1, -1, -1, 6, 10},
+            {5, 0, -1, -1, -1, -1, 6, 11},
+            {3, 0, -1, -1, -1, -1, 6, 9},
+            {2, 0, -1, -1, -1, -1, 6, 8},
+            {1, 0, -1, -1, -1, -1, 6, 7},
+    };
+
     private static final boolean RIGHT_CLICK_DEBUG = true;
+    private static final boolean MIDDLE_CLICK_DEBUG = true;
 
     private final GameModel gameModel;
     private final BoardView boardView;
@@ -29,7 +41,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
     private int yOnScreen; // y Pos of mouse relative to the frame
 
     private ChessController() {
-        gameModel = new GameModel();
+        gameModel = CustomChessGameGenerator.makeGameModel(normalBoard);
         boardView = new BoardView(this);
     }
 
@@ -59,10 +71,18 @@ public class ChessController implements MouseListener, MouseMotionListener {
 
         if (RIGHT_CLICK_DEBUG && e.getButton() == MouseEvent.BUTTON3) {
             Piece piece = gameModel.getBoardModel().getPieceOnSquare(boardView.getSquareFromPixel(xOnScreen, yOnScreen));
-            System.out.println(piece.toString());
-            System.out.println("Moves: ");
-            for (Move move : piece.getPossibleMoves(gameModel)) {
-                System.out.println(move.toString() + ", ");
+            if (piece != null) {
+                System.out.println("\n" + piece.toString());
+                System.out.print("Moves (" + piece.getPossibleMoves(gameModel).size() + "): ");
+                for (Move move : piece.getPossibleMoves(gameModel)) {
+                    System.out.print(move.toString() + ", ");
+                }
+                System.out.println();
+            }
+        } else if (MIDDLE_CLICK_DEBUG && e.getButton() == MouseEvent.BUTTON2) {
+            System.out.print("All Moves (" + gameModel.getAllLegalMoves().size() + "):");
+            for (Move move : gameModel.getAllLegalMoves()) {
+                System.out.print(", " + move.toString());
             }
         }
     }
@@ -77,8 +97,10 @@ public class ChessController implements MouseListener, MouseMotionListener {
         ChessCoordinate endCoordinate = boardView.getSquareFromPixel(endX, endY);
 
         // Check that start coordinate and end coordinate are different, and that there is a piece on start coordinate.
-        if (!startCoordinate.equals(endCoordinate) && gameModel.getBoardModel().getPieceOnSquare(startCoordinate) != null) {
-            // Check if it can move there
+        if (!startCoordinate.equals(endCoordinate)
+                && gameModel.getBoardModel().getPieceOnSquare(startCoordinate) != null
+                && !gameModel.isOver()) {
+            // Attempt to make the move
             gameModel.move(startCoordinate, endCoordinate);
         }
         boardView.updateScreen();

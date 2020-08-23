@@ -26,6 +26,16 @@ public class Move {
         this.typeOfMove = typeOfMove;
     }
 
+    public boolean isLegal(BoardModel boardModel) {
+        boolean isLegal = true;
+        boardModel.makeMove(this);
+        if ((movedPiece.getColor() == 0) ? boardModel.getWhiteKing().isAttacked() : boardModel.getBlackKing().isAttacked()) {
+            isLegal = false;
+        }
+        boardModel.undoMove(this);
+        return isLegal;
+    }
+
     public int getTypeOfMove() {
         return typeOfMove;
     }
@@ -65,9 +75,9 @@ public class Move {
     @Override
     public String toString() {
         if (capturedPiece == null) {
-            return movedPiece.toString() + " " + endingCoordinate.toString();
+            return movedPiece.getShortString() + endingCoordinate.toString();
         } else {
-            return movedPiece.toString() + " X " + endingCoordinate.toString() + " (" + capturedPiece.toString() + ")";
+            return movedPiece.getShortString() + "x" + endingCoordinate.toString() + " (" + capturedPiece.getShortString() + ")";
         }
     }
 }

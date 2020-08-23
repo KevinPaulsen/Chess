@@ -36,7 +36,9 @@ public abstract class LongMovingPiece extends Piece {
             // If The desired ending coordinate has a piece either capture, or break.
             if (board.getPieceOnSquare(possibleMove.getEndingCoordinate()) != null) {
                 if (possibleMove.getCapturedPiece().getColor() != color) {
-                    possibleMoves.add(possibleMove);
+                    if (possibleMove.isLegal(board)) {
+                        possibleMoves.add(possibleMove);
+                    }
                 }
                 break;
             }

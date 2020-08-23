@@ -13,6 +13,6 @@ class BishopTest {
     void getPossibleMoves() {
         Bishop testBishop = new Bishop((byte) 0, new ChessCoordinate(3, 3));
 
-        assertEquals(8, testBishop.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves");
+        assertEquals(13, testBishop.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves");
     }
 }

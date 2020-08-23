@@ -53,6 +53,8 @@ public abstract class Piece {
         this.coordinate = coordinate;
     }
 
+    public abstract String getShortString();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

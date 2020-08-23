@@ -26,7 +26,16 @@ public class Bishop extends LongMovingPiece {
     }
 
     @Override
+    public String getShortString() {
+        return "B";
+    }
+
+    @Override
     public String toString() {
-        return "Bishop";
+        return "Bishop{" +
+                "color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

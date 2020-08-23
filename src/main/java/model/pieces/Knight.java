@@ -31,7 +31,9 @@ public class Knight extends Piece {
                 if (possibleMove.getEndingCoordinate().isInBounds()
                         && (possibleMove.getCapturedPiece() == null
                         || possibleMove.getCapturedPiece().getColor() != color)) {
-                    possibleMoves.add(possibleMove);
+                    if (possibleMove.isLegal(gameModel.getBoardModel())) {
+                        possibleMoves.add(possibleMove);
+                    }
                 }
             }
         }
@@ -40,7 +42,16 @@ public class Knight extends Piece {
     }
 
     @Override
+    public String getShortString() {
+        return "N";
+    }
+
+    @Override
     public String toString() {
-        return "Knight";
+        return "Knight{" +
+                "color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

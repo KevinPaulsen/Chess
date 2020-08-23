@@ -13,6 +13,6 @@ class RookTest {
     void getPossibleMoves() {
         Rook testRock = new Rook((byte) 0, new ChessCoordinate(2, 4));
 
-        assertEquals(11, testRock.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
+        assertEquals(14, testRock.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
     }
 }

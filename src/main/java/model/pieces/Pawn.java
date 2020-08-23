@@ -21,16 +21,20 @@ public class Pawn extends Piece {
         Move oneForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
                 coordinate.getRow() + direction), Move.NORMAL_MOVE);
 
-        // One space Forward
+        // Check one and two spaces forward.
         if (oneForward.getEndingCoordinate().isInBounds()
                 && (gameModel.getBoardModel().getPieceOnSquare(oneForward.getEndingCoordinate()) == null)) {
-            possibleMoves.add(oneForward);
+            if (oneForward.isLegal(gameModel.getBoardModel())) {
+                possibleMoves.add(oneForward);
+            }
             if (timesMoved == 0) {
                 Move twoForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
                         coordinate.getRow() + 2 * direction), Move.NORMAL_MOVE);
                 if (twoForward.getEndingCoordinate().isInBounds()
                         && gameModel.getBoardModel().getPieceOnSquare(twoForward.getEndingCoordinate()) == null) {
-                    possibleMoves.add(twoForward);
+                    if (twoForward.isLegal(gameModel.getBoardModel())) {
+                        possibleMoves.add(twoForward);
+                    }
                 }
             }
         }
@@ -44,7 +48,9 @@ public class Pawn extends Piece {
             if (possibleCapture.getEndingCoordinate().isInBounds()
                     && gameModel.getBoardModel().getPieceOnSquare(possibleCapture.getEndingCoordinate()) != null
                     && gameModel.getBoardModel().getPieceOnSquare(possibleCapture.getEndingCoordinate()).color != color) {
-                possibleMoves.add(possibleCapture);
+                if (possibleCapture.isLegal(gameModel.getBoardModel())) {
+                    possibleMoves.add(possibleCapture);
+                }
             }
         }
         // Check En passant
@@ -56,9 +62,12 @@ public class Pawn extends Piece {
                     && lastMove.getStartingCoordinate().getRow() == coordinate.getRow() + direction * 2) {
                 ChessCoordinate endingCoordinate = new ChessCoordinate(lastMove.getStartingCoordinate().getColumn(),
                         coordinate.getRow() + direction);
-                possibleMoves.add(new Move(this, gameModel.getBoardModel().getPieceOnSquare(
+                Move possibleEnPassant = new Move(this, gameModel.getBoardModel().getPieceOnSquare(
                         new ChessCoordinate(endingCoordinate.getColumn(), endingCoordinate.getRow() - direction)),
-                        coordinate, endingCoordinate, Move.EN_PASSANT));
+                        coordinate, endingCoordinate, Move.EN_PASSANT);
+                if (possibleEnPassant.isLegal(gameModel.getBoardModel())) {
+                    possibleMoves.add(possibleEnPassant);
+                }
             }
         }
 
@@ -66,7 +75,16 @@ public class Pawn extends Piece {
     }
 
     @Override
+    public String getShortString() {
+        return "P";
+    }
+
+    @Override
     public String toString() {
-        return "Pawn";
+        return "Pawn{" +
+                "color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

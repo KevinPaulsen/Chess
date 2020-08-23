@@ -43,6 +43,6 @@ class KingTest {
         assert normalGame != null;
         assertEquals(0, normalGame.getBoardModel().getWhiteKing().getPossibleMoves(normalGame).size());
         assert kingAttackerGame != null;
-        assertEquals(8, kingAttackerGame.getBoardModel().getWhiteKing().getPossibleMoves(kingAttackerGame).size());
+        assertEquals(1, kingAttackerGame.getBoardModel().getWhiteKing().getPossibleMoves(kingAttackerGame).size());
     }
 }

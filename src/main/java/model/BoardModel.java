@@ -1,13 +1,11 @@
 package main.java.model;
 
 import main.java.ChessCoordinate;
-import main.java.model.pieces.Bishop;
 import main.java.model.pieces.King;
-import main.java.model.pieces.Knight;
-import main.java.model.pieces.Pawn;
 import main.java.model.pieces.Piece;
-import main.java.model.pieces.Queen;
 import main.java.model.pieces.Rook;
+
+import java.util.ArrayList;
 
 public class BoardModel {
 
@@ -15,6 +13,8 @@ public class BoardModel {
     private static final int height = 8;
 
     private SquareModel[][] board = new SquareModel[width][height];
+    private final ArrayList<Piece> whitePieces = new ArrayList<>();
+    private final ArrayList<Piece> blackPieces = new ArrayList<>();
     private King whiteKing;
     private King blackKing;
 
@@ -24,21 +24,13 @@ public class BoardModel {
                 board[width][height] = new SquareModel((width + height) % 2);
             }
         }
-        initializeBoard();
     }
 
     public BoardModel(SquareModel[][] startingPosition, King whiteKing, King blackKing) {
         this.board = startingPosition;
         this.whiteKing = whiteKing;
         this.blackKing = blackKing;
-    }
-
-    public static int getWidth() {
-        return width;
-    }
-
-    public static int getHeight() {
-        return height;
+        initializePieceArrays();
     }
 
     public void makeMove(Move move) {
@@ -48,6 +40,9 @@ public class BoardModel {
         Piece movingPiece = move.getMovedPiece();
         movingPiece.moveTo(move.getEndingCoordinate());
 
+        if (move.getCapturedPiece() != null) {
+            (movingPiece.getColor() == 1 ? whitePieces : blackPieces).remove(move.getCapturedPiece());
+        }
         board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(movingPiece);
         board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
 
@@ -75,6 +70,9 @@ public class BoardModel {
         Piece movedPiece = move.getMovedPiece();
         movedPiece.moveBackTo(move.getStartingCoordinate());
 
+        if (move.getCapturedPiece() != null) {
+            (movedPiece.getColor() == 1 ? whitePieces : blackPieces).add(move.getCapturedPiece());
+        }
         board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(movedPiece);
 
         if (move.getTypeOfMove() == Move.NORMAL_MOVE) {
@@ -110,10 +108,6 @@ public class BoardModel {
         }
     }
 
-    public void setPieceOnSquare(Piece piece) {
-        board[piece.getCoordinate().getColumn()][piece.getCoordinate().getRow()].setPiece(piece);
-    }
-
     public Piece getPieceOnSquare(ChessCoordinate coordinate) {
         if (!coordinate.isInBounds()) {
             return null;
@@ -121,43 +115,18 @@ public class BoardModel {
         return board[coordinate.getColumn()][coordinate.getRow()].getPiece();
     }
 
-    /**
-     * Set up board with the starting positions of each piece.
-     */
-    private void initializeBoard() {
-        //Pawns
-        for (int column = 0; column < BoardModel.getWidth(); column++) {
-            setPieceOnSquare(new Pawn((byte) 0, new ChessCoordinate(column, 1)));
-            setPieceOnSquare(new Pawn((byte) 1, new ChessCoordinate(column, 6)));
+    private void initializePieceArrays() {
+        for (SquareModel[] column : board) {
+            for (SquareModel square : column) {
+                if (square.getPiece() != null) {
+                    if (square.getPiece().getColor() == 0) {
+                        whitePieces.add(square.getPiece());
+                    } else {
+                        blackPieces.add(square.getPiece());
+                    }
+                }
+            }
         }
-
-        // Rooks
-        setPieceOnSquare(new Rook((byte) 0, new ChessCoordinate(0, 0)));
-        setPieceOnSquare(new Rook((byte) 0, new ChessCoordinate(7, 0)));
-        setPieceOnSquare(new Rook((byte) 1, new ChessCoordinate(0, 7)));
-        setPieceOnSquare(new Rook((byte) 1, new ChessCoordinate(7, 7)));
-
-        // Knights
-        setPieceOnSquare(new Knight((byte) 0, new ChessCoordinate(1, 0)));
-        setPieceOnSquare(new Knight((byte) 0, new ChessCoordinate(6, 0)));
-        setPieceOnSquare(new Knight((byte) 1, new ChessCoordinate(1, 7)));
-        setPieceOnSquare(new Knight((byte) 1, new ChessCoordinate(6, 7)));
-
-        // Bishops
-        setPieceOnSquare(new Bishop((byte) 0, new ChessCoordinate(2, 0)));
-        setPieceOnSquare(new Bishop((byte) 0, new ChessCoordinate(5, 0)));
-        setPieceOnSquare(new Bishop((byte) 1, new ChessCoordinate(2, 7)));
-        setPieceOnSquare(new Bishop((byte) 1, new ChessCoordinate(5, 7)));
-
-        // Queens
-        setPieceOnSquare(new Queen((byte) 0, new ChessCoordinate(3, 0)));
-        setPieceOnSquare(new Queen((byte) 1, new ChessCoordinate(3, 7)));
-
-        // Kings
-        whiteKing = new King((byte) 0, new ChessCoordinate(4, 0));
-        blackKing = new King((byte) 1, new ChessCoordinate(4, 7));
-        setPieceOnSquare(whiteKing);
-        setPieceOnSquare(blackKing);
     }
 
     public SquareModel[][] getBoard() {
@@ -170,5 +139,13 @@ public class BoardModel {
 
     public King getBlackKing() {
         return blackKing;
+    }
+
+    public ArrayList<Piece> getWhitePieces() {
+        return whitePieces;
+    }
+
+    public ArrayList<Piece> getBlackPieces() {
+        return blackPieces;
     }
 }

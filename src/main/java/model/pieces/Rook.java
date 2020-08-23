@@ -24,7 +24,16 @@ public class Rook extends LongMovingPiece {
     }
 
     @Override
+    public String getShortString() {
+        return "R";
+    }
+
+    @Override
     public String toString() {
-        return "Rook";
+        return "Rook{" +
+                "color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

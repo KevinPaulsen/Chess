@@ -11,8 +11,5 @@ class KnightTest {
 
     @Test
     void getPossibleMoves() {
-        Knight testKnight = new Knight((byte) 0, new ChessCoordinate(3, 3));
-
-        assertEquals(6, testKnight.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
     }
 }

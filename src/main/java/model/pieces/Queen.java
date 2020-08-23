@@ -30,7 +30,16 @@ public class Queen extends LongMovingPiece {
     }
 
     @Override
+    public String getShortString() {
+        return "Q";
+    }
+
+    @Override
     public String toString() {
-        return "Queen";
+        return "Queen{" +
+                "color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

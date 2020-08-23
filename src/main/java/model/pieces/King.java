@@ -35,7 +35,9 @@ public class King extends Piece {
                 if (possibleMove.getEndingCoordinate().isInBounds()
                         && (gameModel.getBoardModel().getPieceOnSquare(possibleMove.getEndingCoordinate()) == null
                         || gameModel.getBoardModel().getPieceOnSquare(possibleMove.getEndingCoordinate()).getColor() != color)) {
-                    possibleMoves.add(possibleMove);
+                    if (possibleMove.isLegal(gameModel.getBoardModel())) {
+                        possibleMoves.add(possibleMove);
+                    }
                 }
             }
         }
@@ -51,9 +53,12 @@ public class King extends Piece {
                 if (!isInCheck(new ChessCoordinate(3, coordinate.getRow()), gameModel.getBoardModel())
                         && !isInCheck(new ChessCoordinate(4, coordinate.getRow()), gameModel.getBoardModel())) {
                     ChessCoordinate endingCoordinate = new ChessCoordinate(2, coordinate.getRow());
-                    possibleMoves.add(new Move(this,
+                    Move possibleMove = new Move(this,
                             gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                            Move.CASTLING_LEFT));
+                            Move.CASTLING_LEFT);
+                    if (possibleMove.isLegal(gameModel.getBoardModel())) {
+                        possibleMoves.add(possibleMove);
+                    }
                 }
             }
             // Check Right
@@ -64,9 +69,12 @@ public class King extends Piece {
                 if (!isInCheck(new ChessCoordinate(4, coordinate.getRow()), gameModel.getBoardModel())
                         && !isInCheck(new ChessCoordinate(5, coordinate.getRow()), gameModel.getBoardModel())) {
                     ChessCoordinate endingCoordinate = new ChessCoordinate(6, coordinate.getRow());
-                    possibleMoves.add(new Move(this,
+                    Move possibleMove = new Move(this,
                             gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                            Move.CASTLING_RIGHT));
+                            Move.CASTLING_RIGHT);
+                    if (possibleMove.isLegal(gameModel.getBoardModel())) {
+                        possibleMoves.add(possibleMove);
+                    }
                 }
             }
         }
@@ -145,7 +153,17 @@ public class King extends Piece {
     }
 
     @Override
+    public String getShortString() {
+        return "K";
+    }
+
+    @Override
     public String toString() {
-        return "King";
+        return "King{" +
+                "isAttacked=" + isAttacked +
+                ", color=" + color +
+                ", timesMoved=" + timesMoved +
+                ", coordinate=" + coordinate +
+                '}';
     }
 }

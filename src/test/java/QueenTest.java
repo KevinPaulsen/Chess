@@ -13,6 +13,6 @@ class QueenTest {
     void getPossibleMoves() {
         Queen testQueen = new Queen((byte) 0, new ChessCoordinate(3, 3));
 
-        assertEquals(19, testQueen.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
+        assertEquals(27, testQueen.getPossibleMoves(new GameModel()).size(), "Wrong number of possible moves.");
     }
 }
