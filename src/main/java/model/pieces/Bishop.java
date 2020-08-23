@@ -15,6 +15,9 @@ public class Bishop extends LongMovingPiece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
 
         // Loop through each direction (Down left or Up Right)
         for (int colDirection = -1; colDirection <= 1; colDirection += 2) {
@@ -23,6 +26,11 @@ public class Bishop extends LongMovingPiece {
             }
         }
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 3;
     }
 
     @Override

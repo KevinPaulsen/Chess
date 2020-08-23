@@ -15,6 +15,9 @@ public class Queen extends LongMovingPiece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
 
         // Loop through each direction the queen can go
         for (int colDirection = -1; colDirection <= 1; colDirection++) {
@@ -27,6 +30,11 @@ public class Queen extends LongMovingPiece {
             }
         }
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 9;
     }
 
     @Override

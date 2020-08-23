@@ -15,12 +15,20 @@ public class Rook extends LongMovingPiece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
 
         possibleMoves.addAll(getMovesAlongDirection(-1, 0, gameModel.getBoardModel()));
         possibleMoves.addAll(getMovesAlongDirection(0, 1, gameModel.getBoardModel()));
         possibleMoves.addAll(getMovesAlongDirection(1, 0, gameModel.getBoardModel()));
         possibleMoves.addAll(getMovesAlongDirection(0, -1, gameModel.getBoardModel()));
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 5;
     }
 
     @Override

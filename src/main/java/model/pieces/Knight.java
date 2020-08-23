@@ -15,6 +15,9 @@ public class Knight extends Piece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
 
         // Loop from 2 columns left of coordinate to two columns right of coordinate
         for (int relativeCol = -2; relativeCol <= 2; relativeCol++) {
@@ -39,6 +42,11 @@ public class Knight extends Piece {
         }
 
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 3;
     }
 
     @Override

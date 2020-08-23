@@ -53,6 +53,8 @@ public abstract class Piece {
         this.coordinate = coordinate;
     }
 
+    public abstract double getValue();
+
     public abstract String getShortString();
 
     @Override

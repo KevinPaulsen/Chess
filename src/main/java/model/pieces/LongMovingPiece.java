@@ -43,7 +43,9 @@ public abstract class LongMovingPiece extends Piece {
                 break;
             }
             // Add move to list, then get next move along the specified direction.
-            possibleMoves.add(possibleMove);
+            if (possibleMove.isLegal(board)) {
+                possibleMoves.add(possibleMove);
+            }
             endingCoordinate = new ChessCoordinate(possibleMove.getEndingCoordinate().getColumn() + colDirection,
                     possibleMove.getEndingCoordinate().getRow() + rowDirection);
             possibleMove = new Move(this, board.getPieceOnSquare(endingCoordinate), coordinate,

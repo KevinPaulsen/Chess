@@ -34,7 +34,7 @@ public class BoardModel {
     }
 
     public void makeMove(Move move) {
-        if (move == null) {
+        if (move == null || move.isIncomplete()) {
             return;
         }
         Piece movingPiece = move.getMovedPiece();

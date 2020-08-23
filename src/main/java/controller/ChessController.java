@@ -4,6 +4,9 @@ import main.java.ChessCoordinate;
 import main.java.model.GameModel;
 import main.java.model.Move;
 import main.java.model.SquareModel;
+import main.java.model.chessai.ChessAI;
+import main.java.model.chessai.MoveEvaluation;
+import main.java.model.chessai.SimplePointComparisonAI;
 import main.java.model.pieces.Piece;
 import main.java.view.BoardView;
 import test.java.CustomChessGameGenerator;
@@ -34,6 +37,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
 
     private final GameModel gameModel;
     private final BoardView boardView;
+    private final ChessAI chessAI;
 
     private int xOnSquare; // x Pos of mouse relative to the square it is in
     private int yOnSquare; // y Pos of mouse relative to the square it is in
@@ -43,6 +47,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
     private ChessController() {
         gameModel = CustomChessGameGenerator.makeGameModel(normalBoard);
         boardView = new BoardView(this);
+        chessAI = new SimplePointComparisonAI();
     }
 
     public static void main(String[] args) {
@@ -101,7 +106,11 @@ public class ChessController implements MouseListener, MouseMotionListener {
                 && gameModel.getBoardModel().getPieceOnSquare(startCoordinate) != null
                 && !gameModel.isOver()) {
             // Attempt to make the move
-            gameModel.move(startCoordinate, endCoordinate);
+            if (gameModel.move(startCoordinate, endCoordinate)) {
+                MoveEvaluation moveEvaluation = chessAI.getBestMove(gameModel, 5, 1);
+                gameModel.move(moveEvaluation.getMove());
+                System.out.println(moveEvaluation.getEvaluation());
+            }
         }
         boardView.updateScreen();
     }

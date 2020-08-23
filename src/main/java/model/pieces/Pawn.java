@@ -16,6 +16,9 @@ public class Pawn extends Piece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
         int direction = (color == 0) ? 1 : -1;
 
         Move oneForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
@@ -72,6 +75,11 @@ public class Pawn extends Piece {
         }
 
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 1;
     }
 
     @Override

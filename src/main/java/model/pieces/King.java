@@ -18,6 +18,9 @@ public class King extends Piece {
     @Override
     public ArrayList<Move> getPossibleMoves(GameModel gameModel) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
+        if (gameModel.getTurn() % 2 != color) {
+            return possibleMoves;
+        }
 
         // Loop through each direction
         for (int relativeRow = -1; relativeRow <= 1; relativeRow++) {
@@ -80,6 +83,11 @@ public class King extends Piece {
         }
 
         return possibleMoves;
+    }
+
+    @Override
+    public double getValue() {
+        return 0;
     }
 
     public boolean isInCheck(ChessCoordinate possiblyAttackedCoordinate, BoardModel boardModel) {

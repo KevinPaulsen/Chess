@@ -18,6 +18,14 @@ public class Move {
     private final ChessCoordinate endingCoordinate;
     private final int typeOfMove; // 0-Normal 1-En Passant 2-Castling
 
+    public Move() {
+        movedPiece = null;
+        capturedPiece = null;
+        startingCoordinate = null;
+        endingCoordinate = null;
+        typeOfMove = -1;
+    }
+
     public Move(Piece movedPiece, Piece capturedPiece, ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, int typeOfMove) {
         this.movedPiece = movedPiece;
         this.capturedPiece = capturedPiece;
@@ -29,11 +37,16 @@ public class Move {
     public boolean isLegal(BoardModel boardModel) {
         boolean isLegal = true;
         boardModel.makeMove(this);
+        assert movedPiece != null;
         if ((movedPiece.getColor() == 0) ? boardModel.getWhiteKing().isAttacked() : boardModel.getBlackKing().isAttacked()) {
             isLegal = false;
         }
         boardModel.undoMove(this);
         return isLegal;
+    }
+
+    public boolean isIncomplete() {
+        return movedPiece == null || startingCoordinate == null || endingCoordinate == null;
     }
 
     public int getTypeOfMove() {

@@ -11,6 +11,7 @@ public class GameModel {
     private final ArrayList<Move> moves;
     int turn = 0;
     boolean isOver = false;
+    int winner = -1;
 
     public GameModel() {
         boardModel = new BoardModel();
@@ -23,9 +24,9 @@ public class GameModel {
     }
 
 
-    public void move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+    public boolean move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (isOver) {
-            return;
+            return false;
         }
         Move legalMove = getLegalMove(startCoordinate, endCoordinate);
         if (legalMove != null) {
@@ -36,7 +37,33 @@ public class GameModel {
             // Check if checkmate
             if (getAllLegalMoves().size() == 0) {
                 isOver = true;
+                winner = (turn % 2 == 1) ? 0 : 1;
             }
+            return true;
+        }
+        return false;
+    }
+
+    public void move(Move move) {
+        if (!isOver && move != null && move.isLegal(boardModel)) {
+            moves.add(move);
+            boardModel.makeMove(move);
+            turn++;
+
+            if (getAllLegalMoves().size() == 0) {
+                isOver = true;
+                winner = (turn % 2 == 1) ? 0 : 1;
+            }
+        }
+    }
+
+    public void undoMove(Move move) {
+        if (move != null) {
+            moves.remove(move);
+            boardModel.undoMove(move);
+            turn--;
+
+            isOver = false;
         }
     }
 
@@ -57,11 +84,6 @@ public class GameModel {
      */
     public Move getLegalMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         Piece movingPiece = boardModel.getPieceOnSquare(startCoordinate);
-
-        // Check that it is our turn
-        if (movingPiece.getColor() != turn % 2) {
-            return null;
-        }
 
         for (Move move : movingPiece.getPossibleMoves(this)) {
             if (move.getEndingCoordinate().equals(endCoordinate)) {
@@ -93,5 +115,9 @@ public class GameModel {
 
     public boolean isOver() {
         return isOver;
+    }
+
+    public int getWinner() {
+        return winner;
     }
 }
