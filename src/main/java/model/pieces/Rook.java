@@ -2,7 +2,7 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 

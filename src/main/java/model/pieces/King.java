@@ -3,7 +3,8 @@ package main.java.model.pieces;
 import main.java.ChessCoordinate;
 import main.java.model.BoardModel;
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.CastleMove;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 
@@ -33,8 +34,7 @@ public class King extends Piece {
 
                 // Create possible move with this piece, this starting coordinate, and +1 in the current direction
                 Move possibleMove = new Move(this,
-                        gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                        Move.NORMAL_MOVE);
+                        gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate);
                 if (possibleMove.getEndingCoordinate().isInBounds()
                         && (gameModel.getBoardModel().getPieceOnSquare(possibleMove.getEndingCoordinate()) == null
                         || gameModel.getBoardModel().getPieceOnSquare(possibleMove.getEndingCoordinate()).getColor() != color)) {
@@ -56,9 +56,8 @@ public class King extends Piece {
                 if (!isInCheck(new ChessCoordinate(3, coordinate.getRow()), gameModel.getBoardModel())
                         && !isInCheck(new ChessCoordinate(4, coordinate.getRow()), gameModel.getBoardModel())) {
                     ChessCoordinate endingCoordinate = new ChessCoordinate(2, coordinate.getRow());
-                    Move possibleMove = new Move(this,
-                            gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                            Move.CASTLING_LEFT);
+                    Move possibleMove = new CastleMove(this,
+                            gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate);
                     if (possibleMove.isLegal(gameModel.getBoardModel())) {
                         possibleMoves.add(possibleMove);
                     }
@@ -72,9 +71,8 @@ public class King extends Piece {
                 if (!isInCheck(new ChessCoordinate(4, coordinate.getRow()), gameModel.getBoardModel())
                         && !isInCheck(new ChessCoordinate(5, coordinate.getRow()), gameModel.getBoardModel())) {
                     ChessCoordinate endingCoordinate = new ChessCoordinate(6, coordinate.getRow());
-                    Move possibleMove = new Move(this,
-                            gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                            Move.CASTLING_RIGHT);
+                    Move possibleMove = new CastleMove(this,
+                            gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate);
                     if (possibleMove.isLegal(gameModel.getBoardModel())) {
                         possibleMoves.add(possibleMove);
                     }
@@ -152,8 +150,9 @@ public class King extends Piece {
                 || (pawnUpLeft != null && pawnUpLeft.getColor() != color && pawnUpLeft instanceof Pawn);
     }
 
-    public void updateAttacked(BoardModel boardModel) {
+    public void updateAttacked(BoardModel boardModel, Move move) {
         isAttacked = isInCheck(coordinate, boardModel);
+        boardModel.updateKingColorSquare(move, this);
     }
 
     public boolean isAttacked() {

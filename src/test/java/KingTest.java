@@ -1,13 +1,7 @@
 package test.java;
 
-import main.java.ChessCoordinate;
-import main.java.controller.ChessController;
 import main.java.model.GameModel;
-import main.java.model.Move;
-import main.java.model.pieces.King;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

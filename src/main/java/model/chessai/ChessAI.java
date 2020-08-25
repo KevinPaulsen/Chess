@@ -1,7 +1,7 @@
 package main.java.model.chessai;
 
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 
 public abstract class ChessAI {
 

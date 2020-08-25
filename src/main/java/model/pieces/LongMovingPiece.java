@@ -2,7 +2,7 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.model.BoardModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 
@@ -29,7 +29,7 @@ public abstract class LongMovingPiece extends Piece {
         ChessCoordinate endingCoordinate = new ChessCoordinate(coordinate.getColumn() + colDirection,
                 coordinate.getRow() + rowDirection);
         Move possibleMove = new Move(this, board.getPieceOnSquare(endingCoordinate), coordinate,
-                endingCoordinate, Move.NORMAL_MOVE);
+                endingCoordinate);
 
         // While the possible is still in bounds, keep looping.
         while (possibleMove.getEndingCoordinate().isInBounds()) {
@@ -49,7 +49,7 @@ public abstract class LongMovingPiece extends Piece {
             endingCoordinate = new ChessCoordinate(possibleMove.getEndingCoordinate().getColumn() + colDirection,
                     possibleMove.getEndingCoordinate().getRow() + rowDirection);
             possibleMove = new Move(this, board.getPieceOnSquare(endingCoordinate), coordinate,
-                    endingCoordinate, Move.NORMAL_MOVE);
+                    endingCoordinate);
         }
         return possibleMoves;
     }

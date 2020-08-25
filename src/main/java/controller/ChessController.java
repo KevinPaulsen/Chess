@@ -2,7 +2,7 @@ package main.java.controller;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 import main.java.model.SquareModel;
 import main.java.model.chessai.ChessAI;
 import main.java.model.chessai.MoveEvaluation;
@@ -109,7 +109,7 @@ public class ChessController implements MouseListener, MouseMotionListener {
             if (gameModel.move(startCoordinate, endCoordinate)) {
                 MoveEvaluation moveEvaluation = chessAI.getBestMove(gameModel, 5, 1);
                 gameModel.move(moveEvaluation.getMove());
-                System.out.println(moveEvaluation.getEvaluation());
+                System.out.println(moveEvaluation.getEvaluation());//*/
             }
         }
         boardView.updateScreen();

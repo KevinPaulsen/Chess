@@ -2,7 +2,7 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -27,7 +27,7 @@ public abstract class Piece {
     public abstract ArrayList<Move> getPossibleMoves(GameModel gameModel);
 
     /**
-     * Updates the required field when a piece moves
+     * Updates the required fields when a piece moves
      *
      * @param coordinate coordinate the piece will move to.
      */

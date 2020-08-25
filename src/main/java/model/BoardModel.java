@@ -1,6 +1,7 @@
 package main.java.model;
 
 import main.java.ChessCoordinate;
+import main.java.model.moves.Move;
 import main.java.model.pieces.King;
 import main.java.model.pieces.Piece;
 import main.java.model.pieces.Rook;
@@ -33,12 +34,15 @@ public class BoardModel {
         initializePieceArrays();
     }
 
-    public void makeMove(Move move) {
+    /*public void makeMove(Move move) {
         if (move == null || move.isIncomplete()) {
             return;
         }
         Piece movingPiece = move.getMovedPiece();
         movingPiece.moveTo(move.getEndingCoordinate());
+
+        // Move moved Piece
+        // Removed Captured Piece
 
         if (move.getCapturedPiece() != null) {
             (movingPiece.getColor() == 1 ? whitePieces : blackPieces).remove(move.getCapturedPiece());
@@ -46,24 +50,27 @@ public class BoardModel {
         board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].setPiece(movingPiece);
         board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
 
-        if (move.getTypeOfMove() == Move.EN_PASSANT) {
-            board[move.getEndingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
-        } else if (move.getTypeOfMove() == Move.CASTLING_LEFT) {
-            Rook leftRook = (Rook) board[0][move.getStartingCoordinate().getRow()].getPiece();
-            makeMove(new Move(leftRook, null, leftRook.getCoordinate(),
-                    new ChessCoordinate(3, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
-        } else if (move.getTypeOfMove() == Move.CASTLING_RIGHT) {
-            Rook rightRook = (Rook) board[7][move.getStartingCoordinate().getRow()].getPiece();
-            makeMove(new Move(rightRook, null, rightRook.getCoordinate(),
-                    new ChessCoordinate(5, rightRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+        switch (move.getTypeOfMove()) {
+            case Move.EN_PASSANT:
+                board[move.getEndingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].setPiece(null);
+                break;
+            case Move.CASTLING_LEFT:
+                Rook leftRook = (Rook) board[0][move.getStartingCoordinate().getRow()].getPiece();
+                makeMove(new Move(leftRook, null, leftRook.getCoordinate(),
+                        new ChessCoordinate(3, leftRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+                break;
+            case Move.CASTLING_RIGHT:
+                Rook rightRook = (Rook) board[7][move.getStartingCoordinate().getRow()].getPiece();
+                makeMove(new Move(rightRook, null, rightRook.getCoordinate(),
+                        new ChessCoordinate(5, rightRook.getCoordinate().getRow()), Move.NORMAL_MOVE));
+                break;
         }
-        whiteKing.updateAttacked(this);
-        blackKing.updateAttacked(this);
-        updateKingColorSquare(move, whiteKing);
-        updateKingColorSquare(move, blackKing);
-    }
 
-    public void undoMove(Move move) {
+        whiteKing.updateAttacked(this, move);
+        blackKing.updateAttacked(this, move);
+    }*/
+
+    /*public void undoMove(Move move) {
         if (move == null) {
             return;
         }
@@ -92,17 +99,15 @@ public class BoardModel {
                     new ChessCoordinate(7, rightRook.getCoordinate().getRow()), rightRook.getCoordinate(),
                     Move.NORMAL_MOVE));
         }
-        whiteKing.updateAttacked(this);
-        blackKing.updateAttacked(this);
-        updateKingColorSquare(move, whiteKing);
-        updateKingColorSquare(move, blackKing);
-    }
+        whiteKing.updateAttacked(this, move);
+        blackKing.updateAttacked(this, move);
+    }*/
 
-    private void updateKingColorSquare(Move move, King blackKing) {
-        if (blackKing.isAttacked()) {
-            board[blackKing.getCoordinate().getColumn()][blackKing.getCoordinate().getRow()].setColor(2);
+    public void updateKingColorSquare(Move move, King king) {
+        if (king.isAttacked()) {
+            board[king.getCoordinate().getColumn()][king.getCoordinate().getRow()].setColor(2);
         } else {
-            board[blackKing.getCoordinate().getColumn()][blackKing.getCoordinate().getRow()].resetColor();
+            board[king.getCoordinate().getColumn()][king.getCoordinate().getRow()].resetColor();
             board[move.getStartingCoordinate().getColumn()][move.getStartingCoordinate().getRow()].resetColor();
             board[move.getEndingCoordinate().getColumn()][move.getEndingCoordinate().getRow()].resetColor();
         }

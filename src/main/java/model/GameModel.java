@@ -1,6 +1,7 @@
 package main.java.model;
 
 import main.java.ChessCoordinate;
+import main.java.model.moves.Move;
 import main.java.model.pieces.Piece;
 
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ public class GameModel {
         Move legalMove = getLegalMove(startCoordinate, endCoordinate);
         if (legalMove != null) {
             moves.add(legalMove);
-            boardModel.makeMove(legalMove);
+            legalMove.makeMove(boardModel);
+            //boardModel.makeMove(legalMove);
             turn++;
 
             // Check if checkmate
@@ -47,7 +49,8 @@ public class GameModel {
     public void move(Move move) {
         if (!isOver && move != null && move.isLegal(boardModel)) {
             moves.add(move);
-            boardModel.makeMove(move);
+            move.makeMove(boardModel);
+            //boardModel.makeMove(move);
             turn++;
 
             if (getAllLegalMoves().size() == 0) {
@@ -60,7 +63,7 @@ public class GameModel {
     public void undoMove(Move move) {
         if (move != null) {
             moves.remove(move);
-            boardModel.undoMove(move);
+            move.undoMove(boardModel);
             turn--;
 
             isOver = false;

@@ -2,8 +2,7 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
-import main.java.model.Move;
-import org.xml.sax.helpers.AttributesImpl;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 
@@ -22,7 +21,7 @@ public class Pawn extends Piece {
         int direction = (color == 0) ? 1 : -1;
 
         Move oneForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
-                coordinate.getRow() + direction), Move.NORMAL_MOVE);
+                coordinate.getRow() + direction));
 
         // Check one and two spaces forward.
         if (oneForward.getEndingCoordinate().isInBounds()
@@ -32,7 +31,7 @@ public class Pawn extends Piece {
             }
             if (timesMoved == 0) {
                 Move twoForward = new Move(this, null, coordinate, new ChessCoordinate(coordinate.getColumn(),
-                        coordinate.getRow() + 2 * direction), Move.NORMAL_MOVE);
+                        coordinate.getRow() + 2 * direction));
                 if (twoForward.getEndingCoordinate().isInBounds()
                         && gameModel.getBoardModel().getPieceOnSquare(twoForward.getEndingCoordinate()) == null) {
                     if (twoForward.isLegal(gameModel.getBoardModel())) {
@@ -46,8 +45,7 @@ public class Pawn extends Piece {
             ChessCoordinate endingCoordinate = new ChessCoordinate(coordinate.getColumn() + relativeColumn,
                     coordinate.getRow() + direction);
             Move possibleCapture = new Move(this,
-                    gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate,
-                    Move.NORMAL_MOVE);
+                    gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate);
             if (possibleCapture.getEndingCoordinate().isInBounds()
                     && gameModel.getBoardModel().getPieceOnSquare(possibleCapture.getEndingCoordinate()) != null
                     && gameModel.getBoardModel().getPieceOnSquare(possibleCapture.getEndingCoordinate()).color != color) {
@@ -67,7 +65,7 @@ public class Pawn extends Piece {
                         coordinate.getRow() + direction);
                 Move possibleEnPassant = new Move(this, gameModel.getBoardModel().getPieceOnSquare(
                         new ChessCoordinate(endingCoordinate.getColumn(), endingCoordinate.getRow() - direction)),
-                        coordinate, endingCoordinate, Move.EN_PASSANT);
+                        coordinate, endingCoordinate);
                 if (possibleEnPassant.isLegal(gameModel.getBoardModel())) {
                     possibleMoves.add(possibleEnPassant);
                 }

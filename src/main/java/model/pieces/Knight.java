@@ -2,7 +2,7 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.model.GameModel;
-import main.java.model.Move;
+import main.java.model.moves.Move;
 
 import java.util.ArrayList;
 
@@ -30,7 +30,7 @@ public class Knight extends Piece {
             for (int direction = -1; direction <= 1; direction += 2) {
                 ChessCoordinate endingCoordinate = new ChessCoordinate(coordinate.getColumn() + relativeCol,
                         coordinate.getRow() + (direction * (3 - Math.abs(relativeCol))));
-                Move possibleMove = new Move(this, gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate, Move.NORMAL_MOVE);
+                Move possibleMove = new Move(this, gameModel.getBoardModel().getPieceOnSquare(endingCoordinate), coordinate, endingCoordinate);
                 if (possibleMove.getEndingCoordinate().isInBounds()
                         && (possibleMove.getCapturedPiece() == null
                         || possibleMove.getCapturedPiece().getColor() != color)) {
