@@ -8,28 +8,30 @@ import java.util.Objects;
  */
 public class ChessCoordinate {
 
-    private char charColumn; // Letter from a - h
-    private int charRow; // Number from 1 - 8
-    private int column; // number from 0 - 7
-    private int row; // number from 0 - 7
+    private char charFile; // Letter from a - h
+    private int charRank; // Number from 1 - 8
+    private int file; // number from 0 - 7
+    private int rank; // number from 0 - 7
 
-    public ChessCoordinate(int column, int row) {
-        setColumn(column);
-        setRow(row);
+    public ChessCoordinate(int file, int rank) {
+        setFile(file);
+        setRank(rank);
     }
 
-    /**
-     * @return the charColumn
-     */
-    public char getCharColumn() {
-        return charColumn;
+    public char getCharFile() {
+        return charFile;
     }
 
-    /**
-     * @return the number column
-     */
-    public int getColumn() {
-        return column;
+    public int getCharRank() {
+        return charRank;
+    }
+
+    public int getFile() {
+        return file;
+    }
+
+    public int getRank() {
+        return rank;
     }
 
     /**
@@ -37,53 +39,31 @@ public class ChessCoordinate {
      * the char column, and the integer column. If column is larger than
      * 7, charColumn is set to '0' and column is set to -1.
      *
-     * @param column column coordinate ranging from 0 to 7
+     * @param file column coordinate ranging from 0 to 7
      */
-    public void setColumn(int column) {
-        this.charColumn = (0 <= column && column <= 7) ? (char) (column + 97) : '0';
-        this.column = (0 <= column && column <= 7) ? column : -1;
-    }
-
-    /**
-     * @return the row coordinate.
-     */
-    public int getRow() {
-        return row;
+    public void setFile(int file) {
+        this.charFile = (0 <= file && file <= 7) ? (char) (file + 97) : '0';
+        this.rank = (0 <= file && file <= 7) ? file : -1;
     }
 
     /**
      * Checks to make sure row is between 0 and 7 inclusive, and
      * sets row to that value if true. If false, sets it to -1.
      *
-     * @param row row coordinate value ranging from 0 to 7.
+     * @param rank row coordinate value ranging from 0 to 7.
      */
-    public void setRow(int row) {
-        this.row = (0 <= row && row <= 7) ? row : -1;
-        this.charRow = (0 <= row && row <= 7) ? row + 1 : 0;
+    public void setRank(int rank) {
+        this.rank = (0 <= rank && rank <= 7) ? rank : -1;
+        this.charRank = (0 <= rank && rank <= 7) ? rank + 1 : 0;
     }
 
     public boolean isInBounds() {
-        return row != -1 && column != -1;
+        return rank != -1 && file != -1;
     }
 
     @Override
     public String toString() {
-        return charColumn + Integer.toString(charRow);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ChessCoordinate that = (ChessCoordinate) o;
-        return charColumn == that.charColumn &&
-                charRow == that.charRow &&
-                column == that.column &&
-                row == that.row;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(charColumn, charRow, column, row);
+        return charFile + Integer.toString(charRank);
     }
 }
+

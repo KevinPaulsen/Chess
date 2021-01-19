@@ -1,34 +1,16 @@
 package main.java.model;
 
+import main.java.ChessCoordinate;
 import main.java.model.pieces.Piece;
 
 public class SquareModel {
 
-    private final int realColor;
-    private int color;
+    private final ChessCoordinate coordinate;
     private Piece piece;
 
-    public SquareModel(int color) {
-        this.realColor = color;
-        this.color = color;
-    }
-
-    public SquareModel(int color, Piece piece) {
-        this.realColor = color;
-        this.color = color;
+    public SquareModel(ChessCoordinate coordinate, Piece piece) {
+        this.coordinate = coordinate;
         this.piece = piece;
-    }
-
-    public int getColor() {
-        return color;
-    }
-
-    public void setColor(int color) {
-        this.color = color;
-    }
-
-    public void resetColor() {
-        this.color = realColor;
     }
 
     public Piece getPiece() {
