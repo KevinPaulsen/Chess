@@ -96,40 +96,40 @@ public class ChessBoardFactory {
         Piece piece = null;
         switch (pieceInt) {
             case W_PAWN:
-                piece = new Pawn('w', null);
+                piece = new Pawn('w');
                 break;
             case W_ROOK:
-                piece = new Rook('w', null);
+                piece = new Rook('w');
                 break;
             case W_KNIGHT:
-                piece = new Knight('w', null);
+                piece = new Knight('w');
                 break;
             case W_BISHOP:
-                piece = new Bishop('w', null);
+                piece = new Bishop('w');
                 break;
             case W_KING:
-                piece = new King('w', null);
+                piece = new King('w');
                 break;
             case W_QUEEN:
-                piece = new Queen('w', null);
+                piece = new Queen('w');
                 break;
             case B_PAWN:
-                piece = new Pawn('b', null);
+                piece = new Pawn('b');
                 break;
             case B_ROOK:
-                piece = new Rook('b', null);
+                piece = new Rook('b');
                 break;
             case B_KNIGHT:
-                piece = new Knight('b', null);
+                piece = new Knight('b');
                 break;
             case B_BISHOP:
-                piece = new Bishop('b', null);
+                piece = new Bishop('b');
                 break;
             case B_QUEEN:
-                piece = new Queen('b', null);
+                piece = new Queen('b');
                 break;
             case B_KING:
-                piece = new King('b', null);
+                piece = new King('b');
         }
         return piece;
     }

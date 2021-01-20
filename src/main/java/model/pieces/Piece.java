@@ -1,12 +1,10 @@
 package main.java.model.pieces;
 
-import main.java.ChessCoordinate;
-
 public abstract class Piece {
 
     private final char color;
 
-    Piece(char color, ChessCoordinate coordinate) {
+    Piece(char color) {
         this.color = color;
     }
 
