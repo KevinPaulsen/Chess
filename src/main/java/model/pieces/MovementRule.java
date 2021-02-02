@@ -13,36 +13,57 @@ import java.util.List;
  */
 public class MovementRule {
 
+    // The direction of this movement rule
     private final Direction direction;
+    // The maximum distance the piece can move in this direction
     private final int maxDistance;
-    private final char color;
+    // The moveMaker that creates the move
     private final MoveMaker moveMaker;
 
-    public MovementRule(Direction direction, int maxDistance, char color, MoveMaker moveMaker) {
+    /**
+     * Creates a MovementRule with the given direction, maxDistance and moveMaker.
+     *
+     * @param direction the direction of this movement rule.
+     * @param maxDistance the max distance allowed in the given direction.
+     * @param moveMaker the MoveMaker to create the move.
+     */
+    public MovementRule(Direction direction, int maxDistance, MoveMaker moveMaker) {
         this.direction = direction;
         this.maxDistance = maxDistance;
-        this.color = color;
         this.moveMaker = moveMaker;
     }
 
+    /**
+     * Calculates and returns the number of moves that satisfy this MovementRule.
+     * If no moves are possible, an empty list is returned.
+     *
+     * @param coordinate the starting coordinate to move from
+     * @param gameModel the GameModel that we are moving on.
+     * @return the list of moves that satisfy this movement rule.
+     */
     public List<Move> getMoves(ChessCoordinate coordinate, GameModel gameModel) {
-        List<Move> possibleMoves = new ArrayList<>();
-        BoardModel boardModel = gameModel.getBoard();
-        Piece movingPiece = boardModel.getPieceOn(coordinate);
+        List<Move> moves = new ArrayList<>();
         int distance = 1;
 
+        // Loop until end coordinate is out of bounds or distance > max distance.
         for (ChessCoordinate endCoordinate = direction.next(coordinate);
              endCoordinate != null && distance <= maxDistance;
              endCoordinate = direction.next(endCoordinate), distance++) {
 
-            Piece occupyingPiece = boardModel.getPieceOn(coordinate);
-            if (occupyingPiece != null && occupyingPiece.color == color) {
-                break;
+            // Create the move
+            Move move = moveMaker.getMove(coordinate, endCoordinate,
+                    gameModel.getBoard().getPieceOn(coordinate), gameModel);
+            // If the move is non-null, add it to moves.
+            if (move != null) {
+                moves.add(move);
             }
 
-            possibleMoves.add(moveMaker.getMove(coordinate, endCoordinate, movingPiece, gameModel));
+            // If there is a piece in the way, break.
+            if (gameModel.getBoard().getPieceOn(endCoordinate) != null) {
+                break;
+            }
         }
 
-        return possibleMoves;
+        return moves;
     }
 }

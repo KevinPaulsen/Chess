@@ -1,6 +1,7 @@
 package main.java.view;
 
 import main.java.ChessCoordinate;
+import main.java.Move;
 import main.java.model.pieces.Piece;
 
 import javax.swing.JPanel;
@@ -42,29 +43,22 @@ public class ChessBoardView extends JPanel {
      *
      * @param move the last move made.
      */
-    /*
-    //TODO Fix this stuff
     public void updateBoard(Move move) {
         if (move != null) {
 
-            if (move.doesCapture()) {
-                ((ChessPieceView) piecesPanel
-                        .getComponent(getZOrder(move.getCapturedStartCoordinate()))).capture();
-            } else if (isCastleMove(move)) {
-                int rookRank = (move.getMovingPiece().getColor() == 'w') ? 0 : 7;
-                boolean castlesLeft = move.getEndCoordinate().getFile() == 2;
-                int rookStartFile = castlesLeft ? 0 : 7;
-                int rookEndFile = castlesLeft ? 3 : 5;
-                swap(new ChessCoordinate(rookStartFile, rookRank),
-                        new ChessCoordinate(rookEndFile, rookRank));
+            if (move.getInteractingPieceStart() != null) {
+                if (move.getInteractingPieceEnd() == null) {
+                    // Capture
+                    ((ChessPieceView) piecesPanel
+                            .getComponent(getZOrder(move.getInteractingPieceStart()))).capture();
+                } else {
+                    // Castle
+                    swap(move.getInteractingPieceStart(), move.getInteractingPieceEnd());
+                }
             }
-            swap(move.getStartCoordinate(), move.getEndCoordinate());
-            if (move.getIsPromotion()) {
-                makeQueen(move.getEndCoordinate(), move.getMovingPiece().getColor());
-            }
+            swap(move.getStartingCoordinate(), move.getEndingCoordinate());
         }
     }
-     */
 
     private void makeQueen(ChessCoordinate coordinate, char color) {
         ((ChessPieceView) piecesPanel.getComponent(getZOrder(coordinate))).makeQueen(color);

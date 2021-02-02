@@ -37,7 +37,7 @@ public class ChessCoordinate {
     }
 
     public static boolean isInBounds(int file, int rank) {
-        return rank != -1 && file != -1;
+        return 0 <= file && file <= 7 && 0 <= rank && rank <= 7;
     }
 
     @Override

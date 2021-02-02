@@ -2,6 +2,7 @@ package main.java.model;
 
 import main.java.ChessCoordinate;
 import main.java.Move;
+import main.java.model.pieces.Piece;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,7 +13,7 @@ public class GameModel {
 
     private final BoardModel board;
     private final Set<Move> legalMoves;
-    private final List<Move> moveList;
+    private final List<Move> moveHistory;
 
     private char turn;
 
@@ -20,7 +21,8 @@ public class GameModel {
         this.board = ChessBoardFactory.createNormalBoard();
         this.legalMoves = new HashSet<>();
         this.turn = 'w';
-        this.moveList = new ArrayList<>();
+        this.moveHistory = new ArrayList<>();
+        updateLegalMoves();
     }
 
     public BoardModel getBoard() {
@@ -66,8 +68,9 @@ public class GameModel {
 
         if (move != null && legalMoves.contains(move) && move.getMovingPiece().getColor() == turn) {
             board.move(move);
-            updateLegalMoves();
+            moveHistory.add(move);
             turn = (turn == 'w') ? 'b' : 'w';
+            updateLegalMoves();
             didMove = true;
         }
 
@@ -75,10 +78,17 @@ public class GameModel {
     }
 
     public Move getLastMove() {
-        return moveList.get(moveList.size() - 1);
+        return moveHistory.size() == 0 ? null : moveHistory.get(moveHistory.size() - 1);
     }
 
     private void updateLegalMoves() {
-
+        legalMoves.clear();
+        for (Piece[] file : board.getPieceArray()) {
+            for (Piece piece : file) {
+                if (piece != null) {
+                    legalMoves.addAll(piece.getLegalMoves(this));
+                }
+            }
+        }
     }
 }

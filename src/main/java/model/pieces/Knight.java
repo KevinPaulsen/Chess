@@ -4,27 +4,38 @@ import main.java.ChessCoordinate;
 
 import java.util.Set;
 
+/**
+ * This is an implementation of Piece. This class implements a Knight Piece that
+ * moves how a Knight should.
+ */
 public class Knight extends Piece {
 
+    /**
+     * Creates a Knight with the given color and coordinate.
+     *
+     * @param color the color of this knight
+     * @param coordinate the coordinate of this knight
+     */
     public Knight(char color, ChessCoordinate coordinate) {
         super(coordinate, color);
         movementRules = getMovementRules();
     }
 
-    public boolean canMoveTo(ChessCoordinate endCoordinate, Piece[][] pieceArray) {
-        return false;
-    }
-
+    /**
+     * Returns the MovementRules of this Knight
+     *
+     * @return the MovementRules of this knight
+     */
     private Set<MovementRule> getMovementRules() {
         return Set.of(
-                new MovementRule(new Direction(2, 1), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(2, -1), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, 2), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, -2), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, 2), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, -2), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-2, 1), 1, color, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-2, -1), 1, color, STANDARD_MOVE_MAKER)
+                new MovementRule(new Direction(2, 1), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(2, -1), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(1, 2), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(1, -2), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(-1, 2), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(-1, -2), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(-2, 1), 1, STANDARD_MOVE_MAKER),
+                new MovementRule(new Direction(-2, -1), 1, STANDARD_MOVE_MAKER)
         );
     }
 }

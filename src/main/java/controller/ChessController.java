@@ -52,6 +52,9 @@ public class ChessController implements MouseListener, MouseMotionListener {
     public void mouseReleased(MouseEvent e) {
         ChessCoordinate endCoordinate = view.getCoordinateOf(e.getComponent(),
                 e.getX(), e.getY());
+        if (gameModel.move(startCoordinate, endCoordinate)) {
+            view.updateScreen(gameModel.getLastMove());
+        }
         view.pack();
     }
 

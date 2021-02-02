@@ -11,31 +11,30 @@ import java.util.Objects;
  */
 public class Direction {
 
+    // The vertical increase
     private final int rise;
+    // The horizontal increase
     private final int run;
-    private final double slope;
 
+    /**
+     * Creates a new Direction with the given rise and run.
+     *
+     * @param rise the vertical increase
+     * @param run  the horizontal increase.
+     */
     public Direction(int rise, int run) {
         this.rise = rise;
         this.run = run;
-        slope = calculateSlope(rise, run);
     }
 
     /**
-     * Can check if two coordinates are aligned. Two coordinates are
-     * considered aligned if the slope between startCoordinate and endCoordinate
-     * are equal to this slope.
+     * Returns the coordinate after the given coordinate and in this Direction.
+     * If coordinate is null, null is returned. If the next coordinate is out of
+     * Bounds, null is returned.
      *
-     * @param startCoordinate the first coordinate
-     * @param endCoordinate the second coordinate
-     * @return if they two coordinates are aligned in this direction.
+     * @param coordinate the starting coordinate.
+     * @return the coordinate after the given coordinate and in this Direction.
      */
-    public boolean areAligned(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
-        int rise = startCoordinate.getRank() - endCoordinate.getRank();
-        int run = startCoordinate.getFile() - endCoordinate.getFile();
-        return slope == calculateSlope(rise, run);
-    }
-
     public ChessCoordinate next(ChessCoordinate coordinate) {
         ChessCoordinate next = null;
         if (coordinate != null) {
@@ -44,28 +43,17 @@ public class Direction {
         return next;
     }
 
-
-    /**
-     * Calculates the slope given two integers.
-     *
-     * @param rise the vertical aspect.
-     * @param run the horizontal aspect.
-     * @return the slope.
-     */
-    private static double calculateSlope(int rise, int run) {
-        return ((double) rise) / run;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Direction)) return false;
         Direction direction = (Direction) o;
-        return rise == direction.rise && run == direction.run && Double.compare(direction.slope, slope) == 0;
+        return rise == direction.rise && run == direction.run;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rise, run, slope);
+        return Objects.hash(rise, run);
     }
 }
+

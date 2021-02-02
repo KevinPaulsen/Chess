@@ -19,7 +19,7 @@ public class ChessPieceView extends JLabel {
 
     private static final ImageIcon BLANK_IMAGE = new ImageIcon("");
 
-    private final boolean isOnBoard;
+    private boolean isOnBoard;
 
     /**
      * Constructs a PieceView from the given chessPiece.
@@ -74,5 +74,6 @@ public class ChessPieceView extends JLabel {
 
     public void capture() {
         setIcon(BLANK_IMAGE);
+        isOnBoard = false;
     }
 }

@@ -31,6 +31,10 @@ public class BoardModel {
         setPiece(move.getInteractingPieceStart(), null);
         setPiece(move.getEndingCoordinate(), move.getMovingPiece());
         setPiece(move.getInteractingPieceEnd(), move.getInteractingPiece());
+        move.getMovingPiece().moveTo(move.getEndingCoordinate());
+        if (move.getInteractingPiece() != null) {
+            move.getInteractingPiece().moveTo(move.getInteractingPieceEnd());
+        }
     }
 
     public Piece getPieceOn(ChessCoordinate coordinate) {
@@ -38,7 +42,9 @@ public class BoardModel {
     }
 
     private void setPiece(ChessCoordinate coordinate, Piece piece) {
-        pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
+        if (coordinate != null) {
+            pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
+        }
     }
 
     public static ChessCoordinate getChessCoordinate(int file, int rank) {

@@ -1,6 +1,7 @@
 package main.java.view;
 
 import main.java.ChessCoordinate;
+import main.java.Move;
 import main.java.model.BoardModel;
 import main.java.model.pieces.Piece;
 
@@ -52,15 +53,13 @@ public class ChessView extends JFrame {
         pack();
     }
 
-    /*
-    //TODO: deal with this
     public void updateScreen(Move move) {
         if (move != null) {
             boardView.updateBoard(move);
             turnView.switchTurns();
         }
         this.pack();
-    }*/
+    }
 
     public ChessCoordinate getCoordinateOf(Component component, int mouseX, int mouseY) {
         int squareWidth = boardView.getWidth() / 8;
