@@ -11,12 +11,12 @@ public class Move {
     private final ChessCoordinate interactingPieceEnd;
     private final Piece interactingPiece;
 
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
-                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
-        this.startingCoordinate = startingCoordinate;
+    public Move(ChessCoordinate endingCoordinate, Piece movingPiece,
+                ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
+        this.startingCoordinate = movingPiece.getCoordinate();
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
-        this.interactingPieceStart = interactingPieceStart;
+        this.interactingPieceStart = interactingPiece == null ? null : interactingPiece.getCoordinate();
         this.interactingPieceEnd = interactingPieceEnd;
         this.interactingPiece = interactingPiece;
     }

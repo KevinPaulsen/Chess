@@ -1,6 +1,7 @@
 package main.java.view;
 
 import main.java.ChessCoordinate;
+import main.java.model.BoardModel;
 import main.java.model.pieces.Piece;
 
 import javax.swing.JFrame;
@@ -66,7 +67,7 @@ public class ChessView extends JFrame {
         int squareHeight = boardView.getHeight() / 8;
         int xCoordinate = (getXOnWindow(component) + mouseX) / (squareWidth);
         int yCoordinate = 7 - (getYOnWindow(component) + mouseY) / squareHeight;
-        return new ChessCoordinate(xCoordinate, yCoordinate);
+        return BoardModel.getChessCoordinate(xCoordinate, yCoordinate);
     }
 
     private static int getYOnWindow(Component component) {

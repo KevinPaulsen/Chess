@@ -3,14 +3,16 @@ package main.java.model;
 import main.java.ChessCoordinate;
 import main.java.Move;
 
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 public class GameModel {
 
     private final BoardModel board;
     private final Set<Move> legalMoves;
+    private final List<Move> moveList;
 
     private char turn;
 
@@ -18,6 +20,7 @@ public class GameModel {
         this.board = ChessBoardFactory.createNormalBoard();
         this.legalMoves = new HashSet<>();
         this.turn = 'w';
+        this.moveList = new ArrayList<>();
     }
 
     public BoardModel getBoard() {
@@ -37,7 +40,7 @@ public class GameModel {
         boolean didMove = false;
 
         // Check that moves are both on screen.
-        if (startCoordinate.isInBounds() && endCoordinate.isInBounds()) {
+        if (startCoordinate != null && endCoordinate != null) {
             Move currentMove = null;
             for (Move move : legalMoves) {
                 if (move.getStartingCoordinate().equals(startCoordinate) && move.getEndingCoordinate().equals(endCoordinate)) {
@@ -64,10 +67,15 @@ public class GameModel {
         if (move != null && legalMoves.contains(move) && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             updateLegalMoves();
+            turn = (turn == 'w') ? 'b' : 'w';
             didMove = true;
         }
 
         return didMove;
+    }
+
+    public Move getLastMove() {
+        return moveList.get(moveList.size() - 1);
     }
 
     private void updateLegalMoves() {
