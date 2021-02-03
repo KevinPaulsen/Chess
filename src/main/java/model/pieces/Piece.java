@@ -34,7 +34,7 @@ public abstract class Piece {
     // The coordinate this piece is currently on.
     protected ChessCoordinate coordinate;
     // Weather or not this piece has moved.
-    protected boolean hasMoved;
+    protected int timesMoved;
 
     /**
      * Constructs a piece with no movement rules, and is on the given
@@ -47,7 +47,7 @@ public abstract class Piece {
         this.movementRules = Set.of();
         this.coordinate = coordinate;
         this.color = color;
-        hasMoved = false;
+        timesMoved = 0;
     }
 
     /**
@@ -58,7 +58,12 @@ public abstract class Piece {
      */
     public void moveTo(ChessCoordinate coordinate) {
         this.coordinate = coordinate;
-        hasMoved = true;
+        timesMoved++;
+    }
+
+    public void moveBackTo(ChessCoordinate coordinate) {
+        this.coordinate = coordinate;
+        timesMoved--;
     }
 
     /**
@@ -76,6 +81,10 @@ public abstract class Piece {
             moves.addAll(movementRule.getMoves(coordinate, game));
         }
         return moves;
+    }
+
+    public boolean hasMoved() {
+        return timesMoved != 0;
     }
 
     /**

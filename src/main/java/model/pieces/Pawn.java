@@ -36,7 +36,7 @@ public class Pawn extends Piece {
                 new MovementRule(new Direction(direction, -1), 1, getDiagonalMoveMaker(-1)),
                 new MovementRule(new Direction(direction, 0), 2, (start, end, piece, game) -> {
                     Piece occupyingPiece = game.getBoard().getPieceOn(end);
-                    if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved)) {
+                    if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved())) {
                         return new Move(end, piece, null, null);
                     }
                     return null;

@@ -53,8 +53,16 @@ public class MovementRule {
             // Create the move
             Move move = moveMaker.getMove(coordinate, endCoordinate,
                     gameModel.getBoard().getPieceOn(coordinate), gameModel);
+
+
             // If the move is non-null, add it to moves.
             if (move != null) {
+                gameModel.getBoard().move(move);
+                if (gameModel.getBoard().kingInCheck(move.getMovingPiece().color)) {
+                    gameModel.getBoard().undoMove(move);
+                    continue;
+                }
+                gameModel.getBoard().undoMove(move);
                 moves.add(move);
             }
 
@@ -65,23 +73,5 @@ public class MovementRule {
         }
 
         return moves;
-    }
-
-    public boolean canMoveTo(ChessCoordinate coordinate, GameModel game) {
-        boolean canMoveTo = false;
-        int distance = 1;
-
-        for (ChessCoordinate searchCoordinate = direction.next(coordinate);
-             searchCoordinate != null && distance <= maxDistance;
-             searchCoordinate = direction.next(searchCoordinate), distance++) {
-
-            if (game.getBoard().getPieceOn(searchCoordinate) != null) {
-                break;
-            }
-
-        }
-
-
-        return canMoveTo;
     }
 }

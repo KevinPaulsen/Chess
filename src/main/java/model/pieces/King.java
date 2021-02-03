@@ -24,7 +24,7 @@ public class King extends Piece {
      * conditions are false, then null is returned.
      */
     private final MoveMaker castleMoveMaker = (start, end, piece, game) -> {
-        if (!hasMoved && (end.getFile() == 2 || end.getFile() == 6)) {
+        if (!hasMoved() && (end.getFile() == 2 || end.getFile() == 6)) {
             int direction = end.getFile() == 2 ? -1 : 1;
             BoardModel board = game.getBoard();
 
@@ -41,13 +41,13 @@ public class King extends Piece {
             Piece rook = board.getPieceOn(BoardModel.getChessCoordinate(
                     direction == 1 ? 7 : 0, start.getRank()));
 
-            if (rook instanceof Rook && !rook.hasMoved
+            if (rook instanceof Rook && !rook.hasMoved()
                     && board.getPieceOn(coordinate1) == null
                     && board.getPieceOn(coordinate2) == null
                     && (direction == 1 || board.getPieceOn(coordinate3) == null)
-                    && !isAttacked(coordinate, game)
-                    && !isAttacked(coordinate1, game)
-                    && !isAttacked(coordinate2, game)) {
+                    && !isAttacked(coordinate, game.getBoard())
+                    && !isAttacked(coordinate1, game.getBoard())
+                    && !isAttacked(coordinate2, game.getBoard())) {
                 return new Move(end, piece, coordinate1, rook);
             }
         }
@@ -88,10 +88,10 @@ public class King extends Piece {
      * game.
      *
      * @param coordinate The coordinate to check if there is an attacker.
-     * @param game the game the coordinate is in.
+     * @param board the board the coordinate is in.
      * @return true if coordinate is being attacked.
      */
-    public boolean isAttacked(ChessCoordinate coordinate, GameModel game) {
+    public boolean isAttacked(ChessCoordinate coordinate, BoardModel board) {
 
         ChessCoordinate searchCoordinate;
         int distance;
@@ -101,7 +101,7 @@ public class King extends Piece {
             distance = 1;
             searchCoordinate = direction.next(coordinate);
             while (searchCoordinate != null) {
-                Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+                Piece occupyingPiece = board.getPieceOn(searchCoordinate);
                 if (occupyingPiece != null) {
                     if (occupyingPiece.color != color
                             && (occupyingPiece instanceof Bishop
@@ -123,7 +123,7 @@ public class King extends Piece {
             distance = 1;
             searchCoordinate = direction.next(coordinate);
             while (searchCoordinate != null) {
-                Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+                Piece occupyingPiece = board.getPieceOn(searchCoordinate);
                 if (occupyingPiece != null) {
                     if (occupyingPiece.color != color
                             && (occupyingPiece instanceof Rook
@@ -141,7 +141,7 @@ public class King extends Piece {
         // Check Knight Attackers
         for (Direction direction : Directions.KNIGHTS.directions) {
             searchCoordinate = direction.next(coordinate);
-            Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+            Piece occupyingPiece = board.getPieceOn(searchCoordinate);
             if (occupyingPiece instanceof Knight && occupyingPiece.color != color) {
                 return true;
             }
