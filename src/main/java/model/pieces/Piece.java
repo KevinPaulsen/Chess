@@ -26,6 +26,7 @@ public abstract class Piece {
             return null;
         }
     };
+    protected static final int LONG_MOVING_MAX = 8;
     // The color of this piece
     protected final char color;
     // The set of movement rules that define how this piece moves.

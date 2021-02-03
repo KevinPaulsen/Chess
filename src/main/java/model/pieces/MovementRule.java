@@ -66,4 +66,22 @@ public class MovementRule {
 
         return moves;
     }
+
+    public boolean canMoveTo(ChessCoordinate coordinate, GameModel game) {
+        boolean canMoveTo = false;
+        int distance = 1;
+
+        for (ChessCoordinate searchCoordinate = direction.next(coordinate);
+             searchCoordinate != null && distance <= maxDistance;
+             searchCoordinate = direction.next(searchCoordinate), distance++) {
+
+            if (game.getBoard().getPieceOn(searchCoordinate) != null) {
+                break;
+            }
+
+        }
+
+
+        return canMoveTo;
+    }
 }

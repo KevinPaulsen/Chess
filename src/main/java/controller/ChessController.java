@@ -59,7 +59,11 @@ public class ChessController implements MouseListener, MouseMotionListener {
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON2) {
+            System.out.println();
+        }
+    }
 
     @Override
     public void mouseEntered(MouseEvent e) {}

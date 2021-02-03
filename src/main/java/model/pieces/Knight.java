@@ -2,6 +2,8 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -27,15 +29,10 @@ public class Knight extends Piece {
      * @return the MovementRules of this knight
      */
     private Set<MovementRule> getMovementRules() {
-        return Set.of(
-                new MovementRule(new Direction(2, 1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(2, -1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, 2), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, -2), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, 2), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, -2), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-2, 1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-2, -1), 1, STANDARD_MOVE_MAKER)
-        );
+        Set<MovementRule> movementRules = new HashSet<>();
+        for (Direction direction : Directions.KNIGHTS.directions) {
+            movementRules.add(new MovementRule(direction, LONG_MOVING_MAX, STANDARD_MOVE_MAKER));
+        }
+        return Collections.unmodifiableSet(movementRules);
     }
 }

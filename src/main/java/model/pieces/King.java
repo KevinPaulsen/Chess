@@ -3,7 +3,10 @@ package main.java.model.pieces;
 import main.java.ChessCoordinate;
 import main.java.Move;
 import main.java.model.BoardModel;
+import main.java.model.GameModel;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -42,9 +45,9 @@ public class King extends Piece {
                     && board.getPieceOn(coordinate1) == null
                     && board.getPieceOn(coordinate2) == null
                     && (direction == 1 || board.getPieceOn(coordinate3) == null)
-                    && !isInCheck(coordinate)
-                    && !isInCheck(coordinate1)
-                    && !isInCheck(coordinate2)) {
+                    && !isAttacked(coordinate, game)
+                    && !isAttacked(coordinate1, game)
+                    && !isAttacked(coordinate2, game)) {
                 return new Move(end, piece, coordinate1, rook);
             }
         }
@@ -68,21 +71,82 @@ public class King extends Piece {
      * @return the set of movement rules for this King.
      */
     private Set<MovementRule> getMovementRules() {
-        return Set.of(
-                new MovementRule(new Direction(1, 1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, 0), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(1, -1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(0, 1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(0, -1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, 1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, 0), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(-1, -1), 1, STANDARD_MOVE_MAKER),
-                new MovementRule(new Direction(0, 2), 1, castleMoveMaker),
-                new MovementRule(new Direction(0, -2), 1, castleMoveMaker)
-        );
+        Set<MovementRule> movementRules = new HashSet<>();
+        for (Direction direction : Directions.STRAIGHTS.directions) {
+            movementRules.add(new MovementRule(direction, 1, STANDARD_MOVE_MAKER));
+        }
+        for (Direction direction : Directions.DIAGONALS.directions) {
+            movementRules.add(new MovementRule(direction, 1, STANDARD_MOVE_MAKER));
+        }
+        movementRules.add(new MovementRule(new Direction(0, 2), 1, castleMoveMaker));
+        movementRules.add(new MovementRule(new Direction(0, -2), 1, castleMoveMaker));
+        return Collections.unmodifiableSet(movementRules);
     }
 
-    public boolean isInCheck(ChessCoordinate coordinate) {
+    /**
+     * Returns true if the given coordinate is being attacked by any piece in
+     * game.
+     *
+     * @param coordinate The coordinate to check if there is an attacker.
+     * @param game the game the coordinate is in.
+     * @return true if coordinate is being attacked.
+     */
+    public boolean isAttacked(ChessCoordinate coordinate, GameModel game) {
+
+        ChessCoordinate searchCoordinate;
+        int distance;
+
+        // Check Diagonal Attackers
+        for (Direction direction : Directions.DIAGONALS.directions) {
+            distance = 1;
+            searchCoordinate = direction.next(coordinate);
+            while (searchCoordinate != null) {
+                Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+                if (occupyingPiece != null) {
+                    if (occupyingPiece.color != color
+                            && (occupyingPiece instanceof Bishop
+                            || occupyingPiece instanceof Queen
+                            || (distance == 1
+                            && (occupyingPiece instanceof King
+                            || occupyingPiece instanceof Pawn)))) {
+                        return true;
+                    }
+                    break;
+                }
+                distance++;
+                searchCoordinate = direction.next(searchCoordinate);
+            }
+        }
+
+        // Check Straight Attackers
+        for (Direction direction : Directions.STRAIGHTS.directions) {
+            distance = 1;
+            searchCoordinate = direction.next(coordinate);
+            while (searchCoordinate != null) {
+                Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+                if (occupyingPiece != null) {
+                    if (occupyingPiece.color != color
+                            && (occupyingPiece instanceof Rook
+                            || occupyingPiece instanceof Queen
+                            || (distance == 1 && occupyingPiece instanceof King))) {
+                        return true;
+                    }
+                    break;
+                }
+                distance++;
+                searchCoordinate = direction.next(searchCoordinate);
+            }
+        }
+
+        // Check Knight Attackers
+        for (Direction direction : Directions.KNIGHTS.directions) {
+            searchCoordinate = direction.next(coordinate);
+            Piece occupyingPiece = game.getBoard().getPieceOn(searchCoordinate);
+            if (occupyingPiece instanceof Knight && occupyingPiece.color != color) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
