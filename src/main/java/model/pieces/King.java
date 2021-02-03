@@ -23,7 +23,7 @@ public class King extends Piece {
      * also that neither the rook nor the king have moved. If any of these
      * conditions are false, then null is returned.
      */
-    private final MoveMaker castleMoveMaker = (start, end, piece, game) -> {
+    private final MoveMaker castleMoveMaker = (start, end, game, code) -> {
         if (!hasMoved() && (end.getFile() == 2 || end.getFile() == 6)) {
             int direction = end.getFile() == 2 ? -1 : 1;
             BoardModel board = game.getBoard();
@@ -48,7 +48,7 @@ public class King extends Piece {
                     && !isAttacked(coordinate, game.getBoard())
                     && !isAttacked(coordinate1, game.getBoard())
                     && !isAttacked(coordinate2, game.getBoard())) {
-                return new Move(end, piece, coordinate1, rook);
+                return new Move(end, game.getBoard().getPieceOn(start), coordinate1, rook);
             }
         }
         return null;

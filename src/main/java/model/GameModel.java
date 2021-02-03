@@ -45,7 +45,7 @@ public class GameModel {
         if (startCoordinate != null && endCoordinate != null) {
             Move currentMove = null;
             for (Move move : legalMoves) {
-                if (move.getStartingCoordinate().equals(startCoordinate) && move.getEndingCoordinate().equals(endCoordinate)) {
+                if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
                     currentMove = move;
                     break;
                 }

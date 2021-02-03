@@ -10,15 +10,26 @@ public class Move {
     private final ChessCoordinate interactingPieceStart;
     private final ChessCoordinate interactingPieceEnd;
     private final Piece interactingPiece;
+    private final Piece promotedPiece;
 
     public Move(ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
+        this(endingCoordinate, movingPiece, interactingPieceEnd, interactingPiece, null);
+    }
+
+    public Move(ChessCoordinate endingCoordinate, Piece movingPiece,
+                ChessCoordinate interactingPieceEnd, Piece interactingPiece, Piece promotedPiece) {
         this.startingCoordinate = movingPiece.getCoordinate();
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
         this.interactingPieceStart = interactingPiece == null ? null : interactingPiece.getCoordinate();
         this.interactingPieceEnd = interactingPieceEnd;
         this.interactingPiece = interactingPiece;
+        this.promotedPiece = promotedPiece;
+    }
+
+    public boolean doesPromote() {
+        return promotedPiece != null;
     }
 
     public ChessCoordinate getStartingCoordinate() {
@@ -43,5 +54,9 @@ public class Move {
 
     public Piece getInteractingPiece() {
         return interactingPiece;
+    }
+
+    public Piece getPromotedPiece() {
+        return promotedPiece;
     }
 }

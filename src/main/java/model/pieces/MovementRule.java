@@ -51,8 +51,8 @@ public class MovementRule {
              endCoordinate = direction.next(endCoordinate), distance++) {
 
             // Create the move
-            Move move = moveMaker.getMove(coordinate, endCoordinate,
-                    gameModel.getBoard().getPieceOn(coordinate), gameModel);
+            // TODO: allow multiple types of promotion
+            Move move = moveMaker.getMove(coordinate, endCoordinate, gameModel, Pawn.QUEEN_PROMOTION);
 
 
             // If the move is non-null, add it to moves.

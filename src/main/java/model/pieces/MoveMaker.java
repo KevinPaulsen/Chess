@@ -17,10 +17,9 @@ public interface MoveMaker {
      *
      * @param startCoordinate the starting coordinate of the moving Piece
      * @param endCoordinate the ending coordinate of the moving Piece
-     * @param movingPiece the moving Piece
      * @param model the gameModel containing the moving Piece
+     * @param promotionCode the code to promote to {@see Pawn}
      * @return a Move that makes the requested move
      */
-    Move getMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate, Piece movingPiece,
-                 GameModel model);
+    Move getMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate, GameModel model, int promotionCode);
 }

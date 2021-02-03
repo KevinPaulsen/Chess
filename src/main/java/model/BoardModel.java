@@ -33,12 +33,22 @@ public class BoardModel {
      */
     public void move(Move move) {
         if (move != null) {
+            // Remove all relevant pieces
             setPiece(move.getStartingCoordinate(), null);
             setPiece(move.getInteractingPieceStart(), null);
-            setPiece(move.getEndingCoordinate(), move.getMovingPiece());
-            setPiece(move.getInteractingPieceEnd(), move.getInteractingPiece());
-            move.getMovingPiece().moveTo(move.getEndingCoordinate());
+
+            // put moving piece back
+            if (move.doesPromote()) {
+                setPiece(move.getEndingCoordinate(), move.getPromotedPiece());
+                move.getPromotedPiece().moveTo(move.getEndingCoordinate());
+            } else {
+                setPiece(move.getEndingCoordinate(), move.getMovingPiece());
+                move.getMovingPiece().moveTo(move.getEndingCoordinate());
+            }
+
+            // Put interacting piece back
             if (move.getInteractingPiece() != null) {
+                setPiece(move.getInteractingPieceEnd(), move.getInteractingPiece());
                 move.getInteractingPiece().moveTo(move.getInteractingPieceEnd());
             }
         }
@@ -46,12 +56,17 @@ public class BoardModel {
 
     public void undoMove(Move move) {
         if (move != null) {
+            // Remove all relevant Pieces
             setPiece(move.getEndingCoordinate(), null);
             setPiece(move.getInteractingPieceEnd(), null);
+
+            // Put moving piece back to original square
             setPiece(move.getStartingCoordinate(), move.getMovingPiece());
-            setPiece(move.getInteractingPieceStart(), move.getInteractingPiece());
             move.getMovingPiece().moveBackTo(move.getStartingCoordinate());
+
+            // Put interacting Piece back to original square
             if (move.getInteractingPiece() != null) {
+                setPiece(move.getInteractingPieceStart(), move.getInteractingPiece());
                 move.getInteractingPiece().moveBackTo(move.getInteractingPieceStart());
             }
         }

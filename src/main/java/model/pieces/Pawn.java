@@ -12,15 +12,36 @@ import java.util.Set;
  */
 public class Pawn extends Piece {
 
+    public static final int QUEEN_PROMOTION = 0;
+    public static final int ROOK_PROMOTION = 1;
+    public static final int KNIGHT_PROMOTION = 2;
+    public static final int BISHOP_PROMOTION = 3;
+
+    private final MoveMaker straightMovement = (start, end, game, code) -> {
+        Piece piece = game.getBoard().getPieceOn(start);
+        Piece occupyingPiece = game.getBoard().getPieceOn(end);
+        if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved())) {
+            if (end.getRank() == (color == 'w' ? 7 : 0)) {
+                return new Move(end, piece, null, null, makePiece(code));
+            } else {
+                return new Move(end, piece, null, null);
+            }
+        }
+        return null;
+    };
+
+    private final int direction;
+
     /**
      * Creates a pawn with the given color and coordinate
      *
-     * @param color the color of this pawn
+     * @param color      the color of this pawn
      * @param coordinate the coordinate of this pawn
      */
     public Pawn(char color, ChessCoordinate coordinate) {
         super(coordinate, color);
         movementRules = getMovementRules(color);
+        direction = color == 'w' ? 1 : -1;
     }
 
     /**
@@ -34,20 +55,14 @@ public class Pawn extends Piece {
         return Set.of(
                 new MovementRule(new Direction(direction, 1), 1, getDiagonalMoveMaker(1)),
                 new MovementRule(new Direction(direction, -1), 1, getDiagonalMoveMaker(-1)),
-                new MovementRule(new Direction(direction, 0), 2, (start, end, piece, game) -> {
-                    Piece occupyingPiece = game.getBoard().getPieceOn(end);
-                    if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved())) {
-                        return new Move(end, piece, null, null);
-                    }
-                    return null;
-                })
+                new MovementRule(new Direction(direction, 0), 2, straightMovement)
         );
     }
 
     /**
      * Returns true if this pawn can take EnPassant in the given direction.
      *
-     * @param lastMove the last move made
+     * @param lastMove  the last move made
      * @param direction the direction we are attempting to take EnPassant
      * @return if we can take EnPassant
      */
@@ -70,21 +85,40 @@ public class Pawn extends Piece {
      * @return the MoveMaker for diagonal movement.
      */
     private MoveMaker getDiagonalMoveMaker(int direction) {
-        return (start, end, piece, game) -> {
+        return (start, end, game, code) -> {
+            Piece piece = game.getBoard().getPieceOn(start);
             Piece capturedPiece = game.getBoard().getPieceOn(end);
 
-            if (capturedPiece != null && capturedPiece.color != color) {
-                // If piece on square, and captured piece is opposite color, make capture move.
-                return new Move(end, piece, null, capturedPiece);
-            } else if (canPassant(game.getLastMove(), direction)) {
-                // if can passant, capture
+            if (canPassant(game.getLastMove(), direction)) {
                 capturedPiece = game.getBoard().getPieceOn(
                         BoardModel.getChessCoordinate(start.getFile() + direction, start.getRank()));
-                return new Move(end, piece, null, capturedPiece);
-            } else {
-                // If captured Piece is null, or captured piece is same color, and cant EnPassant, return null.
+            } else if ((capturedPiece == null || capturedPiece.color == color)) {
                 return null;
             }
+            if (end.getRank() == (color == 'w' ? 7 : 0)) {
+                return new Move(end, piece, null, capturedPiece, makePiece(code));
+            } else {
+                return new Move(end, piece, null, capturedPiece);
+            }
         };
+    }
+
+    private Piece makePiece(int promotionCode) {
+        Piece piece = null;
+        switch (promotionCode) {
+            case QUEEN_PROMOTION:
+                piece = new Queen(color, null);
+                break;
+            case ROOK_PROMOTION:
+                piece = new Rook(color, null);
+                break;
+            case KNIGHT_PROMOTION:
+                piece = new Knight(color, null);
+                break;
+            case BISHOP_PROMOTION:
+                piece = new Bishop(color, null);
+                break;
+        }
+        return piece;
     }
 }

@@ -56,28 +56,13 @@ public class ChessBoardView extends JPanel {
                     swap(move.getInteractingPieceStart(), move.getInteractingPieceEnd());
                 }
             }
+            if (move.doesPromote()) {
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate())))
+                        .promoteTo(move.getPromotedPiece());
+            }
             swap(move.getStartingCoordinate(), move.getEndingCoordinate());
         }
     }
-
-    private void makeQueen(ChessCoordinate coordinate, char color) {
-        ((ChessPieceView) piecesPanel.getComponent(getZOrder(coordinate))).makeQueen(color);
-    }
-
-    /**
-     * Returns whether or not the given move is a castle move or not.
-     *
-     * @param move the move to check.
-     * @return whether or not the move is a castle move
-     */
-    /*
-    //TODO: Fix this
-    private boolean isCastleMove(Move move) {
-        return move.getMovingPiece() instanceof King
-                && Math.abs(move.getStartCoordinate().getFile() - move.getEndCoordinate().getFile())
-                == 2;
-    }
-     */
 
     /**
      * Returns the ZOrder of the piece on the given ChessCoordinate.

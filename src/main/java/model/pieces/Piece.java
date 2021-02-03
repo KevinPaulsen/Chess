@@ -18,10 +18,11 @@ public abstract class Piece {
      * A standard move in which the piece moves to the square, and captures
      * the piece currently occupying that square.
      */
-    protected static final MoveMaker STANDARD_MOVE_MAKER = (startCoordinate, endCoordinate, movingPiece, game) -> {
-        Piece capturedPiece = game.getBoard().getPieceOn(endCoordinate);
+    protected static final MoveMaker STANDARD_MOVE_MAKER = (start, end, game, code) -> {
+        Piece capturedPiece = game.getBoard().getPieceOn(end);
+        Piece movingPiece = game.getBoard().getPieceOn(start);
         if (capturedPiece == null || capturedPiece.color != movingPiece.color) {
-            return new Move(endCoordinate, movingPiece, null, capturedPiece);
+            return new Move(end, movingPiece, null, capturedPiece);
         } else {
             return null;
         }
