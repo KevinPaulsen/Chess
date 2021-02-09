@@ -7,6 +7,7 @@ import main.java.model.pieces.Piece;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class GameModel {
@@ -77,6 +78,20 @@ public class GameModel {
         return didMove;
     }
 
+    public boolean undoMove(Move move) {
+        boolean didMove = false;
+
+        if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
+            board.undoMove(move);
+            moveHistory.remove(moveHistory.size() - 1);
+            turn = (turn == 'w') ? 'b' : 'w';
+            updateLegalMoves();
+            didMove = true;
+        }
+
+        return didMove;
+    }
+
     public Move getLastMove() {
         return moveHistory.size() == 0 ? null : moveHistory.get(moveHistory.size() - 1);
     }
@@ -90,5 +105,30 @@ public class GameModel {
                 }
             }
         }
+    }
+
+    public Set<Move> getLegalMoves() {
+        return legalMoves;
+    }
+
+    public List<Move> getMoveHistory() {
+        return moveHistory;
+    }
+
+    public char getTurn() {
+        return turn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GameModel)) return false;
+        GameModel gameModel = (GameModel) o;
+        return turn == gameModel.turn && board.equals(gameModel.board) && legalMoves.equals(gameModel.legalMoves) && moveHistory.equals(gameModel.moveHistory);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(board, legalMoves, moveHistory, turn);
     }
 }

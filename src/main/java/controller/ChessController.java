@@ -1,7 +1,10 @@
 package main.java.controller;
 
 import main.java.ChessCoordinate;
+import main.java.Move;
 import main.java.model.GameModel;
+import main.java.model.chessai.ChessAI;
+import main.java.model.chessai.PieceValueEvaluator;
 import main.java.view.ChessPieceView;
 import main.java.view.ChessView;
 
@@ -20,10 +23,13 @@ import java.util.Set;
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
+    private static final boolean AI_ON = false;
+
     private final GameModel gameModel;
     private final ChessView view;
+    private final ChessAI chessAI;
 
-    final Set<Integer> pressedKeyCodes;
+    private final Set<Integer> pressedKeyCodes;
     private ChessCoordinate startCoordinate;
     private int xOnSquare = 0;
     private int yOnSquare = 0;
@@ -31,6 +37,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private ChessController() {
         gameModel = new GameModel();
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this);
+        chessAI = new ChessAI(new PieceValueEvaluator());
         pressedKeyCodes = new HashSet<>();
     }
 
@@ -47,6 +54,10 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (gameModel.move(startCoordinate, endCoordinate)) {
             view.updateScreen(gameModel.getLastMove());
+            view.pack();
+            if (AI_ON && gameModel.move(chessAI.getBestMove(gameModel))) {
+                view.updateScreen(gameModel.getLastMove());
+            }
         }
         view.pack();
     }

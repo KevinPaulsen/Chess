@@ -5,10 +5,18 @@ import main.java.Move;
 import main.java.model.pieces.King;
 import main.java.model.pieces.Piece;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 public class BoardModel {
 
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Piece[][] pieceArray;
+
+    private final Set<Piece> whitePieces;
+    private final Set<Piece> blackPieces;
 
     private King whiteKing;
     private King blackKing;
@@ -17,7 +25,9 @@ public class BoardModel {
 
     public BoardModel(Piece[][] pieceArray) {
         this.pieceArray = pieceArray;
-        initKings();
+        this.whitePieces = new HashSet<>();
+        this.blackPieces = new HashSet<>();
+        initPieces();
     }
 
     public Piece[][] getPieceArray() {
@@ -39,6 +49,12 @@ public class BoardModel {
 
             // put moving piece back
             if (move.doesPromote()) {
+                if (blackPieces.remove(move.getMovingPiece())) {
+                    blackPieces.add(move.getPromotedPiece());
+                } else {
+                    whitePieces.remove(move.getMovingPiece());
+                    whitePieces.add(move.getPromotedPiece());
+                }
                 setPiece(move.getEndingCoordinate(), move.getPromotedPiece());
                 move.getPromotedPiece().moveTo(move.getEndingCoordinate());
             } else {
@@ -50,6 +66,10 @@ public class BoardModel {
             if (move.getInteractingPiece() != null) {
                 setPiece(move.getInteractingPieceEnd(), move.getInteractingPiece());
                 move.getInteractingPiece().moveTo(move.getInteractingPieceEnd());
+                if (move.getInteractingPieceEnd() == null) {
+                    whitePieces.remove(move.getInteractingPiece());
+                    blackPieces.remove(move.getInteractingPiece());
+                }
             }
         }
     }
@@ -61,6 +81,14 @@ public class BoardModel {
             setPiece(move.getInteractingPieceEnd(), null);
 
             // Put moving piece back to original square
+            if (move.doesPromote()) {
+                if (whitePieces.remove(move.getPromotedPiece())) {
+                    whitePieces.add(move.getMovingPiece());
+                } else {
+                    blackPieces.remove(move.getPromotedPiece());
+                    blackPieces.add(move.getMovingPiece());
+                }
+            }
             setPiece(move.getStartingCoordinate(), move.getMovingPiece());
             move.getMovingPiece().moveBackTo(move.getStartingCoordinate());
 
@@ -68,6 +96,13 @@ public class BoardModel {
             if (move.getInteractingPiece() != null) {
                 setPiece(move.getInteractingPieceStart(), move.getInteractingPiece());
                 move.getInteractingPiece().moveBackTo(move.getInteractingPieceStart());
+                if (move.getInteractingPieceEnd() == null) {
+                    if (move.getInteractingPiece().getColor() == 'w') {
+                        whitePieces.add(move.getInteractingPiece());
+                    } else {
+                        blackPieces.add(move.getInteractingPiece());
+                    }
+                }
             }
         }
     }
@@ -104,17 +139,47 @@ public class BoardModel {
         return chessCoordinates;
     }
 
-    private void initKings() {
+    private void initPieces() {
         for (Piece[] file : pieceArray) {
             for (Piece piece : file) {
-                if (piece instanceof King) {
+                if (piece != null) {
+                    if (piece instanceof King) {
+                        if (piece.getColor() == 'w') {
+                            whiteKing = (King) piece;
+                        } else {
+                            blackKing = (King) piece;
+                        }
+                    }
                     if (piece.getColor() == 'w') {
-                        whiteKing = (King) piece;
+                        whitePieces.add(piece);
                     } else {
-                        blackKing = (King) piece;
+                        blackPieces.add(piece);
                     }
                 }
             }
         }
+    }
+
+    public Set<Piece> getWhitePieces() {
+        return whitePieces;
+    }
+
+    public Set<Piece> getBlackPieces() {
+        return blackPieces;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BoardModel)) return false;
+        BoardModel that = (BoardModel) o;
+        return Arrays.equals(pieceArray, that.pieceArray) && Objects.equals(whiteKing, that.whiteKing) && Objects.equals(blackKing, that.blackKing);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(whiteKing, blackKing);
+        result = 31 * result + Arrays.hashCode(pieceArray);
+        return result;
     }
 }

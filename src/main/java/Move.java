@@ -2,6 +2,8 @@ package main.java;
 
 import main.java.model.pieces.Piece;
 
+import java.util.Objects;
+
 public class Move {
 
     private final ChessCoordinate startingCoordinate;
@@ -58,5 +60,18 @@ public class Move {
 
     public Piece getPromotedPiece() {
         return promotedPiece;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Move)) return false;
+        Move move = (Move) o;
+        return Objects.equals(startingCoordinate, move.startingCoordinate) && Objects.equals(endingCoordinate, move.endingCoordinate) && Objects.equals(movingPiece, move.movingPiece) && Objects.equals(interactingPieceStart, move.interactingPieceStart) && Objects.equals(interactingPieceEnd, move.interactingPieceEnd) && Objects.equals(interactingPiece, move.interactingPiece) && Objects.equals(promotedPiece, move.promotedPiece);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd, interactingPiece, promotedPiece);
     }
 }

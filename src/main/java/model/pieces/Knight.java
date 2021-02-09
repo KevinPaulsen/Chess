@@ -31,7 +31,7 @@ public class Knight extends Piece {
     private Set<MovementRule> getMovementRules() {
         Set<MovementRule> movementRules = new HashSet<>();
         for (Direction direction : Directions.KNIGHTS.directions) {
-            movementRules.add(new MovementRule(direction, LONG_MOVING_MAX, STANDARD_MOVE_MAKER));
+            movementRules.add(new MovementRule(direction, 1, STANDARD_MOVE_MAKER));
         }
         return Collections.unmodifiableSet(movementRules);
     }
