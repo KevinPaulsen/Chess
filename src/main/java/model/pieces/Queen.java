@@ -40,4 +40,9 @@ public class Queen extends Piece {
         }
         return Collections.unmodifiableSet(movementRules);
     }
+
+    @Override
+    public String toString() {
+        return "Q";
+    }
 }

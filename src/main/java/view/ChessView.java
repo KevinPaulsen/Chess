@@ -3,12 +3,14 @@ package main.java.view;
 import main.java.ChessCoordinate;
 import main.java.Move;
 import main.java.model.BoardModel;
+import main.java.model.GameModel;
 import main.java.model.pieces.Piece;
 
 import javax.swing.JFrame;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
@@ -34,12 +36,18 @@ public class ChessView extends JFrame {
      * @param motionListener the MouseMotionListener for the PieceViews to use.
      */
     public ChessView(Piece[][] board, MouseListener mouseListener,
-                     MouseMotionListener motionListener) {
+                     MouseMotionListener motionListener, KeyListener keyListener) {
         boardView = new ChessBoardView(board, mouseListener, motionListener);
         turnView = new ChessTurnView('w');
         init();
         this.add(boardView, BorderLayout.CENTER);
         this.add(turnView, BorderLayout.SOUTH);
+        this.addKeyListener(keyListener);
+    }
+
+    public void slowUpdate(Piece[][] board, MouseListener mouseListener, MouseMotionListener motionListener, char turn) {
+        boardView.slowUpdateBoard(board, mouseListener, motionListener);
+        turnView.setTurn(turn);
     }
 
     /**

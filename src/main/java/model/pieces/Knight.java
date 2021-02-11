@@ -35,4 +35,9 @@ public class Knight extends Piece {
         }
         return Collections.unmodifiableSet(movementRules);
     }
+
+    @Override
+    public String toString() {
+        return "N";
+    }
 }

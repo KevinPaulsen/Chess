@@ -28,4 +28,12 @@ public class ChessTurnView extends JPanel {
             label.setText("White to move");
         }
     }
+
+    public void setTurn(char color) {
+        if (color == 'w') {
+            label.setText("White to move");
+        } else {
+            label.setText("Black to move");
+        }
+    }
 }

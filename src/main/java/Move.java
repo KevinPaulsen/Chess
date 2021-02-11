@@ -1,5 +1,6 @@
 package main.java;
 
+import main.java.model.pieces.Pawn;
 import main.java.model.pieces.Piece;
 
 import java.util.Objects;
@@ -60,6 +61,36 @@ public class Move {
 
     public Piece getPromotedPiece() {
         return promotedPiece;
+    }
+
+    @Override
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+
+        if (interactingPiece != null && interactingPieceEnd != null) {
+            // Castle
+            if (endingCoordinate.getFile() == 6) {
+                result.append("0-0");
+            } else {
+                result.append("0-0-0");
+            }
+        } else {
+            // Pawn
+            if (movingPiece instanceof Pawn) {
+                if (interactingPiece != null) {
+                    result.append(startingCoordinate.getCharFile());
+                }
+            }
+
+            result.append(movingPiece.toString());
+            if (interactingPiece != null) {
+                result.append("x");
+            }
+            result.append(endingCoordinate.toString());
+        }
+
+        return result.toString();
     }
 
     @Override

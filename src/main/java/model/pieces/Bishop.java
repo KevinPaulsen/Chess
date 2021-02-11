@@ -37,4 +37,9 @@ public class Bishop extends Piece {
         }
         return Collections.unmodifiableSet(movementRules);
     }
+
+    @Override
+    public String toString() {
+        return "B";
+    }
 }

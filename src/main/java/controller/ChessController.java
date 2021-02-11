@@ -1,7 +1,6 @@
 package main.java.controller;
 
 import main.java.ChessCoordinate;
-import main.java.Move;
 import main.java.model.GameModel;
 import main.java.model.chessai.ChessAI;
 import main.java.model.chessai.PieceValueEvaluator;
@@ -16,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This class controls both the model and the view for the
@@ -23,20 +23,23 @@ import java.util.Set;
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
-    private static final boolean AI_ON = false;
+    private static final boolean AI_ON = true;
 
     private final GameModel gameModel;
     private final ChessView view;
     private final ChessAI chessAI;
 
+    private CompletableFuture<Void> futureAIMove;
+
     private final Set<Integer> pressedKeyCodes;
     private ChessCoordinate startCoordinate;
     private int xOnSquare = 0;
     private int yOnSquare = 0;
+    private boolean isCalculating = false;
 
     private ChessController() {
         gameModel = new GameModel();
-        view = new ChessView(gameModel.getBoard().getPieceArray(), this, this);
+        view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
         chessAI = new ChessAI(new PieceValueEvaluator());
         pressedKeyCodes = new HashSet<>();
     }
@@ -53,11 +56,19 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      */
     private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (gameModel.move(startCoordinate, endCoordinate)) {
-            view.updateScreen(gameModel.getLastMove());
+            //view.updateScreen(gameModel.getLastMove());
+            view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
-            if (AI_ON && gameModel.move(chessAI.getBestMove(gameModel))) {
-                view.updateScreen(gameModel.getLastMove());
-            }
+
+            futureAIMove = CompletableFuture.runAsync(() -> {
+                if (AI_ON && gameModel.move(chessAI.getBestMove(gameModel))) {
+                    view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
+                    view.pack();
+                }
+            }).exceptionally(ex -> {
+                ex.printStackTrace();
+                return null;
+            });//*/
         }
         view.pack();
     }
@@ -85,7 +96,15 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     @Override
     public void mouseReleased(MouseEvent e) {
         ChessCoordinate endCoordinate = view.getCoordinateOf(e.getComponent(), e.getX(), e.getY());
-        makeMove(startCoordinate, endCoordinate);
+        if (futureAIMove == null) {
+            makeMove(startCoordinate, endCoordinate);
+        } else {
+            CompletableFuture.allOf(futureAIMove).thenAccept(v -> makeMove(startCoordinate, endCoordinate));
+        }
+
+        if (e.getButton() == MouseEvent.BUTTON3 && gameModel.getBoard().getPieceOn(endCoordinate) != null) {
+            System.out.println(gameModel.getBoard().getPieceOn(endCoordinate).getLegalMoves(gameModel));
+        }
     }
 
     /**
@@ -175,6 +194,14 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      * @param e the event to be processed
      */
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+        if (e.getExtendedKeyCode() == KeyEvent.VK_P) {
+            gameModel.getBoard().printBoard();
+        } else if (e.getExtendedKeyCode() == KeyEvent.VK_OPEN_BRACKET) {
+            gameModel.undoMove(gameModel.getLastMove());
+            view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
+            view.pack();
+        }
+    }
 }
 

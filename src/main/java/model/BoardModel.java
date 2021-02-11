@@ -3,6 +3,7 @@ package main.java.model;
 import main.java.ChessCoordinate;
 import main.java.Move;
 import main.java.model.pieces.King;
+import main.java.model.pieces.Pawn;
 import main.java.model.pieces.Piece;
 
 import java.util.Arrays;
@@ -11,6 +12,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class BoardModel {
+
+    private static final boolean DEBUG_MODE = false;
 
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Piece[][] pieceArray;
@@ -28,6 +31,7 @@ public class BoardModel {
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
         initPieces();
+        checkRep();
     }
 
     public Piece[][] getPieceArray() {
@@ -42,6 +46,7 @@ public class BoardModel {
      * @param move the move to make. Cannot be null.
      */
     public void move(Move move) {
+        checkRep();
         if (move != null) {
             // Remove all relevant pieces
             setPiece(move.getStartingCoordinate(), null);
@@ -72,9 +77,11 @@ public class BoardModel {
                 }
             }
         }
+        checkRep();
     }
 
     public void undoMove(Move move) {
+        checkRep();
         if (move != null) {
             // Remove all relevant Pieces
             setPiece(move.getEndingCoordinate(), null);
@@ -105,6 +112,7 @@ public class BoardModel {
                 }
             }
         }
+        checkRep();
     }
 
     public boolean kingInCheck(char color) {
@@ -181,5 +189,40 @@ public class BoardModel {
         int result = Objects.hash(whiteKing, blackKing);
         result = 31 * result + Arrays.hashCode(pieceArray);
         return result;
+    }
+
+    public void printBoard() {
+        for (Piece[] pieces : pieceArray) {
+            for (Piece piece : pieces) {
+                if (piece == null) {
+                    System.out.print("  ");
+                } else {
+                    if (piece instanceof Pawn) {
+                        System.out.print("P ");
+                    } else {
+                        System.out.print(piece.toString() + " ");
+                    }
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    private void checkRep() {
+        if (DEBUG_MODE) {
+            if (pieceArray == null || whitePieces == null || blackPieces == null || whiteKing == null || blackKing == null) {
+                assert false : "Rep is incorrect";
+                throw new RuntimeException("Representation is incorrect.");
+            }
+            for (Piece[] file : pieceArray) {
+                for (Piece piece : file) {
+                    if (piece != null) {
+                        if (!whitePieces.contains(piece) && !blackPieces.contains(piece)) {
+                            throw new RuntimeException("Representation is incorrect.");
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -121,4 +121,9 @@ public class Pawn extends Piece {
         }
         return piece;
     }
+
+    @Override
+    public String toString() {
+        return "";
+    }
 }

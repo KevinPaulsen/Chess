@@ -13,17 +13,17 @@ import java.util.Set;
 public class GameModel {
 
     private final BoardModel board;
-    private final Set<Move> legalMoves;
     private final List<Move> moveHistory;
+    private final List<Integer> pastPositionHashes;
 
     private char turn;
 
     public GameModel() {
         this.board = ChessBoardFactory.createNormalBoard();
-        this.legalMoves = new HashSet<>();
         this.turn = 'w';
         this.moveHistory = new ArrayList<>();
-        updateLegalMoves();
+        this.pastPositionHashes = new ArrayList<>(List.of(hashCode()));
+        checkRep();
     }
 
     public BoardModel getBoard() {
@@ -40,20 +40,25 @@ public class GameModel {
      * @return weather or not the move was successful.
      */
     public boolean move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+        checkRep();
         boolean didMove = false;
 
         // Check that moves are both on screen.
         if (startCoordinate != null && endCoordinate != null) {
             Move currentMove = null;
-            for (Move move : legalMoves) {
-                if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
-                    currentMove = move;
-                    break;
+            Piece movingPiece = board.getPieceOn(startCoordinate);
+            if (movingPiece != null) {
+                for (Move move : movingPiece.getLegalMoves(this)) {
+                    if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
+                        currentMove = move;
+                        break;
+                    }
                 }
             }
             didMove = move(currentMove);
         }
 
+        checkRep();
         return didMove;
     }
 
@@ -65,38 +70,37 @@ public class GameModel {
      * @return true if the move is successful, false otherwise.
      */
     public boolean move(Move move) {
+        checkRep();
         boolean didMove = false;
 
-        if (move != null && legalMoves.contains(move) && move.getMovingPiece().getColor() == turn) {
+        if (move != null && move.getMovingPiece().getLegalMoves(this).contains(move) && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
             turn = (turn == 'w') ? 'b' : 'w';
-            updateLegalMoves();
+            pastPositionHashes.add(hashCode());
             didMove = true;
         }
 
+        checkRep();
         return didMove;
     }
 
-    public boolean undoMove(Move move) {
-        boolean didMove = false;
-
+    public void undoMove(Move move) {
+        checkRep();
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
             board.undoMove(move);
             moveHistory.remove(moveHistory.size() - 1);
+            pastPositionHashes.remove(pastPositionHashes.size() - 1);
             turn = (turn == 'w') ? 'b' : 'w';
-            updateLegalMoves();
-            didMove = true;
         }
-
-        return didMove;
+        checkRep();
     }
 
     public Move getLastMove() {
         return moveHistory.size() == 0 ? null : moveHistory.get(moveHistory.size() - 1);
     }
 
-    private void updateLegalMoves() {
+    /*private void updateLegalMoves() {
         legalMoves.clear();
         for (Piece[] file : board.getPieceArray()) {
             for (Piece piece : file) {
@@ -105,11 +109,7 @@ public class GameModel {
                 }
             }
         }
-    }
-
-    public Set<Move> getLegalMoves() {
-        return legalMoves;
-    }
+    }//*/
 
     public List<Move> getMoveHistory() {
         return moveHistory;
@@ -124,11 +124,18 @@ public class GameModel {
         if (this == o) return true;
         if (!(o instanceof GameModel)) return false;
         GameModel gameModel = (GameModel) o;
-        return turn == gameModel.turn && board.equals(gameModel.board) && legalMoves.equals(gameModel.legalMoves) && moveHistory.equals(gameModel.moveHistory);
+        return turn == gameModel.turn && board.equals(gameModel.board) && moveHistory.equals(gameModel.moveHistory);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, legalMoves, moveHistory, turn);
+        return Objects.hash(board, moveHistory, turn);
+    }
+
+    private void checkRep() {
+        if (board == null || moveHistory == null || pastPositionHashes == null ||
+                pastPositionHashes.size() == 0 || pastPositionHashes.get(pastPositionHashes.size() - 1) != hashCode()) {
+            throw new RuntimeException("Representation is incorrect.");
+        }
     }
 }

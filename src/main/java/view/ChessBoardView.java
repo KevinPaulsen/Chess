@@ -108,6 +108,17 @@ public class ChessBoardView extends JPanel {
         this.add(squaresPanel);
     }
 
+    public void slowUpdateBoard(Piece[][] board, MouseListener mouseListener, MouseMotionListener motionListener) {
+        piecesPanel.removeAll();
+        for (int rank = 7; rank >= 0; rank--) {
+            for (int file = 0; file < 8; file++) {
+                Piece piece = board[file][rank];
+                ChessPieceView pieceView = makePieceView(piece, mouseListener, motionListener);
+                piecesPanel.add(pieceView);
+            }
+        }
+    }
+
     /**
      * Creates a new Square from the given rank and file.
      *

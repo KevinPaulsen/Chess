@@ -58,12 +58,10 @@ public class MovementRule {
             // If the move is non-null, add it to moves.
             if (move != null) {
                 gameModel.getBoard().move(move);
-                if (gameModel.getBoard().kingInCheck(move.getMovingPiece().color)) {
-                    gameModel.getBoard().undoMove(move);
-                    continue;
+                if (!gameModel.getBoard().kingInCheck(move.getMovingPiece().color)) {
+                    moves.add(move);
                 }
                 gameModel.getBoard().undoMove(move);
-                moves.add(move);
             }
 
             // If there is a piece in the way, break.
