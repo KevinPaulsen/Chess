@@ -42,6 +42,17 @@ public class ChessBoardFactory {
             {W_ROOK, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_ROOK},
     };
 
+    public static final int[][] TEST_BOARD = {
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {W_KING, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, B_KING},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}
+    };
+
     /**
      * Creates a standard chess board with all the pieces in their
      * original positions.
@@ -79,7 +90,6 @@ public class ChessBoardFactory {
         Piece[][] pieceArray = new Piece[8][8];
         for (int file = 0; file < 8; file++) {
             for (int rank = 0; rank < 8; rank++) {
-                //TODO: Set the correct Coordinate
                 pieceArray[file][rank] = createPiece(board[file][rank], BoardModel.getChessCoordinate(file, rank));
             }
         }

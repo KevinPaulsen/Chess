@@ -44,5 +44,18 @@ public class ChessCoordinate {
     public String toString() {
         return charFile + Integer.toString(charRank);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChessCoordinate)) return false;
+        ChessCoordinate that = (ChessCoordinate) o;
+        return charFile == that.charFile && charRank == that.charRank && file == that.file && rank == that.rank;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(file, rank);
+    }
 }
 

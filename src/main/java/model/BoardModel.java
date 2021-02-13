@@ -27,7 +27,7 @@ public class BoardModel {
     private static final ChessCoordinate[][] chessCoordinates = createChessCoordinates();
 
     public BoardModel(Piece[][] pieceArray) {
-        this.pieceArray = pieceArray;
+        this.pieceArray = pieceArray.clone();
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
         initPieces();
@@ -35,7 +35,7 @@ public class BoardModel {
     }
 
     public Piece[][] getPieceArray() {
-        return pieceArray;
+        return pieceArray.clone();
     }
 
     /**
@@ -46,69 +46,38 @@ public class BoardModel {
      * @param move the move to make. Cannot be null.
      */
     public void move(Move move) {
-        checkRep();
         if (move != null) {
-            // Remove all relevant pieces
-            setPiece(move.getStartingCoordinate(), null);
-            setPiece(move.getInteractingPieceStart(), null);
 
-            // put moving piece back
-            if (move.doesPromote()) {
-                if (blackPieces.remove(move.getMovingPiece())) {
-                    blackPieces.add(move.getPromotedPiece());
-                } else {
-                    whitePieces.remove(move.getMovingPiece());
-                    whitePieces.add(move.getPromotedPiece());
-                }
-                setPiece(move.getEndingCoordinate(), move.getPromotedPiece());
-                move.getPromotedPiece().moveTo(move.getEndingCoordinate());
-            } else {
-                setPiece(move.getEndingCoordinate(), move.getMovingPiece());
-                move.getMovingPiece().moveTo(move.getEndingCoordinate());
+            if (getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+                throw new IllegalStateException("This move cannot exist");
             }
 
-            // Put interacting piece back
-            if (move.getInteractingPiece() != null) {
-                setPiece(move.getInteractingPieceEnd(), move.getInteractingPiece());
-                move.getInteractingPiece().moveTo(move.getInteractingPieceEnd());
-                if (move.getInteractingPieceEnd() == null) {
-                    whitePieces.remove(move.getInteractingPiece());
-                    blackPieces.remove(move.getInteractingPiece());
-                }
+            movePiece(move.getInteractingPiece(), move.getInteractingPieceEnd(), 0);
+
+            if (move.doesPromote()) {
+                removePiece(move.getMovingPiece());
+                addPiece(move.getPromotedPiece(), move.getEndingCoordinate(), 1);
+            } else {
+                movePiece(move.getMovingPiece(), move.getEndingCoordinate(), 1);
             }
         }
         checkRep();
     }
 
     public void undoMove(Move move) {
-        checkRep();
         if (move != null) {
-            // Remove all relevant Pieces
-            setPiece(move.getEndingCoordinate(), null);
-            setPiece(move.getInteractingPieceEnd(), null);
-
-            // Put moving piece back to original square
             if (move.doesPromote()) {
-                if (whitePieces.remove(move.getPromotedPiece())) {
-                    whitePieces.add(move.getMovingPiece());
-                } else {
-                    blackPieces.remove(move.getPromotedPiece());
-                    blackPieces.add(move.getMovingPiece());
-                }
+                removePiece(move.getPromotedPiece());
+                addPiece(move.getMovingPiece(), move.getEndingCoordinate(), -1);
+            } else {
+                movePiece(move.getMovingPiece(), move.getStartingCoordinate(), -1);
             }
-            setPiece(move.getStartingCoordinate(), move.getMovingPiece());
-            move.getMovingPiece().moveBackTo(move.getStartingCoordinate());
 
-            // Put interacting Piece back to original square
             if (move.getInteractingPiece() != null) {
-                setPiece(move.getInteractingPieceStart(), move.getInteractingPiece());
-                move.getInteractingPiece().moveBackTo(move.getInteractingPieceStart());
                 if (move.getInteractingPieceEnd() == null) {
-                    if (move.getInteractingPiece().getColor() == 'w') {
-                        whitePieces.add(move.getInteractingPiece());
-                    } else {
-                        blackPieces.add(move.getInteractingPiece());
-                    }
+                    addPiece(move.getInteractingPiece(), move.getInteractingPieceStart(), 0);
+                } else {
+                    movePiece(move.getInteractingPiece(), move.getInteractingPieceStart(), 0);
                 }
             }
         }
@@ -124,17 +93,56 @@ public class BoardModel {
     }
 
     public Piece getPieceOn(ChessCoordinate coordinate) {
-        return coordinate != null ? pieceArray[coordinate.getFile()][coordinate.getRank()] : null;
+        return coordinate == null ? null : pieceArray[coordinate.getFile()][coordinate.getRank()];
     }
 
-    private void setPiece(ChessCoordinate coordinate, Piece piece) {
-        if (coordinate != null) {
+    private void addPiece(Piece piece, ChessCoordinate coordinate, int movesToAdd) {
+        if (piece != null && coordinate != null) {
+            if (getPieceOn(coordinate) != null) {
+                throw new IllegalStateException("Adding a piece to square where piece already exists");
+            }
+
             pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
+            piece.moveTo(coordinate, movesToAdd);
+            boolean didAdd;
+            if (piece.getColor() == 'w') {
+                didAdd = whitePieces.add(piece);
+            } else {
+                didAdd = blackPieces.add(piece);
+            }
+            if (!didAdd) {
+                throw new IllegalArgumentException("Piece is already on board.");
+            }
+        }
+    }
+
+    private void removePiece(Piece piece) {
+        if (piece != null) {
+            if (piece.getCoordinate() == null || getPieceOn(piece.getCoordinate()) != piece) {
+                throw new IllegalStateException("Piece Data is out of sync.");
+            }
+
+            pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
+            if (!whitePieces.remove(piece) && !blackPieces.remove(piece)) {
+                throw new IllegalStateException("Piece is not in either array");
+            }
+            piece.moveTo(null, 0);
+        }
+    }
+
+    public void movePiece(Piece piece, ChessCoordinate endCoordinate, int movesToAdd) {
+        if (piece != null) {
+            removePiece(piece);
+            addPiece(piece, endCoordinate, movesToAdd);
+        }
+
+        if (countPieces() != whitePieces.size() + blackPieces.size()) {
+            throw new RuntimeException("Pieces missing from arrays.");
         }
     }
 
     public static ChessCoordinate getChessCoordinate(int file, int rank) {
-        return ChessCoordinate.isInBounds(file, rank) ? chessCoordinates[file][rank] : null;
+        return chessCoordinates[file][rank];
     }
 
     private static ChessCoordinate[][] createChessCoordinates() {
@@ -176,6 +184,14 @@ public class BoardModel {
         return blackPieces;
     }
 
+    public King getWhiteKing() {
+        return whiteKing;
+    }
+
+    public King getBlackKing() {
+        return blackKing;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -211,7 +227,6 @@ public class BoardModel {
     private void checkRep() {
         if (DEBUG_MODE) {
             if (pieceArray == null || whitePieces == null || blackPieces == null || whiteKing == null || blackKing == null) {
-                assert false : "Rep is incorrect";
                 throw new RuntimeException("Representation is incorrect.");
             }
             for (Piece[] file : pieceArray) {
@@ -224,5 +239,18 @@ public class BoardModel {
                 }
             }
         }
+    }
+
+
+    private int countPieces() {
+        int count = 0;
+        for (Piece[] file : pieceArray) {
+            for (Piece piece : file) {
+                if (piece != null) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }

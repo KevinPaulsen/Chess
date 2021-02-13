@@ -21,7 +21,18 @@ public class Queen extends Piece {
      * @param coordinate the coordinate of this rook
      */
     public Queen(char color, ChessCoordinate coordinate) {
-        super(coordinate, color);
+        super(color, coordinate);
+        movementRules = getMovementRules();
+    }
+
+    /**
+     * Constructs a piece from the given piece. The UID of this
+     * piece will be the same as the piece given.
+     *
+     * @param piece the piece to create this piece with
+     */
+    public Queen(Piece piece) {
+        super(piece);
         movementRules = getMovementRules();
     }
 

@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
-    private static final boolean AI_ON = true;
+    private static final boolean AI_ON = true ;
 
     private final GameModel gameModel;
     private final ChessView view;
@@ -39,6 +39,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
     private ChessController() {
         gameModel = new GameModel();
+        //gameModel = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD));
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
         chessAI = new ChessAI(new PieceValueEvaluator());
         pressedKeyCodes = new HashSet<>();
@@ -56,7 +57,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      */
     private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (gameModel.move(startCoordinate, endCoordinate)) {
-            //view.updateScreen(gameModel.getLastMove());
+            view.updateScreen(gameModel.getLastMove());
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
 
@@ -198,9 +199,11 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         if (e.getExtendedKeyCode() == KeyEvent.VK_P) {
             gameModel.getBoard().printBoard();
         } else if (e.getExtendedKeyCode() == KeyEvent.VK_OPEN_BRACKET) {
-            gameModel.undoMove(gameModel.getLastMove());
-            view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
-            view.pack();
+            CompletableFuture.allOf(futureAIMove).thenAccept(v -> {
+                gameModel.undoMove(gameModel.getLastMove());
+                view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
+                view.pack();
+            });
         }
     }
 }

@@ -38,7 +38,11 @@ public class Direction {
     public ChessCoordinate next(ChessCoordinate coordinate) {
         ChessCoordinate next = null;
         if (coordinate != null) {
-            next = BoardModel.getChessCoordinate(coordinate.getFile() + run, coordinate.getRank() + rise);
+            int file = coordinate.getFile() + run;
+            int rank = coordinate.getRank() + rise;
+            if (ChessCoordinate.isInBounds(file, rank)) {
+                next = BoardModel.getChessCoordinate(file, rank);
+            }
         }
         return next;
     }

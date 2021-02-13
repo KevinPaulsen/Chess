@@ -5,6 +5,7 @@ import main.java.Move;
 import main.java.model.GameModel;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -36,6 +37,8 @@ public abstract class Piece {
     protected ChessCoordinate coordinate;
     // Weather or not this piece has moved.
     protected int timesMoved;
+    private static int identifier = 0;
+    private final int uniqueIdentifier;
 
     /**
      * Constructs a piece with no movement rules, and is on the given
@@ -44,11 +47,21 @@ public abstract class Piece {
      * @param coordinate the coordinate this piece is on.
      * @param color      the color of this piece.
      */
-    public Piece(ChessCoordinate coordinate, char color) {
+    public Piece(char color, ChessCoordinate coordinate) {
         this.movementRules = Set.of();
         this.coordinate = coordinate;
         this.color = color;
         timesMoved = 0;
+        identifier++;
+        uniqueIdentifier = identifier;
+    }
+
+    public Piece(Piece piece) {
+        this.movementRules = Set.of();
+        this.coordinate = piece.coordinate;
+        this.color = piece.color;
+        this.timesMoved = 0;
+        this.uniqueIdentifier = piece.uniqueIdentifier;
     }
 
     /**
@@ -57,14 +70,11 @@ public abstract class Piece {
      *
      * @param coordinate the coordinate this piece is moving to.
      */
-    public void moveTo(ChessCoordinate coordinate) {
+    public void moveTo(ChessCoordinate coordinate, int movesToAdd) {
         this.coordinate = coordinate;
-        timesMoved++;
-    }
-
-    public void moveBackTo(ChessCoordinate coordinate) {
-        this.coordinate = coordinate;
-        timesMoved--;
+        if (-1 <= movesToAdd && movesToAdd <= 1) {
+            timesMoved += movesToAdd;
+        }
     }
 
     /**
@@ -104,5 +114,22 @@ public abstract class Piece {
      */
     public ChessCoordinate getCoordinate() {
         return coordinate;
+    }
+
+    public int getUniqueIdentifier() {
+        return uniqueIdentifier;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Piece)) return false;
+        Piece piece = (Piece) o;
+        return color == piece.color && uniqueIdentifier == piece.uniqueIdentifier;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(color, uniqueIdentifier);
     }
 }

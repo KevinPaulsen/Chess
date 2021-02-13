@@ -4,7 +4,9 @@ import main.java.Move;
 import main.java.model.GameModel;
 import main.java.model.pieces.Piece;
 
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ChessAI {
 
@@ -23,6 +25,7 @@ public class ChessAI {
         Move bestMove = bestEvaluation.getMove();
 
         System.out.println(Math.round(bestEvaluation.getEvaluation()));
+        System.out.println((bestEvaluation.getMove()));
         return bestMove;
     }
 
@@ -30,9 +33,28 @@ public class ChessAI {
         Set<Piece> movingPieces = maximizingPlayer ? Set.copyOf(game.getBoard().getWhitePieces())
                 : Set.copyOf(game.getBoard().getBlackPieces());
 
+        /*TreeSet<Piece> sortedSet = new TreeSet<>((Piece o1, Piece o2) -> {
+            if (o1.getCoordinate().getFile() == o2.getCoordinate().getFile()) {
+                return Integer.compare(o1.getCoordinate().getRank(), o2.getCoordinate().getRank());
+            } else {
+                return Integer.compare(o1.getCoordinate().getFile(), o2.getCoordinate().getFile());
+            }
+        });
+        sortedSet.addAll(movingPieces);
+
+        Comparator<Move> moveComparator = (Move o1, Move o2) -> {
+            if (o1.getEndingCoordinate().getFile() == o2.getEndingCoordinate().getFile()) {
+                return Integer.compare(o1.getEndingCoordinate().getRank(), o2.getEndingCoordinate().getRank());
+            } else {
+                return Integer.compare(o1.getEndingCoordinate().getFile(), o2.getEndingCoordinate().getFile());
+            }
+        };//*/
+
         Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
 
         for (Piece piece : movingPieces) {
+            //TreeSet<Move> moves = new TreeSet<>(moveComparator);
+            //moves.addAll(piece.getLegalMoves(game));//*/
             for (Move move : piece.getLegalMoves(game)) {
                 game.move(move);
                 Evaluation evaluation = miniMax(game, !maximizingPlayer, alpha, beta, depth - 1);
@@ -55,7 +77,7 @@ public class ChessAI {
 
 
     private Evaluation miniMax(GameModel game, boolean maximizingPlayer, double alpha, double beta, int depth) {
-        if (depth == 0) {
+        if (depth == 0 || game.isOver()) {
             return evaluator.evaluate(game);
         }
 

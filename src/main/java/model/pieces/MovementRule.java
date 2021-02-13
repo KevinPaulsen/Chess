@@ -7,6 +7,7 @@ import main.java.model.GameModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class contains all the information to describe movement of a ChessPiece.
@@ -54,6 +55,10 @@ public class MovementRule {
             // TODO: allow multiple types of promotion
             Move move = moveMaker.getMove(coordinate, endCoordinate, gameModel, Pawn.QUEEN_PROMOTION);
 
+            if (move != null && gameModel.getBoard().getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+                throw new IllegalStateException("This move cannot exist");
+            }
+
 
             // If the move is non-null, add it to moves.
             if (move != null) {
@@ -71,5 +76,18 @@ public class MovementRule {
         }
 
         return moves;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MovementRule)) return false;
+        MovementRule that = (MovementRule) o;
+        return maxDistance == that.maxDistance && Objects.equals(direction, that.direction) && Objects.equals(moveMaker, that.moveMaker);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(direction, maxDistance, moveMaker);
     }
 }

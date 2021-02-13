@@ -21,7 +21,18 @@ public class Rook extends Piece {
      * @param coordinate the coordinate of this rook
      */
     public Rook(char color, ChessCoordinate coordinate) {
-        super(coordinate, color);
+        super(color, coordinate);
+        movementRules = getMovementRules();
+    }
+
+    /**
+     * Constructs a piece from the given piece. The UID of this
+     * piece will be the same as the piece given.
+     *
+     * @param piece the piece to create this piece with
+     */
+    public Rook(Piece piece) {
+        super(piece);
         movementRules = getMovementRules();
     }
 

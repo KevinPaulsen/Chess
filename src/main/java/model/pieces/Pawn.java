@@ -22,15 +22,13 @@ public class Pawn extends Piece {
         Piece occupyingPiece = game.getBoard().getPieceOn(end);
         if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved())) {
             if (end.getRank() == (color == 'w' ? 7 : 0)) {
-                return new Move(end, piece, null, null, makePiece(code));
+                return new Move(end, piece, null, null, makePromotedPiece(code));
             } else {
                 return new Move(end, piece, null, null);
             }
         }
         return null;
     };
-
-    private final int direction;
 
     /**
      * Creates a pawn with the given color and coordinate
@@ -39,9 +37,19 @@ public class Pawn extends Piece {
      * @param coordinate the coordinate of this pawn
      */
     public Pawn(char color, ChessCoordinate coordinate) {
-        super(coordinate, color);
+        super(color, coordinate);
         movementRules = getMovementRules(color);
-        direction = color == 'w' ? 1 : -1;
+    }
+
+    /**
+     * Constructs a piece from the given piece. The UID of this
+     * piece will be the same as the piece given.
+     *
+     * @param piece the piece to create this piece with
+     */
+    public Pawn(Piece piece) {
+        super(piece);
+        movementRules = getMovementRules(color);
     }
 
     /**
@@ -88,35 +96,40 @@ public class Pawn extends Piece {
         return (start, end, game, code) -> {
             Piece piece = game.getBoard().getPieceOn(start);
             Piece capturedPiece = game.getBoard().getPieceOn(end);
-
             if (canPassant(game.getLastMove(), direction)) {
                 capturedPiece = game.getBoard().getPieceOn(
                         BoardModel.getChessCoordinate(start.getFile() + direction, start.getRank()));
+                Move move = new Move(end, piece, null, capturedPiece);
+                if (game.getBoard().getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+                    throw new IllegalStateException("This move cannot exist");
+                }
             } else if ((capturedPiece == null || capturedPiece.color == color)) {
                 return null;
             }
+            Move move;
             if (end.getRank() == (color == 'w' ? 7 : 0)) {
-                return new Move(end, piece, null, capturedPiece, makePiece(code));
+                move = new Move(end, piece, null, capturedPiece, makePromotedPiece(code));
             } else {
-                return new Move(end, piece, null, capturedPiece);
+                move = new Move(end, piece, null, capturedPiece);
             }
+            return move;
         };
     }
 
-    private Piece makePiece(int promotionCode) {
+    private Piece makePromotedPiece(int promotionCode) {
         Piece piece = null;
         switch (promotionCode) {
             case QUEEN_PROMOTION:
-                piece = new Queen(color, null);
+                piece = new Queen(this);
                 break;
             case ROOK_PROMOTION:
-                piece = new Rook(color, null);
+                piece = new Rook(this);
                 break;
             case KNIGHT_PROMOTION:
-                piece = new Knight(color, null);
+                piece = new Knight(this);
                 break;
             case BISHOP_PROMOTION:
-                piece = new Bishop(color, null);
+                piece = new Bishop(this);
                 break;
         }
         return piece;
