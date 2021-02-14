@@ -49,7 +49,7 @@ public class Pawn extends Piece {
      */
     public Pawn(Piece piece) {
         super(piece);
-        movementRules = getMovementRules(color);
+        movementRules = piece.movementRules;
     }
 
     /**

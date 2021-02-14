@@ -30,6 +30,13 @@ public class GameModel {
         checkRep();
     }
 
+    public GameModel(GameModel gameModel) {
+        this.board = new BoardModel(gameModel.getBoard());
+        this.moveHistory = new ArrayList<>(gameModel.moveHistory);
+        this.turn = gameModel.getTurn();
+        checkRep();
+    }
+
     public GameModel(BoardModel board) {
         this.board = board;
         this.turn = 'w';

@@ -77,6 +77,24 @@ public abstract class Piece {
         }
     }
 
+    public static Piece clone(Piece piece) {
+        if (piece instanceof Pawn) {
+            return new Pawn(piece);
+        } else if (piece instanceof Knight) {
+            return new Knight(piece);
+        } else if (piece instanceof Bishop) {
+            return new Bishop(piece);
+        } else if (piece instanceof Rook) {
+            return new Rook(piece);
+        } else if (piece instanceof Queen) {
+            return new Queen(piece);
+        } else if (piece instanceof King) {
+            return new King(piece);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Returns the set of all possible moves this piece can move to. This
      * Method takes into account position of other pieces, and moves according

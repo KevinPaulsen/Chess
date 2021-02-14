@@ -34,6 +34,24 @@ public class BoardModel {
         checkRep();
     }
 
+    public BoardModel(BoardModel boardModel) {
+        this.pieceArray = boardModel.cloneArray();
+        this.whitePieces = new HashSet<>(boardModel.whitePieces);
+        this.blackPieces = new HashSet<>(boardModel.blackPieces);
+        this.whiteKing = boardModel.whiteKing;
+        this.blackKing = boardModel.blackKing;
+    }
+
+    private Piece[][] cloneArray() {
+        Piece[][] pieceArray = new Piece[this.pieceArray.length][this.pieceArray.length];
+        for (int file = 0; file < pieceArray.length; file++) {
+            for (int rank = 0; rank < pieceArray.length; rank++) {
+                pieceArray[file][rank] = Piece.clone(this.pieceArray[file][rank]);
+            }
+        }
+        return pieceArray;
+    }
+
     public Piece[][] getPieceArray() {
         return pieceArray.clone();
     }
