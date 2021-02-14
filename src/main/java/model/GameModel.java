@@ -9,14 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class GameModel {
 
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
 
     private final BoardModel board;
     private final List<Move> moveHistory;
-    private final List<Integer> pastPositionHashes;
 
     private char turn;
     private boolean isOver;
@@ -26,7 +27,6 @@ public class GameModel {
         this.board = ChessBoardFactory.createNormalBoard();
         this.turn = 'w';
         this.moveHistory = new ArrayList<>();
-        this.pastPositionHashes = new ArrayList<>(List.of(hashCode()));
         checkRep();
     }
 
@@ -34,7 +34,6 @@ public class GameModel {
         this.board = board;
         this.turn = 'w';
         this.moveHistory = new ArrayList<>();
-        this.pastPositionHashes = new ArrayList<>(List.of(hashCode()));
         checkRep();
     }
 
@@ -90,7 +89,6 @@ public class GameModel {
             moveHistory.add(move);
             turn = (turn == 'w') ? 'b' : 'w';
             checkGameOver(turn == 'w');
-            pastPositionHashes.add(hashCode());
             didMove = true;
         }
 
@@ -100,15 +98,15 @@ public class GameModel {
 
     private void checkGameOver(final boolean isWhitesMove) {
         King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
-        boolean foundMove = false;
-        Set<Piece> relevantPieces = Set.copyOf(isWhitesMove ? board.getWhitePieces() : board.getBlackPieces());
-        for (Piece piece : relevantPieces) {
+        AtomicBoolean foundMove = new AtomicBoolean(false);
+        Set<Piece> relevantPieces = isWhitesMove ? board.getWhitePieces() : board.getBlackPieces();
+        for (Piece piece : relevantPieces.stream().collect(Collectors.toUnmodifiableSet())) {
             if (!piece.getLegalMoves(this).isEmpty()) {
-                foundMove = true;
+                foundMove.set(true);
                 break;
             }
-        }
-        if (foundMove) {
+        }//*/
+        if (foundMove.get()) {
             isOver = false;
             winner = 'N';
         } else {
@@ -126,12 +124,9 @@ public class GameModel {
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
             board.undoMove(move);
             moveHistory.remove(moveHistory.size() - 1);
-            pastPositionHashes.remove(pastPositionHashes.size() - 1);
             turn = (turn == 'w') ? 'b' : 'w';
-            checkGameOver(turn == 'w');
-        }
-        if (hashCode() != pastPositionHashes.get(pastPositionHashes.size() - 1)) {
-            throw new RuntimeException("NOPE!");
+            isOver = false;
+            winner = 'N';
         }
         checkRep();
     }
@@ -171,8 +166,7 @@ public class GameModel {
 
     private void checkRep() {
         if (DEBUG_MODE) {
-            if (board == null || moveHistory == null || pastPositionHashes == null ||
-                    pastPositionHashes.size() == 0 || pastPositionHashes.get(pastPositionHashes.size() - 1) != hashCode()) {
+            if (board == null || moveHistory == null) {
                 throw new RuntimeException("Representation is incorrect.");
             }
         }

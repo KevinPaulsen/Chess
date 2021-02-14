@@ -1,6 +1,7 @@
 package main.java.controller;
 
 import main.java.ChessCoordinate;
+import main.java.model.ChessBoardFactory;
 import main.java.model.GameModel;
 import main.java.model.chessai.ChessAI;
 import main.java.model.chessai.PieceValueEvaluator;
@@ -17,13 +18,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import static main.java.model.ChessBoardFactory.TEST_BOARD;
+
 /**
  * This class controls both the model and the view for the
  * Chess game.
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
-    private static final boolean AI_ON = true ;
+    private static final boolean AI_ON = true;
 
     private final GameModel gameModel;
     private final ChessView view;

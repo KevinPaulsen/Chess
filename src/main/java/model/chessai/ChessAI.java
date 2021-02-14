@@ -5,17 +5,22 @@ import main.java.model.GameModel;
 import main.java.model.pieces.Piece;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class ChessAI {
 
-    private static final int DEPTH = 5;
+    private static final int DEPTH = 6;
+
+    private final Map<Integer, Evaluation> positionToEval;
 
     private final Evaluator evaluator;
 
     public ChessAI(Evaluator evaluator) {
         this.evaluator = evaluator;
+        this.positionToEval = new HashMap<>();
     }
 
     public Move getBestMove(GameModel game) {
@@ -30,6 +35,12 @@ public class ChessAI {
     }
 
     private Evaluation getBestEvaluation(GameModel game, boolean maximizingPlayer, double alpha, double beta, int depth) {
+
+        int hashCode = game.hashCode();
+        if (positionToEval.containsKey(hashCode) && positionToEval.get(hashCode).getDepth() >= depth) {
+            return positionToEval.get(hashCode);
+        }
+
         Set<Piece> movingPieces = maximizingPlayer ? Set.copyOf(game.getBoard().getWhitePieces())
                 : Set.copyOf(game.getBoard().getBlackPieces());
 
@@ -58,7 +69,7 @@ public class ChessAI {
             for (Move move : piece.getLegalMoves(game)) {
                 game.move(move);
                 Evaluation evaluation = miniMax(game, !maximizingPlayer, alpha, beta, depth - 1);
-                evaluation = new Evaluation(move, evaluation.getEvaluation(), game.hashCode(), depth);
+                evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
                 game.undoMove(move);
 
                 if (maximizingPlayer) {
@@ -72,6 +83,7 @@ public class ChessAI {
             }
             if (beta <= alpha) break;
         }
+        positionToEval.put(hashCode, bestEvaluation);
         return bestEvaluation;
     }
 

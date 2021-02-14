@@ -10,7 +10,6 @@ import main.java.model.pieces.Rook;
 
 public class PieceValueEvaluator implements Evaluator {
 
-
     @Override
     public Evaluation evaluate(GameModel game) {
         if (game.isOver()) {
@@ -25,7 +24,7 @@ public class PieceValueEvaluator implements Evaluator {
                 case 's':
                     score = 0;
             }
-            return new Evaluation(score, game.hashCode(), 0);
+            return new Evaluation(score, 0);
         }
         int whiteScore = 0;
         int blackScore = 0;
@@ -36,7 +35,7 @@ public class PieceValueEvaluator implements Evaluator {
         for (Piece piece : game.getBoard().getBlackPieces()) {
             blackScore += getValue(piece);
         }
-        return new Evaluation(whiteScore - blackScore, game.hashCode(), 0);
+        return new Evaluation(whiteScore - blackScore, 0);
     }
 
     private int getValue(Piece piece) {
