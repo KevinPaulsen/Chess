@@ -68,7 +68,7 @@ public class BoardModel {
         if (move != null) {
             if (move.doesPromote()) {
                 removePiece(move.getPromotedPiece());
-                addPiece(move.getMovingPiece(), move.getEndingCoordinate(), -1);
+                addPiece(move.getMovingPiece(), move.getStartingCoordinate(), -1);
             } else {
                 movePiece(move.getMovingPiece(), move.getStartingCoordinate(), -1);
             }
