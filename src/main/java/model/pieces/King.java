@@ -119,7 +119,8 @@ public class King extends Piece {
                             || occupyingPiece instanceof Queen
                             || (distance == 1
                             && (occupyingPiece instanceof King
-                            || occupyingPiece instanceof Pawn)))) {
+                            || (occupyingPiece instanceof Pawn
+                            && (searchCoordinate.getRank() - coordinate.getRank()) == (color == 'w' ? 1 : -1)))))) {
                         return true;
                     }
                     break;

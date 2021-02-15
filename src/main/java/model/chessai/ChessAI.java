@@ -2,130 +2,178 @@ package main.java.model.chessai;
 
 import main.java.Move;
 import main.java.model.GameModel;
-import main.java.model.pieces.Piece;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ChessAI {
 
-    private static final int DEPTH = 5;
+    private static final int DEPTH = 6;
 
     private final Map<Integer, Evaluation> positionToEval;
-    private final Stack<GameModel> gameModels;
+    private final Map<String, AlphaBeta> alphaBetaMap;
     private final Evaluator evaluator;
     private final Executor executor;
+
+    private Evaluation evaluation;
+
+    private long time;
 
     public ChessAI(Evaluator evaluator) {
         this.evaluator = evaluator;
         this.positionToEval = new HashMap<>();
-        this.gameModels = new Stack<>();
+        this.alphaBetaMap = new HashMap<>();
         this.executor = Executors.newFixedThreadPool(6);
     }
 
     public Move getBestMove(GameModel game) {
+        long startTime = System.currentTimeMillis();
 
-        Map<CompletableFuture<Evaluation>, Move> futureToMove = new HashMap<>();
+        ArrayList<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         boolean maximizingPlayer = game.getTurn() == 'w';
+        evaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        AlphaBeta alphaBeta = new AlphaBeta();
+        alphaBetaMap.put("", alphaBeta);
 
+        int count = 0;
         for (Move move : game.getLegalMoves(game.getTurn())) {
             GameModel gameClone = new GameModel(game);
             Move cloneMove = gameClone.cloneMove(move);
             gameClone.move(cloneMove);
-            futureToMove.put(getFutureEvaluation(gameClone, maximizingPlayer), move);
-        }
+            completableFutures.add(getFutureEvaluation(gameClone, Integer.toString(999 - count), maximizingPlayer).thenAcceptAsync(evaluation -> {
+                if (maximizingPlayer) {
+                    this.evaluation = Evaluation.max(this.evaluation, new Evaluation(move, evaluation.getEvaluation(), evaluation.getDepth()));
+                    alphaBeta.alphaMax(evaluation.getEvaluation());
+                } else {
+                    this.evaluation = Evaluation.min(this.evaluation, new Evaluation(move, evaluation.getEvaluation(), evaluation.getDepth()));
+                    alphaBeta.betaMin(evaluation.getEvaluation());
 
-        CompletableFuture<Evaluation>[] futures = futureToMove.keySet().toArray(new CompletableFuture[0]);
-
-        CompletableFuture<Evaluation> bestFuture = futures.length > 0 ? futures[0] : null;
-        try {
-            if (futures.length > 0) {
-                bestFuture = CompletableFuture.allOf(futures).thenApply(v -> bestEvaluation(futures, maximizingPlayer)).get();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return futureToMove.get(bestFuture);
-    }
-
-    private CompletableFuture<Evaluation> getFutureEvaluation(GameModel game, boolean maximizingPlayer) {
-        return CompletableFuture.supplyAsync(() ->
-                getBestEvaluation(game, maximizingPlayer, Integer.MIN_VALUE, Integer.MAX_VALUE, DEPTH), executor);
-    }
-
-    private CompletableFuture<Evaluation> bestEvaluation(CompletableFuture<Evaluation>[] futureEvaluations, boolean maximizingPlayer) {
-        CompletableFuture<Evaluation> bestFuture = futureEvaluations[0];
-        Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-
-        for (CompletableFuture<Evaluation> futureEvaluation : futureEvaluations) {
-            try {
-                Evaluation eval = futureEvaluation.get();
-                if (eval.getEvaluation() > bestEvaluation.getEvaluation() && maximizingPlayer) {
-                    bestEvaluation = eval;
-                    bestFuture = futureEvaluation;
-                } else if (eval.getEvaluation() < bestEvaluation.getEvaluation() && !maximizingPlayer) {
-                    bestEvaluation = eval;
-                    bestFuture = futureEvaluation;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            }, executor));
+            count++;
         }
 
-        return bestFuture;
+        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+        time = System.currentTimeMillis() - startTime;
+        System.out.println(time);
+        return game.cloneMove(evaluation.getMove());
     }
 
-    private Evaluation getBestEvaluation(GameModel game, boolean maximizingPlayer, double alpha, double beta, int depth) {
+    /**
+     * Returns a Future Evaluation. Calculates the best evaluation from a position asynchronously.
+     *
+     * @param game the game to to move in.
+     * @param maximizingPlayer the best player
+     * @return a future Evaluation
+     */
+    private CompletableFuture<Evaluation> getFutureEvaluation(GameModel game, String treeLocation, boolean maximizingPlayer) {
+        return CompletableFuture.supplyAsync(() -> getBestEvaluation(game, maximizingPlayer, new AlphaBeta(), treeLocation, DEPTH), executor);
+    }
+
+    private Evaluation getBestEvaluation(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
 
         int hashCode = game.hashCode();
         if (positionToEval.containsKey(hashCode) && positionToEval.get(hashCode).getDepth() >= depth) {
             return positionToEval.get(hashCode);
-        }
-
-        Set<Piece> movingPieces = maximizingPlayer ? Set.copyOf(game.getBoard().getWhitePieces())
-                : Set.copyOf(game.getBoard().getBlackPieces());
+        }//*/
 
         Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        alphaBetaMap.put(treeLocation, alphaBeta);
 
-        for (Piece piece : movingPieces) {
-            for (Move move : piece.getLegalMoves(game)) {
-                game.move(move);
-                Evaluation evaluation = miniMax(game, !maximizingPlayer, alpha, beta, depth - 1);
-                evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
-                game.undoMove(move);
+        int count = 0;
+        for (Move move : game.getLegalMoves(maximizingPlayer ? 'w' : 'b')) {
+            game.move(move);
+            Evaluation evaluation = miniMax(game, !maximizingPlayer, new AlphaBeta(alphaBeta), treeLocation + (999 - count), depth - 1);
+            evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
+            game.undoMove(move);
 
-                if (maximizingPlayer) {
-                    bestEvaluation = Evaluation.max(bestEvaluation, evaluation);
-                    alpha = Math.max(alpha, evaluation.getEvaluation());
-                } else {
-                    bestEvaluation = Evaluation.min(bestEvaluation, evaluation);
-                    beta = Math.min(beta, evaluation.getEvaluation());
-                }
-                if (beta <= alpha) break;
+            if (maximizingPlayer) {
+                bestEvaluation = Evaluation.max(bestEvaluation, evaluation);
+                alphaBeta.alphaMax(evaluation.getEvaluation());
+            } else {
+                bestEvaluation = Evaluation.min(bestEvaluation, evaluation);
+                alphaBeta.betaMin(evaluation.getEvaluation());
             }
-            if (beta <= alpha) break;
+            alphaBeta.updateFromMap(alphaBetaMap, treeLocation, maximizingPlayer);
+            if (alphaBeta.betaLessThanAlpha()) {
+                break;
+            }
+            count++;
         }
+
         positionToEval.put(hashCode, bestEvaluation);
         return bestEvaluation;
     }
 
 
-    private Evaluation miniMax(GameModel game, boolean maximizingPlayer, double alpha, double beta, int depth) {
+    private Evaluation miniMax(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
         if (depth == 0 || game.isOver()) {
             return evaluator.evaluate(game);
         }
 
         Evaluation bestEvaluation;
         if (maximizingPlayer) {
-            bestEvaluation = getBestEvaluation(game, true, alpha, beta, depth);
+            bestEvaluation = getBestEvaluation(game, true, alphaBeta, treeLocation, depth);
         } else {
-            bestEvaluation = getBestEvaluation(game, false, alpha, beta, depth);
+            bestEvaluation = getBestEvaluation(game, false, alphaBeta, treeLocation, depth);
         }
         return bestEvaluation;
+    }
+
+    private static class AlphaBeta {
+        double alpha;
+        double beta;
+
+        private AlphaBeta() {
+            this(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        }
+
+        private AlphaBeta(double alpha, double beta) {
+            this.alpha = alpha;
+            this.beta = beta;
+        }
+
+        private AlphaBeta(AlphaBeta alphaBeta) {
+            alpha = alphaBeta.alpha;
+            beta = alphaBeta.beta;
+        }
+
+        private boolean betaLessThanAlpha() {
+            return beta <= alpha;
+        }
+
+        private void updateFromMap(Map<String, AlphaBeta> alphaBetaMap, String location, boolean maximizingPlayer) {
+            if (location.length() % 3 != 0) {
+                throw new IllegalArgumentException("Location is not formatted properly");
+            }
+
+            for (int idx = 0; idx < location.length(); idx += 3) {
+                AlphaBeta parentAlphaBeta = alphaBetaMap.get(location.substring(0, idx));
+                if (parentAlphaBeta != null) {
+                    alphaMax(parentAlphaBeta.alpha);
+                    betaMin(parentAlphaBeta.beta);//*/
+                }
+            }
+        }
+
+        private boolean alphaMax(double eval) {
+            if (alpha < eval) {
+                alpha = eval;
+                return true;
+            }
+            return false;
+        }
+
+        private boolean betaMin(double eval) {
+            if (eval < beta) {
+                beta = eval;
+                return true;
+            }
+            return false;
+        }
     }
 }
