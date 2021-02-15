@@ -6,6 +6,8 @@ import main.java.model.pieces.King;
 import main.java.model.pieces.Piece;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -110,9 +112,9 @@ public class GameModel {
     private void checkGameOver(final boolean isWhitesMove) {
         King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
         boolean foundMove = false;
-        Set<Piece> relevantPieces = isWhitesMove ? board.getWhitePieces() : board.getBlackPieces();
-        for (Piece piece : Set.copyOf(relevantPieces)) {
-            if (!piece.getLegalMoves(this).isEmpty()) {
+        Collection<BoardModel.PieceHolder> relevantPieces = isWhitesMove ? board.getWhitePieces().values() : board.getBlackPieces().values();
+        for (BoardModel.PieceHolder piece : relevantPieces) {
+            if (piece.getPiece() != null && !piece.getPiece().getLegalMoves(this).isEmpty()) {
                 foundMove = true;
                 break;
             }
@@ -145,10 +147,12 @@ public class GameModel {
     public List<Move> getLegalMoves(char color) {
         List<Move> result = new ArrayList<>(40);
 
-        Set<Piece> relevantPieces = color == 'w' ? board.getWhitePieces() : board.getBlackPieces();
+        Collection<BoardModel.PieceHolder> relevantPieces = color == 'w' ? board.getWhitePieces().values() : board.getBlackPieces().values();
 
-        for (Piece piece : Set.copyOf(relevantPieces)) {
-            result.addAll(piece.getLegalMoves(this));
+        for (BoardModel.PieceHolder piece: relevantPieces) {
+            if (piece.getPiece() != null) {
+                result.addAll(piece.getPiece().getLegalMoves(this));
+            }
         }
 
         return result;

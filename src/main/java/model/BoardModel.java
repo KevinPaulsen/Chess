@@ -9,6 +9,7 @@ import main.java.model.pieces.Piece;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -19,8 +20,8 @@ public class BoardModel {
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Piece[][] pieceArray;
 
-    private final Set<Piece> whitePieces;
-    private final Set<Piece> blackPieces;
+    private final Map<String, PieceHolder> whitePieces;
+    private final Map<String, PieceHolder> blackPieces;
 
     private King whiteKing;
     private King blackKing;
@@ -29,15 +30,15 @@ public class BoardModel {
 
     public BoardModel(Piece[][] pieceArray) {
         this.pieceArray = pieceArray.clone();
-        this.whitePieces = new HashSet<>();
-        this.blackPieces = new HashSet<>();
+        this.whitePieces = new HashMap<>();
+        this.blackPieces = new HashMap<>();
         initPieces();
         checkRep();
     }
 
     public BoardModel(BoardModel boardModel) {
-        this.whitePieces = new HashSet<>();
-        this.blackPieces = new HashSet<>();
+        this.whitePieces = new HashMap<>();
+        this.blackPieces = new HashMap<>();
         this.pieceArray = boardModel.cloneArray();
         initPieces();
     }
@@ -123,14 +124,10 @@ public class BoardModel {
 
             pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
             piece.moveTo(coordinate, movesToAdd);
-            boolean didAdd;
             if (piece.getColor() == 'w') {
-                didAdd = whitePieces.add(piece);
+                whitePieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
             } else {
-                didAdd = blackPieces.add(piece);
-            }
-            if (!didAdd) {
-                throw new IllegalArgumentException("Piece is already on board.");
+                blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
             }
         }
     }
@@ -143,9 +140,9 @@ public class BoardModel {
 
             pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
             if (piece.getColor() == 'w') {
-                whitePieces.remove(piece);
+                whitePieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(null);
             } else {
-                blackPieces.remove(piece);
+                blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(null);
             }
             piece.moveTo(null, 0);
         }
@@ -155,10 +152,6 @@ public class BoardModel {
         if (piece != null) {
             removePiece(piece);
             addPiece(piece, endCoordinate, movesToAdd);
-        }
-
-        if (countPieces() != whitePieces.size() + blackPieces.size()) {
-            throw new RuntimeException("Pieces missing from arrays.");
         }
     }
 
@@ -188,20 +181,20 @@ public class BoardModel {
                         }
                     }
                     if (piece.getColor() == 'w') {
-                        whitePieces.add(piece);
+                        whitePieces.put(Integer.toString(piece.getUniqueIdentifier()), new PieceHolder(piece));
                     } else {
-                        blackPieces.add(piece);
+                        blackPieces.put(Integer.toString(piece.getUniqueIdentifier()), new PieceHolder(piece));
                     }
                 }
             }
         }
     }
 
-    public Set<Piece> getWhitePieces() {
+    public Map<String, PieceHolder> getWhitePieces() {
         return whitePieces;
     }
 
-    public Set<Piece> getBlackPieces() {
+    public Map<String, PieceHolder> getBlackPieces() {
         return blackPieces;
     }
 
@@ -253,7 +246,8 @@ public class BoardModel {
             for (Piece[] file : pieceArray) {
                 for (Piece piece : file) {
                     if (piece != null) {
-                        if (!whitePieces.contains(piece) && !blackPieces.contains(piece)) {
+                        if (!whitePieces.containsKey(Integer.toString(piece.getUniqueIdentifier()))
+                                && !blackPieces.containsKey(Integer.toString(piece.getUniqueIdentifier()))) {
                             throw new RuntimeException("Representation is incorrect.");
                         }
                     }
@@ -261,7 +255,6 @@ public class BoardModel {
             }
         }
     }
-
 
     private int countPieces() {
         int count = 0;
@@ -273,5 +266,22 @@ public class BoardModel {
             }
         }
         return count;
+    }
+
+    public static class PieceHolder {
+
+        Piece piece;
+
+        public PieceHolder(Piece piece) {
+            this.piece = piece;
+        }
+
+        public Piece getPiece() {
+            return piece;
+        }
+
+        public void setPiece(Piece piece) {
+            this.piece = piece;
+        }
     }
 }

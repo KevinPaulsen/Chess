@@ -63,6 +63,7 @@ public class King extends Piece {
     public King(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules();
+        this.pieceValue = 0;
     }
 
     /**
@@ -74,6 +75,7 @@ public class King extends Piece {
     public King(Piece piece) {
         super(piece);
         movementRules = getMovementRules();
+        this.pieceValue = 0;
     }
 
     /**

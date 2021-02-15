@@ -23,6 +23,7 @@ public class Bishop extends Piece {
     public Bishop(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules();
+        this.pieceValue = 3;
     }
 
     /**
@@ -34,6 +35,7 @@ public class Bishop extends Piece {
     public Bishop(Piece piece) {
         super(piece);
         movementRules = getMovementRules();
+        this.pieceValue = 3;
     }
 
     /**

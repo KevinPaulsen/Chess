@@ -5,6 +5,7 @@ import main.java.model.GameModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -40,7 +41,7 @@ public class ChessAI {
         alphaBetaMap.put("", alphaBeta);
 
         int count = 0;
-        for (Move move : game.getLegalMoves(game.getTurn())) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(game.getTurn()), maximizingPlayer)) {
             GameModel gameClone = new GameModel(game);
             Move cloneMove = gameClone.cloneMove(move);
             gameClone.move(cloneMove);
@@ -51,7 +52,6 @@ public class ChessAI {
                 } else {
                     this.evaluation = Evaluation.min(this.evaluation, new Evaluation(move, evaluation.getEvaluation(), evaluation.getDepth()));
                     alphaBeta.betaMin(evaluation.getEvaluation());
-
                 }
             }, executor));
             count++;
@@ -59,8 +59,11 @@ public class ChessAI {
 
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
         time = System.currentTimeMillis() - startTime;
+
         System.out.println(time);
-        return game.cloneMove(evaluation.getMove());
+        positionToEval.put(game.hashCode(), evaluation);
+        System.out.println("Eval: " + evaluation.getEvaluation());
+        return evaluation.getMove();
     }
 
     /**
@@ -85,7 +88,7 @@ public class ChessAI {
         alphaBetaMap.put(treeLocation, alphaBeta);
 
         int count = 0;
-        for (Move move : game.getLegalMoves(maximizingPlayer ? 'w' : 'b')) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(maximizingPlayer ? 'w' : 'b'), maximizingPlayer)) {
             game.move(move);
             Evaluation evaluation = miniMax(game, !maximizingPlayer, new AlphaBeta(alphaBeta), treeLocation + (999 - count), depth - 1);
             evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
@@ -109,7 +112,6 @@ public class ChessAI {
         return bestEvaluation;
     }
 
-
     private Evaluation miniMax(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
         if (depth == 0 || game.isOver()) {
             return evaluator.evaluate(game);
@@ -122,6 +124,19 @@ public class ChessAI {
             bestEvaluation = getBestEvaluation(game, false, alphaBeta, treeLocation, depth);
         }
         return bestEvaluation;
+    }
+
+    private List<Move> getOrderedMoves(List<Move> unorderedList, boolean maximizingPlayer) {
+        unorderedList.sort((Move move1, Move move2) -> {
+            int score;
+            if (maximizingPlayer) {
+                score = move1.valueScore() - move2.valueScore();
+            } else {
+                score = move2.valueScore() - move1.valueScore();
+            }
+            return score;
+        });
+        return unorderedList;
     }
 
     private static class AlphaBeta {

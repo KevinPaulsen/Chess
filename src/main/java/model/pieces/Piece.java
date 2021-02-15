@@ -35,6 +35,7 @@ public abstract class Piece {
     protected Set<MovementRule> movementRules;
     // The coordinate this piece is currently on.
     protected ChessCoordinate coordinate;
+    protected int pieceValue;
     // Weather or not this piece has moved.
     protected int timesMoved;
     private static int identifier = 0;
@@ -132,6 +133,10 @@ public abstract class Piece {
      */
     public ChessCoordinate getCoordinate() {
         return coordinate;
+    }
+
+    public int getValue() {
+        return pieceValue;
     }
 
     public int getUniqueIdentifier() {

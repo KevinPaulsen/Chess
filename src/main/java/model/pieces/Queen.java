@@ -23,6 +23,7 @@ public class Queen extends Piece {
     public Queen(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules();
+        this.pieceValue = 9;
     }
 
     /**
@@ -34,6 +35,7 @@ public class Queen extends Piece {
     public Queen(Piece piece) {
         super(piece);
         movementRules = getMovementRules();
+        this.pieceValue = 9;
     }
 
     /**

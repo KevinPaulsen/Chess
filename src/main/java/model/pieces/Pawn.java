@@ -42,6 +42,7 @@ public class Pawn extends Piece {
     public Pawn(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules(color);
+        this.pieceValue = 1;
     }
 
     /**
@@ -53,6 +54,7 @@ public class Pawn extends Piece {
     public Pawn(Piece piece) {
         super(piece);
         movementRules = getMovementRules(getColor());
+        this.pieceValue = 1;
     }
 
     /**

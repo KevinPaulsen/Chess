@@ -46,6 +46,21 @@ public class Move {
         return new Move(this);
     }
 
+    public int valueScore() {
+        int score = 0;
+
+        // If captures
+        if (interactingPiece != null && interactingPiece.getColor() != movingPiece.getColor()) {
+            score = 10 * interactingPiece.getValue() - movingPiece.getValue();
+        }
+
+        if (doesPromote()) {
+            score += promotedPiece.getValue();
+        }
+
+        return score;
+    }
+
     public boolean doesPromote() {
         return promotedPiece != null;
     }

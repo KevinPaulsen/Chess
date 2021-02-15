@@ -21,6 +21,7 @@ public class Knight extends Piece {
     public Knight(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules();
+        this.pieceValue = 3;
     }
 
     /**
@@ -32,6 +33,7 @@ public class Knight extends Piece {
     public Knight(Piece piece) {
         super(piece);
         movementRules = getMovementRules();
+        this.pieceValue = 3;
     }
 
     /**

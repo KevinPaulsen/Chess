@@ -23,6 +23,7 @@ public class Rook extends Piece {
     public Rook(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
         movementRules = getMovementRules();
+        this.pieceValue = 9;
     }
 
     /**
@@ -34,6 +35,7 @@ public class Rook extends Piece {
     public Rook(Piece piece) {
         super(piece);
         movementRules = getMovementRules();
+        this.pieceValue = 9;
     }
 
     /**
