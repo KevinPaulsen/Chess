@@ -4,34 +4,80 @@ import main.java.Move;
 import main.java.model.GameModel;
 import main.java.model.pieces.Piece;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.Stack;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class ChessAI {
 
-    private static final int DEPTH = 6;
+    private static final int DEPTH = 5;
 
     private final Map<Integer, Evaluation> positionToEval;
-
+    private final Stack<GameModel> gameModels;
     private final Evaluator evaluator;
+    private final Executor executor;
 
     public ChessAI(Evaluator evaluator) {
         this.evaluator = evaluator;
         this.positionToEval = new HashMap<>();
+        this.gameModels = new Stack<>();
+        this.executor = Executors.newFixedThreadPool(6);
     }
 
     public Move getBestMove(GameModel game) {
+
+        Map<CompletableFuture<Evaluation>, Move> futureToMove = new HashMap<>();
         boolean maximizingPlayer = game.getTurn() == 'w';
 
-        Evaluation bestEvaluation = miniMax(game, maximizingPlayer, Integer.MIN_VALUE, Integer.MAX_VALUE, DEPTH);
-        Move bestMove = bestEvaluation.getMove();
+        for (Move move : game.getLegalMoves(game.getTurn())) {
+            GameModel gameClone = new GameModel(game);
+            Move cloneMove = gameClone.cloneMove(move);
+            gameClone.move(cloneMove);
+            futureToMove.put(getFutureEvaluation(gameClone, maximizingPlayer), move);
+        }
 
-        System.out.println(Math.round(bestEvaluation.getEvaluation()));
-        System.out.println((bestEvaluation.getMove()));
-        return bestMove;
+        CompletableFuture<Evaluation>[] futures = futureToMove.keySet().toArray(new CompletableFuture[0]);
+
+        CompletableFuture<Evaluation> bestFuture = futures.length > 0 ? futures[0] : null;
+        try {
+            if (futures.length > 0) {
+                bestFuture = CompletableFuture.allOf(futures).thenApply(v -> bestEvaluation(futures, maximizingPlayer)).get();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return futureToMove.get(bestFuture);
+    }
+
+    private CompletableFuture<Evaluation> getFutureEvaluation(GameModel game, boolean maximizingPlayer) {
+        return CompletableFuture.supplyAsync(() ->
+                getBestEvaluation(game, maximizingPlayer, Integer.MIN_VALUE, Integer.MAX_VALUE, DEPTH), executor);
+    }
+
+    private CompletableFuture<Evaluation> bestEvaluation(CompletableFuture<Evaluation>[] futureEvaluations, boolean maximizingPlayer) {
+        CompletableFuture<Evaluation> bestFuture = futureEvaluations[0];
+        Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+
+        for (CompletableFuture<Evaluation> futureEvaluation : futureEvaluations) {
+            try {
+                Evaluation eval = futureEvaluation.get();
+                if (eval.getEvaluation() > bestEvaluation.getEvaluation() && maximizingPlayer) {
+                    bestEvaluation = eval;
+                    bestFuture = futureEvaluation;
+                } else if (eval.getEvaluation() < bestEvaluation.getEvaluation() && !maximizingPlayer) {
+                    bestEvaluation = eval;
+                    bestFuture = futureEvaluation;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return bestFuture;
     }
 
     private Evaluation getBestEvaluation(GameModel game, boolean maximizingPlayer, double alpha, double beta, int depth) {
@@ -44,28 +90,9 @@ public class ChessAI {
         Set<Piece> movingPieces = maximizingPlayer ? Set.copyOf(game.getBoard().getWhitePieces())
                 : Set.copyOf(game.getBoard().getBlackPieces());
 
-        /*TreeSet<Piece> sortedSet = new TreeSet<>((Piece o1, Piece o2) -> {
-            if (o1.getCoordinate().getFile() == o2.getCoordinate().getFile()) {
-                return Integer.compare(o1.getCoordinate().getRank(), o2.getCoordinate().getRank());
-            } else {
-                return Integer.compare(o1.getCoordinate().getFile(), o2.getCoordinate().getFile());
-            }
-        });
-        sortedSet.addAll(movingPieces);
-
-        Comparator<Move> moveComparator = (Move o1, Move o2) -> {
-            if (o1.getEndingCoordinate().getFile() == o2.getEndingCoordinate().getFile()) {
-                return Integer.compare(o1.getEndingCoordinate().getRank(), o2.getEndingCoordinate().getRank());
-            } else {
-                return Integer.compare(o1.getEndingCoordinate().getFile(), o2.getEndingCoordinate().getFile());
-            }
-        };//*/
-
         Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
 
         for (Piece piece : movingPieces) {
-            //TreeSet<Move> moves = new TreeSet<>(moveComparator);
-            //moves.addAll(piece.getLegalMoves(game));//*/
             for (Move move : piece.getLegalMoves(game)) {
                 game.move(move);
                 Evaluation evaluation = miniMax(game, !maximizingPlayer, alpha, beta, depth - 1);

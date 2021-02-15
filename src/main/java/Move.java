@@ -32,6 +32,20 @@ public class Move {
         this.promotedPiece = promotedPiece;
     }
 
+    public Move(Move move) {
+        this.startingCoordinate = move.startingCoordinate;
+        this.endingCoordinate = move.endingCoordinate;
+        this.movingPiece = Piece.clone(move.movingPiece);
+        this.interactingPieceStart = move.interactingPieceStart;
+        this.interactingPieceEnd = move.interactingPieceEnd;
+        this.interactingPiece = Piece.clone(move.interactingPiece);
+        this.promotedPiece = Piece.clone(move.promotedPiece);
+    }
+
+    public Move clone() {
+        return new Move(this);
+    }
+
     public boolean doesPromote() {
         return promotedPiece != null;
     }

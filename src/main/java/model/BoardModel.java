@@ -7,6 +7,7 @@ import main.java.model.pieces.Pawn;
 import main.java.model.pieces.Piece;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -35,18 +36,18 @@ public class BoardModel {
     }
 
     public BoardModel(BoardModel boardModel) {
+        this.whitePieces = new HashSet<>();
+        this.blackPieces = new HashSet<>();
         this.pieceArray = boardModel.cloneArray();
-        this.whitePieces = new HashSet<>(boardModel.whitePieces);
-        this.blackPieces = new HashSet<>(boardModel.blackPieces);
-        this.whiteKing = boardModel.whiteKing;
-        this.blackKing = boardModel.blackKing;
+        initPieces();
     }
 
     private Piece[][] cloneArray() {
         Piece[][] pieceArray = new Piece[this.pieceArray.length][this.pieceArray.length];
         for (int file = 0; file < pieceArray.length; file++) {
             for (int rank = 0; rank < pieceArray.length; rank++) {
-                pieceArray[file][rank] = Piece.clone(this.pieceArray[file][rank]);
+                Piece clonedPiece = Piece.clone(this.pieceArray[file][rank]);
+                pieceArray[file][rank] = clonedPiece;
             }
         }
         return pieceArray;
@@ -141,8 +142,10 @@ public class BoardModel {
             }
 
             pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
-            if (!whitePieces.remove(piece) && !blackPieces.remove(piece)) {
-                throw new IllegalStateException("Piece is not in either array");
+            if (piece.getColor() == 'w') {
+                whitePieces.remove(piece);
+            } else {
+                blackPieces.remove(piece);
             }
             piece.moveTo(null, 0);
         }
@@ -160,7 +163,7 @@ public class BoardModel {
     }
 
     public static ChessCoordinate getChessCoordinate(int file, int rank) {
-        return chessCoordinates[file][rank];
+        return ChessCoordinate.isInBounds(file, rank) ? chessCoordinates[file][rank] : null;
     }
 
     private static ChessCoordinate[][] createChessCoordinates() {

@@ -6,6 +6,7 @@ import main.java.model.pieces.King;
 import main.java.model.pieces.Piece;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -33,7 +34,10 @@ public class GameModel {
     public GameModel(GameModel gameModel) {
         this.board = new BoardModel(gameModel.getBoard());
         this.moveHistory = new ArrayList<>(gameModel.moveHistory);
+        moveHistory.replaceAll(Move::new);
         this.turn = gameModel.getTurn();
+        this.isOver = gameModel.isOver;
+        this.winner = gameModel.winner;
         checkRep();
     }
 
@@ -91,7 +95,7 @@ public class GameModel {
         checkRep();
         boolean didMove = false;
 
-        if (move != null && move.getMovingPiece().getLegalMoves(this).contains(move) && move.getMovingPiece().getColor() == turn) {
+        if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
             turn = (turn == 'w') ? 'b' : 'w';
@@ -105,15 +109,15 @@ public class GameModel {
 
     private void checkGameOver(final boolean isWhitesMove) {
         King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
-        AtomicBoolean foundMove = new AtomicBoolean(false);
+        boolean foundMove = false;
         Set<Piece> relevantPieces = isWhitesMove ? board.getWhitePieces() : board.getBlackPieces();
-        for (Piece piece : relevantPieces.stream().collect(Collectors.toUnmodifiableSet())) {
+        for (Piece piece : Set.copyOf(relevantPieces)) {
             if (!piece.getLegalMoves(this).isEmpty()) {
-                foundMove.set(true);
+                foundMove = true;
                 break;
             }
         }//*/
-        if (foundMove.get()) {
+        if (foundMove) {
             isOver = false;
             winner = 'N';
         } else {
@@ -136,6 +140,24 @@ public class GameModel {
             winner = 'N';
         }
         checkRep();
+    }
+
+    public List<Move> getLegalMoves(char color) {
+        List<Move> result = new ArrayList<>(40);
+
+        Set<Piece> relevantPieces = color == 'w' ? board.getWhitePieces() : board.getBlackPieces();
+
+        for (Piece piece : Set.copyOf(relevantPieces)) {
+            result.addAll(piece.getLegalMoves(this));
+        }
+
+        return result;
+    }
+
+    public Move cloneMove(Move move) {
+        return new Move(move.getEndingCoordinate(), board.getPieceOn(move.getStartingCoordinate()),
+                move.getInteractingPieceEnd(), board.getPieceOn(move.getInteractingPieceStart()),
+                move.getPromotedPiece());
     }
 
     public Move getLastMove() {

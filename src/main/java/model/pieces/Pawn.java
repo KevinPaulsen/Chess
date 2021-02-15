@@ -19,6 +19,9 @@ public class Pawn extends Piece {
 
     private final MoveMaker straightMovement = (start, end, game, code) -> {
         Piece piece = game.getBoard().getPieceOn(start);
+        if (piece == null) {
+            throw new IllegalStateException("Start has no moving Piece");
+        }
         Piece occupyingPiece = game.getBoard().getPieceOn(end);
         if (occupyingPiece == null && (Math.abs(end.getRank() - start.getRank()) == 1 || !hasMoved())) {
             if (end.getRank() == (color == 'w' ? 7 : 0)) {
@@ -49,7 +52,7 @@ public class Pawn extends Piece {
      */
     public Pawn(Piece piece) {
         super(piece);
-        movementRules = piece.movementRules;
+        movementRules = getMovementRules(getColor());
     }
 
     /**
@@ -76,6 +79,7 @@ public class Pawn extends Piece {
      */
     private boolean canPassant(Move lastMove, int direction) {
         return lastMove != null && lastMove.getMovingPiece() instanceof Pawn
+                && lastMove.getMovingPiece().color != color
                 && lastMove.getEndingCoordinate().equals(BoardModel
                 .getChessCoordinate(coordinate.getFile() + direction, coordinate.getRank()))
                 && Math.abs(lastMove.getStartingCoordinate().getRank()
@@ -102,7 +106,7 @@ public class Pawn extends Piece {
                 Move move = new Move(end, piece, null, capturedPiece);
                 if (game.getBoard().getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
                     throw new IllegalStateException("This move cannot exist");
-                }
+                }//*/
             } else if ((capturedPiece == null || capturedPiece.color == color)) {
                 return null;
             }

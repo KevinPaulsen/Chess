@@ -2,7 +2,6 @@ package main.java.model.pieces;
 
 import main.java.ChessCoordinate;
 import main.java.Move;
-import main.java.model.BoardModel;
 import main.java.model.GameModel;
 
 import java.util.ArrayList;
@@ -55,10 +54,10 @@ public class MovementRule {
             // TODO: allow multiple types of promotion
             Move move = moveMaker.getMove(coordinate, endCoordinate, gameModel, Pawn.QUEEN_PROMOTION);
 
-            if (move != null && gameModel.getBoard().getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+            if (move != null && gameModel.getBoard().getPieceOn(move.getEndingCoordinate()) != null
+                    && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
                 throw new IllegalStateException("This move cannot exist");
             }
-
 
             // If the move is non-null, add it to moves.
             if (move != null) {
