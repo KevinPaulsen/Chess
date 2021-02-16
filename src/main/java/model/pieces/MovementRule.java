@@ -77,6 +77,10 @@ public class MovementRule {
         return moves;
     }
 
+    public Direction getDirection() {
+        return direction;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

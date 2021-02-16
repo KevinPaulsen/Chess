@@ -47,6 +47,10 @@ public class Direction {
         return next;
     }
 
+    public boolean isDiagonal() {
+        return rise * run != 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

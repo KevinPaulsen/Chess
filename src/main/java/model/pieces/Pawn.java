@@ -3,7 +3,9 @@ package main.java.model.pieces;
 import main.java.ChessCoordinate;
 import main.java.Move;
 import main.java.model.BoardModel;
+import main.java.model.GameModel;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -70,6 +72,16 @@ public class Pawn extends Piece {
                 new MovementRule(new Direction(direction, -1), 1, getDiagonalMoveMaker(-1)),
                 new MovementRule(new Direction(direction, 0), 2, straightMovement)
         );
+    }
+
+    public Set<Move> getCaptures(GameModel gameModel) {
+        Set<Move> moves = new HashSet<>();
+        for (MovementRule movementRule : movementRules) {
+            if (movementRule.getDirection().isDiagonal()) {
+                moves.addAll(movementRule.getMoves(coordinate, gameModel));
+            }
+        }
+        return moves;
     }
 
     /**

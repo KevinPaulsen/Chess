@@ -41,7 +41,7 @@ public class ChessAI {
         alphaBetaMap.put("", alphaBeta);
 
         int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(game.getTurn()), maximizingPlayer)) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(game.getTurn()), maximizingPlayer, game)) {
             GameModel gameClone = new GameModel(game);
             Move cloneMove = gameClone.cloneMove(move);
             gameClone.move(cloneMove);
@@ -88,7 +88,7 @@ public class ChessAI {
         alphaBetaMap.put(treeLocation, alphaBeta);
 
         int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(maximizingPlayer ? 'w' : 'b'), maximizingPlayer)) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(maximizingPlayer ? 'w' : 'b'), maximizingPlayer, game)) {
             game.move(move);
             Evaluation evaluation = miniMax(game, !maximizingPlayer, new AlphaBeta(alphaBeta), treeLocation + (999 - count), depth - 1);
             evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
@@ -126,14 +126,14 @@ public class ChessAI {
         return bestEvaluation;
     }
 
-    private List<Move> getOrderedMoves(List<Move> unorderedList, boolean maximizingPlayer) {
+    private List<Move> getOrderedMoves(List<Move> unorderedList, boolean maximizingPlayer, GameModel gameModel) {
         unorderedList.sort((Move move1, Move move2) -> {
             int score;
             if (maximizingPlayer) {
-                score = move1.valueScore() - move2.valueScore();
+                score = move1.valueScore(gameModel) - move2.valueScore(gameModel);
             } else {
-                score = move2.valueScore() - move1.valueScore();
-            }
+                score = move2.valueScore(gameModel) - move1.valueScore(gameModel);
+            }//*/
             return score;
         });
         return unorderedList;

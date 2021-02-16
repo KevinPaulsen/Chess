@@ -1,6 +1,7 @@
 package main.java;
 
 import main.java.model.BoardModel;
+import main.java.model.GameModel;
 import main.java.model.pieces.Pawn;
 import main.java.model.pieces.Piece;
 
@@ -46,7 +47,7 @@ public class Move {
         return new Move(this);
     }
 
-    public int valueScore() {
+    public int valueScore(GameModel gameModel) {
         int score = 0;
 
         // If captures
@@ -56,6 +57,17 @@ public class Move {
 
         if (doesPromote()) {
             score += promotedPiece.getValue();
+        }
+
+        int rank = endingCoordinate.getRank() + (movingPiece.getColor() == 'w' ? 1 : -1);
+        ChessCoordinate coordinate1 = BoardModel.getChessCoordinate(rank, endingCoordinate.getFile() + 1);
+        ChessCoordinate coordinate2 = BoardModel.getChessCoordinate(rank, endingCoordinate.getFile() - 1);
+        Piece piece1 = gameModel.getBoard().getPieceOn(coordinate1);
+        Piece piece2 = gameModel.getBoard().getPieceOn(coordinate2);
+        if ((piece1 != null && piece1.getColor() != movingPiece.getColor()) || (piece2 != null && piece2.getColor() != movingPiece.getColor())) {
+            if (piece1 instanceof Pawn || piece2 instanceof Pawn) {
+                score -= 3.5;
+            }
         }
 
         return score;
