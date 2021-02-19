@@ -25,11 +25,12 @@ public abstract class Piece {
     protected static final MoveMaker STANDARD_MOVE_MAKER = (start, end, game, code) -> {
         Piece capturedPiece = game.getBoard().getPieceOn(end);
         Piece movingPiece = game.getBoard().getPieceOn(start);
+        Move move = null;
         if (capturedPiece == null || capturedPiece.color != movingPiece.color) {
-            return new Move(end, movingPiece, null, capturedPiece);
-        } else {
-            return null;
+            move = new Move(end, movingPiece, null, capturedPiece);
         }
+        movingPiece.addAttacking(game.getBoard().getSquare(end));
+        return move;
     };
     private static int identifier = 0;
     protected static final int LONG_MOVING_MAX = 8;
@@ -236,10 +237,6 @@ public abstract class Piece {
             for (Move move : movementRule.getMoves(coordinate, game)) {
                 if (move != null) {
                     sudoLegalMoves.add(move);
-
-                    if (movementRule.getDirection().isDiagonal()) {
-                        addAttacking(game.getBoard().getSquare(move.getEndingCoordinate()));
-                    }
                 }
             }
         }

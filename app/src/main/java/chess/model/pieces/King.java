@@ -58,12 +58,14 @@ public class King extends Piece {
     private final MoveMaker normalMoveMaker = (start, end, game, code) -> {
         Piece capturedPiece = game.getBoard().getPieceOn(end);
         Piece movingPiece = game.getBoard().getPieceOn(start);
+
+        movingPiece.addAttacking(game.getBoard().getSquare(end));
+        Move move = null;
         if (game.getBoard().getSquare(end).numAttackers(color) == 0
                 && (capturedPiece == null || capturedPiece.color != movingPiece.color)) {
-            return new Move(end, movingPiece, null, capturedPiece);
-        } else {
-            return null;
+            move = new Move(end, movingPiece, null, capturedPiece);
         }
+        return move;
     };
 
     /**

@@ -121,18 +121,17 @@ public class Pawn extends Piece {
         return (start, end, game, code) -> {
             Piece piece = game.getBoard().getPieceOn(start);
             Piece capturedPiece = game.getBoard().getPieceOn(end);
-            if (canPassant(game.getLastMove(), direction)) {
-                capturedPiece = game.getBoard().getPieceOn(
-                        BoardModel.getChessCoordinate(start.getFile() + direction, start.getRank()));
-                Move move = new Move(end, piece, null, capturedPiece);
-                if (game.getBoard().getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
-                    throw new IllegalStateException("This move cannot exist");
-                }//*/
-            } else if ((capturedPiece == null || capturedPiece.color == color)) {
-                return null;
-            }
             Move move;
-            if (end.getRank() == (color == 'w' ? 7 : 0)) {
+
+            addAttacking(game.getBoard().getSquare(end));
+            if (canPassant(game.getLastMove(), direction)) {
+                capturedPiece = game.getBoard().getPieceOn(BoardModel
+                        .getChessCoordinate(start.getFile() + direction, start.getRank()));
+            }
+
+            if ((capturedPiece == null || capturedPiece.color == color)) {
+                move = null;
+            } else if (end.getRank() == (color == 'w' ? 7 : 0)) {
                 move = new Move(end, piece, null, capturedPiece, makePromotedPiece(code));
             } else {
                 move = new Move(end, piece, null, capturedPiece);
