@@ -64,7 +64,7 @@ public class Pawn extends Piece {
             }
         }
 
-        // Diagonal Captures.
+        // Diagonal Captures
         addCapture(board, captureLeft, lastMove);
         addCapture(board, captureRight, lastMove);
 

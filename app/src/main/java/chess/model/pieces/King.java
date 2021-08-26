@@ -17,6 +17,16 @@ import java.util.Set;
 public class King extends Piece {
 
     /**
+     * Reference to right direction
+     */
+    private static final Direction RIGHT = new Direction(0, 1);
+
+    /**
+     * Reference to right direction
+     */
+    private static final Direction LEFT = new Direction(0, -1);
+
+    /**
      * Creates a new king with the given color and coordinate.
      *
      * @param color the given color
@@ -45,6 +55,21 @@ public class King extends Piece {
 
         // TODO: Castling Logic
         return moves;
+    }
+
+    private boolean canCastleRight(BoardModel board, Direction direction) {
+        ChessCoordinate searchCoord = direction.next(coordinate);
+        for (int offset = 0; offset < (direction == RIGHT ? 2 : 3); offset++, searchCoord = direction.next(coordinate)) {
+            // FIXME: castle left should be able to castle if last square is attacked
+            if (board.getPieceOn(searchCoord) != null && !board.getSquare(searchCoord).isAttacked(color == 'w' ? 'b' : 'w')) {
+                return false;
+            }
+        }
+        Piece potentialRook = board.getPieceOn(searchCoord);
+        return potentialRook instanceof Rook
+                && potentialRook.color == color
+                && potentialRook.timesMoved == 0
+                && timesMoved == 0;
     }
 
     @Override
