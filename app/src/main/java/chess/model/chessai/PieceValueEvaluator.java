@@ -36,11 +36,11 @@ public class PieceValueEvaluator implements Evaluator {
         int whiteScore = 0;
         int blackScore = 0;
 
-        for (BoardModel.PieceHolder piece : game.getBoard().getWhitePieces().values()) {
-            whiteScore += getValue(piece.getPiece());
+        for (Piece piece : game.getBoard().getWhitePieces()) {
+            whiteScore += getValue(piece);
         }
-        for (BoardModel.PieceHolder piece : game.getBoard().getBlackPieces().values()) {
-            blackScore += getValue(piece.getPiece());
+        for (Piece piece : game.getBoard().getBlackPieces()) {
+            blackScore += getValue(piece);
         }
         return new Evaluation(whiteScore - blackScore, 0);
     }

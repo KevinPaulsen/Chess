@@ -20,8 +20,8 @@ public class BoardModel {
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Square[][] squareArray;
 
-    private final Map<String, PieceHolder> whitePieces;
-    private final Map<String, PieceHolder> blackPieces;
+    private final Set<Piece> whitePieces;
+    private final Set<Piece> blackPieces;
 
     private final Set<Square> squaresToUpdate;
 
@@ -32,16 +32,15 @@ public class BoardModel {
 
     public BoardModel(Piece[][] pieceArray) {
         this.squareArray = makeSquareArray(pieceArray);
-        this.whitePieces = new HashMap<>();
-        this.blackPieces = new HashMap<>();
+        this.whitePieces = new HashSet<>();
+        this.blackPieces = new HashSet<>();
         this.squaresToUpdate = new HashSet<>();
         initPieces();
-        checkRep();
     }
 
     public BoardModel(BoardModel boardModel) {
-        this.whitePieces = new HashMap<>();
-        this.blackPieces = new HashMap<>();
+        this.whitePieces = new HashSet<>();
+        this.blackPieces = new HashSet<>();
         this.squareArray = boardModel.cloneArray();
         this.squaresToUpdate = new HashSet<>();
         initPieces();
@@ -80,7 +79,8 @@ public class BoardModel {
      */
     public void move(Move move) {
         if (move != null) {
-            if (getPieceOn(move.getEndingCoordinate()) != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+            if (getPieceOn(move.getEndingCoordinate()) != null
+                    && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
                 throw new IllegalStateException("This move cannot exist");
             }
 
@@ -92,23 +92,6 @@ public class BoardModel {
             } else {
                 movePiece(move.getMovingPiece(), move.getEndingCoordinate(), 1);
             }
-
-            if (pawnMovesTwice(move)) {
-                updateEnPassant((Pawn) move.getMovingPiece(), move.getMovingPiece().getColor());
-            }
-        }
-        checkRep();
-    }
-
-    private void updateEnPassant(Pawn pawn, char color) {
-        ChessCoordinate coordinate1 = BoardModel.getChessCoordinate(pawn.getCoordinate().getFile() + 1, pawn.getCoordinate().getRank());
-        ChessCoordinate coordinate2 = BoardModel.getChessCoordinate(pawn.getCoordinate().getFile() - 1, pawn.getCoordinate().getRank());
-        Piece piece1 = getPieceOn(coordinate1);
-        Piece piece2 = getPieceOn(coordinate2);
-
-        if (piece1 instanceof Pawn && piece1.getColor() != color) {
-            // FIXME
-            //((Pawn) piece1).addEnPassant(pawn.getCoordinate().getFile(), pawn);
         }
     }
 
@@ -135,7 +118,6 @@ public class BoardModel {
                 }
             }
         }
-        checkRep();
     }
 
     public Set<Square> getSquaresToUpdate() {
@@ -158,37 +140,62 @@ public class BoardModel {
         return coordinate == null ? null : squareArray[coordinate.getFile()][coordinate.getRank()].getPiece();
     }
 
+    /**
+     * Add piece to the board, and add the given moves to add to the piece.
+     *
+     * @param piece the piece to add.
+     * @param coordinate the coordinate to put the piece.
+     * @param movesToAdd the number of moves to add to the piecce.
+     */
     private void addPiece(Piece piece, ChessCoordinate coordinate, int movesToAdd) {
-        // FIXME: UID dependency
-        /*if (piece != null && coordinate != null) {
+        if (piece != null && coordinate != null) {
             squareArray[coordinate.getFile()][coordinate.getRank()].setPiece(piece);
             piece.moveTo(coordinate, movesToAdd);
             if (piece.getColor() == 'w') {
-                whitePieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
+                if (!whitePieces.add(piece)) {
+                    throw new RuntimeException("This piece already exists on the board.");
+                }
             } else {
-                blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
+                if (!blackPieces.add(piece)) {
+                    throw new RuntimeException("This piece already exists on the board.");
+                }
             }
-        }//*/
+        }
     }
 
+    /**
+     * Removes the given piece from the board.
+     *
+     * @param piece the piece to remove.
+     */
     private void removePiece(Piece piece) {
-        // FIXME: UID dependency
-        /*if (piece != null) {
+        if (piece != null) {
             if (piece.getCoordinate() == null || getPieceOn(piece.getCoordinate()) != piece) {
                 throw new IllegalStateException("Piece Data is out of sync.");
             }
 
             squareArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()].setPiece(null);
             if (piece.getColor() == 'w') {
-                whitePieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(null);
+                if (!whitePieces.remove(piece)) {
+                    throw new IllegalStateException("Attempted to remove piece that was not held.");
+                }
             } else {
-                blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(null);
+                if (!blackPieces.remove(piece)) {
+                    throw new IllegalStateException("Attempted to remove piece that was not held.");
+                }
             }
             piece.moveTo(null, 0);
-            // TODO: update pieces
-        }//*/
+        }
     }
 
+    /**
+     * Moves the piece to the given coordinate, and adds the given number of moves
+     * to the piece.
+     *
+     * @param piece the piece to move.
+     * @param endCoordinate the end coordinate of the piece.
+     * @param movesToAdd the number of moves to add to the piece.
+     */
     public void movePiece(Piece piece, ChessCoordinate endCoordinate, int movesToAdd) {
         if (piece != null) {
             removePiece(piece);
@@ -211,8 +218,7 @@ public class BoardModel {
     }
 
     private void initPieces() {
-        // FIXME: UID dependency
-        /*for (Square[] file : squareArray) {
+        for (Square[] file : squareArray) {
             for (Square square : file) {
                 Piece piece = square.getPiece();
                 if (piece != null) {
@@ -224,20 +230,24 @@ public class BoardModel {
                         }
                     }
                     if (piece.getColor() == 'w') {
-                        whitePieces.put(Integer.toString(piece.getUniqueIdentifier()), new PieceHolder(piece));
+                        if (!whitePieces.add(piece)) {
+                            throw new IllegalStateException("Adding piece that already exists on board.");
+                        }
                     } else {
-                        blackPieces.put(Integer.toString(piece.getUniqueIdentifier()), new PieceHolder(piece));
+                        if (!blackPieces.add(piece)) {
+                            throw new IllegalStateException("Adding piece that already exists on board.");
+                        }
                     }
                 }
             }
         }//*/
     }
 
-    public Map<String, PieceHolder> getWhitePieces() {
+    public Set<Piece> getWhitePieces() {
         return whitePieces;
     }
 
-    public Map<String, PieceHolder> getBlackPieces() {
+    public Set<Piece> getBlackPieces() {
         return blackPieces;
     }
 
@@ -286,26 +296,6 @@ public class BoardModel {
         }
     }
 
-    private void checkRep() {
-        // FIXME: UID dependency
-        /*if (DEBUG_MODE) {
-            if (squareArray == null || whitePieces == null || blackPieces == null || whiteKing == null || blackKing == null) {
-                throw new RuntimeException("Representation is incorrect.");
-            }
-            for (Square[] file : squareArray) {
-                for (Square square : file) {
-                    Piece piece = square.getPiece();
-                    if (piece != null) {
-                        if (!whitePieces.containsKey(Integer.toString(piece.getUniqueIdentifier()))
-                                && !blackPieces.containsKey(Integer.toString(piece.getUniqueIdentifier()))) {
-                            throw new RuntimeException("Representation is incorrect.");
-                        }
-                    }
-                }
-            }
-        }//*/
-    }
-
     private int countPieces() {
         int count = 0;
         for (Square[] file : squareArray) {
@@ -320,22 +310,5 @@ public class BoardModel {
 
     public Square getSquare(ChessCoordinate coordinate) {
         return squareArray[coordinate.getFile()][coordinate.getRank()];
-    }
-
-    public static class PieceHolder {
-
-        Piece piece;
-
-        public PieceHolder(Piece piece) {
-            this.piece = piece;
-        }
-
-        public Piece getPiece() {
-            return piece;
-        }
-
-        public void setPiece(Piece piece) {
-            this.piece = piece;
-        }
     }
 }

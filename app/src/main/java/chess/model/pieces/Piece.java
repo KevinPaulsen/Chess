@@ -24,7 +24,7 @@ public abstract class Piece {
     /**
      * The number of times this piece has moved, cannot be less than 0.
      */
-    protected final int timesMoved;
+    protected int timesMoved;
 
     /**
      * The coordinate this piece is at
@@ -64,6 +64,18 @@ public abstract class Piece {
      * @param lastMove the last made move.
      */
     public abstract Set<Move> updateLegalMoves(BoardModel board, Move lastMove);
+
+    /**
+     * @return all the moves this piece can make
+     */
+    public Set<Move> getMoves() {
+        return moves;
+    }
+
+    public void moveTo(ChessCoordinate coordinate, int movesToAdd) {
+        this.coordinate = coordinate;
+        this.timesMoved += movesToAdd;
+    }
 
     /**
      * @return the color of this piece

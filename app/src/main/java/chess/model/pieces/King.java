@@ -3,10 +3,7 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
-import chess.model.GameModel;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -53,13 +50,26 @@ public class King extends Piece {
             addMove(board, coordinate);
         }
 
+        if (canCastle(board, RIGHT)) {
+            ChessCoordinate kingEnd = BoardModel.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank());
+            ChessCoordinate rookStart = BoardModel.getChessCoordinate(coordinate.getFile() + 3, coordinate.getRank());
+            ChessCoordinate rookEnd = BoardModel.getChessCoordinate(coordinate.getFile() + 1, coordinate.getRank());
+            moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
+        }
+        if (canCastle(board, LEFT)) {
+            ChessCoordinate kingEnd = BoardModel.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank());
+            ChessCoordinate rookStart = BoardModel.getChessCoordinate(coordinate.getFile() - 4, coordinate.getRank());
+            ChessCoordinate rookEnd = BoardModel.getChessCoordinate(coordinate.getFile() - 1, coordinate.getRank());
+            moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
+        }
+
         // TODO: Castling Logic
         return moves;
     }
 
-    private boolean canCastleRight(BoardModel board, Direction direction) {
+    private boolean canCastle(BoardModel board, Direction direction) {
         ChessCoordinate searchCoord = direction.next(coordinate);
-        for (int offset = 0; offset < (direction == RIGHT ? 2 : 3); offset++, searchCoord = direction.next(coordinate)) {
+        for (int offset = 0; offset < (direction == RIGHT ? 2 : 3); offset++, searchCoord = direction.next(searchCoord)) {
             // FIXME: castle left should be able to castle if last square is attacked
             if (board.getPieceOn(searchCoord) != null && !board.getSquare(searchCoord).isAttacked(color == 'w' ? 'b' : 'w')) {
                 return false;

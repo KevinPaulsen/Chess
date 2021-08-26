@@ -49,18 +49,14 @@ public class GameModel {
     }
 
     private void initPieces() {
-        for (BoardModel.PieceHolder pieceHolder : board.getBlackPieces().values()) {
-            Piece piece = pieceHolder.getPiece();
+        for (Piece piece : board.getBlackPieces()) {
             if (piece != null) {
-                // FIXME: updateAttacking dependency
-                //piece.updateAttacking(this);
+                piece.updateLegalMoves(board, getLastMove());
             }
         }
-        for (BoardModel.PieceHolder pieceHolder : board.getWhitePieces().values()) {
-            Piece piece = pieceHolder.getPiece();
+        for (Piece piece : board.getWhitePieces()) {
             if (piece != null) {
-                // FIXME: UID dependency
-                //piece.updateAttacking(this);
+                piece.updateLegalMoves(board, getLastMove());
             }
         }
     }
@@ -86,7 +82,7 @@ public class GameModel {
             Move currentMove = null;
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
-                for (Move move : movingPiece.updateLegalMoves(board, getLastMove())) {
+                for (Move move : movingPiece.getMoves()) {
                     if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
                         currentMove = move;
                         break;
@@ -113,8 +109,8 @@ public class GameModel {
 
         if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
-            updateAfterMove(move);
             moveHistory.add(move);
+            updateAfterMove(move);
             turn = (turn == 'w') ? 'b' : 'w';
             //checkGameOver(turn == 'w');
             didMove = true;
@@ -125,6 +121,8 @@ public class GameModel {
     }
 
     private void updateAfterMove(Move move) {
+        initPieces();
+        /*
         board.getSquare(move.getEndingCoordinate()).update(this);
         board.getSquare(move.getStartingCoordinate()).update(this);
 
@@ -136,7 +134,7 @@ public class GameModel {
             board.getSquare(move.getInteractingPieceEnd()).update(this);
             updatePossiblePawn(move.getStartingCoordinate());
             updatePossiblePawn(move.getEndingCoordinate());
-        }
+        }//*/
     }
 
     private void updatePossiblePawn(ChessCoordinate coordinate) {
@@ -160,9 +158,9 @@ public class GameModel {
     private void checkGameOver(final boolean isWhitesMove) {
         King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
         boolean foundMove = false;
-        Collection<BoardModel.PieceHolder> relevantPieces = isWhitesMove ? board.getWhitePieces().values() : board.getBlackPieces().values();
-        for (BoardModel.PieceHolder piece : relevantPieces) {
-            if (piece.getPiece() != null && !piece.getPiece().updateLegalMoves(board, getLastMove()).isEmpty()) {
+        Collection<Piece> relevantPieces = isWhitesMove ? board.getWhitePieces() : board.getBlackPieces();
+        for (Piece piece : relevantPieces) {
+            if (piece != null && !piece.updateLegalMoves(board, getLastMove()).isEmpty()) {
                 foundMove = true;
                 break;
             }
@@ -201,11 +199,11 @@ public class GameModel {
     public List<Move> getLegalMoves(char color) {
         List<Move> result = new ArrayList<>(40);
 
-        Collection<BoardModel.PieceHolder> relevantPieces = color == 'w' ? board.getWhitePieces().values() : board.getBlackPieces().values();
+        Collection<Piece> relevantPieces = color == 'w' ? board.getWhitePieces() : board.getBlackPieces();
 
-        for (BoardModel.PieceHolder piece: relevantPieces) {
-            if (piece.getPiece() != null) {
-                result.addAll(piece.getPiece().updateLegalMoves(board, getLastMove()));
+        for (Piece piece: relevantPieces) {
+            if (piece != null) {
+                result.addAll(piece.updateLegalMoves(board, getLastMove()));
             }
         }
 
