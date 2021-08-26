@@ -110,7 +110,7 @@ public class Square {
      * @param color the color of potential attacker
      * @return if there exists at least one attacker of the given color
      */
-    public boolean isAttacked(char color) {
+    public boolean isAttackedBy(char color) {
         return color == 'w' ? whiteAttackers.size() > 0 : blackAttackers.size() > 0;
     }
 

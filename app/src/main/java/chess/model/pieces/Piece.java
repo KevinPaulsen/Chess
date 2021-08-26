@@ -150,4 +150,8 @@ public abstract class Piece {
             }
         }
     }
+
+    protected char oppositeColor() {
+        return color == 'w' ? 'b' : 'w';
+    }
 }

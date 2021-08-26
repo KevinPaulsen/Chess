@@ -63,15 +63,14 @@ public class King extends Piece {
             moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
         }
 
-        // TODO: Castling Logic
         return moves;
     }
 
     private boolean canCastle(BoardModel board, Direction direction) {
         ChessCoordinate searchCoord = direction.next(coordinate);
         for (int offset = 0; offset < (direction == RIGHT ? 2 : 3); offset++, searchCoord = direction.next(searchCoord)) {
-            // FIXME: castle left should be able to castle if last square is attacked
-            if (board.getPieceOn(searchCoord) != null && !board.getSquare(searchCoord).isAttacked(color == 'w' ? 'b' : 'w')) {
+            if (board.getPieceOn(searchCoord) != null && (offset == 2
+                    || !board.getSquare(searchCoord).isAttackedBy(oppositeColor()))) {
                 return false;
             }
         }
