@@ -7,15 +7,11 @@ import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 public class BoardModel {
-
-    private static final boolean DEBUG_MODE = false;
 
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Square[][] squareArray;
@@ -120,18 +116,6 @@ public class BoardModel {
 
     public Set<Square> getSquaresToUpdate() {
         return squaresToUpdate;
-    }
-
-    public void addAttacker(Piece piece, ChessCoordinate coordinate) {
-        squareArray[coordinate.getFile()][coordinate.getRank()].addAttacker(piece);
-    }
-
-    public boolean kingInCheck(char color) {
-        if (color == 'w') {
-            return getSquare(whiteKing.getCoordinate()).numAttackers('b') == 0;
-        } else {
-            return getSquare(blackKing.getCoordinate()).numAttackers('w') == 0;
-        }
     }
 
     public Piece getPieceOn(ChessCoordinate coordinate) {
@@ -257,10 +241,6 @@ public class BoardModel {
         return blackKing;
     }
 
-    public static ChessCoordinate[][] getChessCoordinates() {
-        return CHESS_COORDINATES;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -292,18 +272,6 @@ public class BoardModel {
             }
             System.out.println();
         }
-    }
-
-    private int countPieces() {
-        int count = 0;
-        for (Square[] file : squareArray) {
-            for (Square square : file) {
-                if (square.getPiece() != null) {
-                    count++;
-                }
-            }
-        }
-        return count;
     }
 
     public Square getSquare(ChessCoordinate coordinate) {
