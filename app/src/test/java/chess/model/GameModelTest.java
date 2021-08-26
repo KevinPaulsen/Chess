@@ -38,11 +38,11 @@ public class GameModelTest {
                 Piece piece = square.getPiece();
                 if (piece != null) {
                     if (piece instanceof Pawn) {
-                        assertEquals("Pawn on " + piece.getCoordinate() + "has wrong number of moves", 2, piece.getSudoLegalMoves().size());
+                        assertEquals("Pawn on " + piece.getCoordinate() + "has wrong number of moves", 2, piece.updateLegalMoves(gameModel.getBoard(), gameModel.getLastMove()).size());
                     } else if (piece instanceof Knight) {
-                        assertEquals("Knight on " + piece.getCoordinate() + "has wrong number of moves", 2, piece.getSudoLegalMoves().size());
+                        assertEquals("Knight on " + piece.getCoordinate() + "has wrong number of moves", 2, piece.updateLegalMoves(gameModel.getBoard(), gameModel.getLastMove()).size());
                     } else {
-                        assertEquals("Piece on " + piece.getCoordinate() + "has wrong number of moves", 0, piece.getSudoLegalMoves().size());
+                        assertEquals("Piece on " + piece.getCoordinate() + "has wrong number of moves", 0, piece.updateLegalMoves(gameModel.getBoard(), gameModel.getLastMove()).size());
                     }
                 }
             }

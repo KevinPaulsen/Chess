@@ -32,7 +32,7 @@ public class GameModel {
     public GameModel(GameModel gameModel) {
         this.board = new BoardModel(gameModel.getBoard());
         this.moveHistory = new ArrayList<>(gameModel.moveHistory);
-        moveHistory.replaceAll(Move::new);
+        //moveHistory.replaceAll(Move::new);
         this.turn = gameModel.getTurn();
         this.isOver = gameModel.isOver;
         this.winner = gameModel.winner;
@@ -52,13 +52,15 @@ public class GameModel {
         for (BoardModel.PieceHolder pieceHolder : board.getBlackPieces().values()) {
             Piece piece = pieceHolder.getPiece();
             if (piece != null) {
-                piece.updateAttacking(this);
+                // FIXME: updateAttacking dependency
+                //piece.updateAttacking(this);
             }
         }
         for (BoardModel.PieceHolder pieceHolder : board.getWhitePieces().values()) {
             Piece piece = pieceHolder.getPiece();
             if (piece != null) {
-                piece.updateAttacking(this);
+                // FIXME: UID dependency
+                //piece.updateAttacking(this);
             }
         }
     }
@@ -77,7 +79,6 @@ public class GameModel {
      * @return weather or not the move was successful.
      */
     public boolean move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
-        checkRep();
         boolean didMove = false;
 
         // Check that moves are both on screen.
@@ -85,7 +86,7 @@ public class GameModel {
             Move currentMove = null;
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
-                for (Move move : movingPiece.getSudoLegalMoves()) {
+                for (Move move : movingPiece.updateLegalMoves(board, getLastMove())) {
                     if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
                         currentMove = move;
                         break;
@@ -112,9 +113,10 @@ public class GameModel {
 
         if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
+            updateAfterMove(move);
             moveHistory.add(move);
             turn = (turn == 'w') ? 'b' : 'w';
-            checkGameOver(turn == 'w');
+            //checkGameOver(turn == 'w');
             didMove = true;
         }
 
@@ -122,12 +124,45 @@ public class GameModel {
         return didMove;
     }
 
+    private void updateAfterMove(Move move) {
+        board.getSquare(move.getEndingCoordinate()).update(this);
+        board.getSquare(move.getStartingCoordinate()).update(this);
+
+        updatePossiblePawn(move.getStartingCoordinate());
+        updatePossiblePawn(move.getEndingCoordinate());
+
+        if (move.getInteractingPiece() != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+            board.getSquare(move.getInteractingPieceStart()).update(this);
+            board.getSquare(move.getInteractingPieceEnd()).update(this);
+            updatePossiblePawn(move.getStartingCoordinate());
+            updatePossiblePawn(move.getEndingCoordinate());
+        }
+    }
+
+    private void updatePossiblePawn(ChessCoordinate coordinate) {
+        Piece piece1 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() + 2));
+        Piece piece2 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() + 1));
+        Piece piece3 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() - 1));
+        Piece piece4 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() - 2));
+
+        // FIXME: What is this?
+        /*if (piece1 instanceof Pawn && piece1.getColor() == 'b') {
+            piece1.updateAttacking(this);
+        } else if (piece2 instanceof Pawn && piece2.getColor() == 'b') {
+            piece2.updateAttacking(this);
+        } else if (piece3 instanceof Pawn && piece3.getColor() == 'w') {
+            piece3.updateAttacking(this);
+        } else if (piece4 instanceof Pawn && piece4.getColor() == 'w') {
+            piece4.updateAttacking(this);
+        }//*/
+    }
+
     private void checkGameOver(final boolean isWhitesMove) {
         King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
         boolean foundMove = false;
         Collection<BoardModel.PieceHolder> relevantPieces = isWhitesMove ? board.getWhitePieces().values() : board.getBlackPieces().values();
         for (BoardModel.PieceHolder piece : relevantPieces) {
-            if (piece.getPiece() != null && !piece.getPiece().getLegalMoves(this).isEmpty()) {
+            if (piece.getPiece() != null && !piece.getPiece().updateLegalMoves(board, getLastMove()).isEmpty()) {
                 foundMove = true;
                 break;
             }
@@ -170,7 +205,7 @@ public class GameModel {
 
         for (BoardModel.PieceHolder piece: relevantPieces) {
             if (piece.getPiece() != null) {
-                result.addAll(piece.getPiece().getLegalMoves(this));
+                result.addAll(piece.getPiece().updateLegalMoves(board, getLastMove()));
             }
         }
 

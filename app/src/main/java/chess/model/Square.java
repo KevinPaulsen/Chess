@@ -30,7 +30,8 @@ public class Square {
     private static Set<Piece> copyAttackers(Set<Piece> attackers) {
         Set<Piece> copiedAttackers = new HashSet<>();
         for (Piece piece : attackers) {
-            copiedAttackers.add(Piece.clone(piece));
+            // FIXME: Clone does not exits
+            //copiedAttackers.add(Piece.clone(piece));
         }
         return copiedAttackers;
     }
@@ -58,7 +59,18 @@ public class Square {
     }
 
     public void update(GameModel game) {
-        piece.updateAttacking(game);
+        //FIXME: UpdateAttacking dependency
+        /*
+        if (piece != null) {
+            piece.updateAttacking(game);
+        }
+
+        for (Piece piece : Set.copyOf(whiteAttackers)) {
+            piece.updateAttacking(game);
+        }
+        for (Piece piece : Set.copyOf(blackAttackers)) {
+            piece.updateAttacking(game);
+        }//*/
     }
 
     public int numAttackers(char color) {
@@ -90,6 +102,16 @@ public class Square {
             attacker = relevantAttackers.iterator().next();
         }
         return attacker;
+    }
+
+    /**
+     * Returns true if the given color is attacking this square at least once.
+     *
+     * @param color the color of potential attacker
+     * @return if there exists at least one attacker of the given color
+     */
+    public boolean isAttacked(char color) {
+        return color == 'w' ? whiteAttackers.size() > 0 : blackAttackers.size() > 0;
     }
 
     public boolean isAttacking(Piece piece) {

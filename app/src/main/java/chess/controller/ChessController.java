@@ -61,15 +61,17 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
 
-            futureAIMove = CompletableFuture.runAsync(() -> {
-                if (AI_ON && gameModel.move(chessAI.getBestMove(gameModel))) {
-                    view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
-                    view.pack();
-                }
-            }).exceptionally(ex -> {
-                ex.printStackTrace();
-                return null;
-            });//*/
+            if (AI_ON) {
+                futureAIMove = CompletableFuture.runAsync(() -> {
+                    if (gameModel.move(chessAI.getBestMove(gameModel))) {
+                        view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
+                        view.pack();
+                    }
+                }).exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return null;
+                });//*/
+            }
         }
         view.pack();
     }
@@ -104,7 +106,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         }
 
         if (e.getButton() == MouseEvent.BUTTON3 && gameModel.getBoard().getPieceOn(endCoordinate) != null) {
-            System.out.println(gameModel.getBoard().getPieceOn(endCoordinate).getLegalMoves(gameModel));
+            System.out.println(gameModel.getBoard().getPieceOn(endCoordinate).updateLegalMoves(gameModel.getBoard(), gameModel.getLastMove()));
         }
     }
 

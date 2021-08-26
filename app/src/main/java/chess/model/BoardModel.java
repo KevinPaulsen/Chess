@@ -92,8 +92,30 @@ public class BoardModel {
             } else {
                 movePiece(move.getMovingPiece(), move.getEndingCoordinate(), 1);
             }
+
+            if (pawnMovesTwice(move)) {
+                updateEnPassant((Pawn) move.getMovingPiece(), move.getMovingPiece().getColor());
+            }
         }
         checkRep();
+    }
+
+    private void updateEnPassant(Pawn pawn, char color) {
+        ChessCoordinate coordinate1 = BoardModel.getChessCoordinate(pawn.getCoordinate().getFile() + 1, pawn.getCoordinate().getRank());
+        ChessCoordinate coordinate2 = BoardModel.getChessCoordinate(pawn.getCoordinate().getFile() - 1, pawn.getCoordinate().getRank());
+        Piece piece1 = getPieceOn(coordinate1);
+        Piece piece2 = getPieceOn(coordinate2);
+
+        if (piece1 instanceof Pawn && piece1.getColor() != color) {
+            // FIXME
+            //((Pawn) piece1).addEnPassant(pawn.getCoordinate().getFile(), pawn);
+        }
+    }
+
+    private boolean pawnMovesTwice(Move move) {
+        return move.getMovingPiece() instanceof Pawn
+                && Math.abs(move.getStartingCoordinate().getRank()
+                - move.getEndingCoordinate().getRank()) == 2;
     }
 
     public void undoMove(Move move) {
@@ -137,19 +159,21 @@ public class BoardModel {
     }
 
     private void addPiece(Piece piece, ChessCoordinate coordinate, int movesToAdd) {
-        if (piece != null && coordinate != null) {
+        // FIXME: UID dependency
+        /*if (piece != null && coordinate != null) {
             squareArray[coordinate.getFile()][coordinate.getRank()].setPiece(piece);
-            piece.moveTo(squaresToUpdate, coordinate, movesToAdd);
+            piece.moveTo(coordinate, movesToAdd);
             if (piece.getColor() == 'w') {
                 whitePieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
             } else {
                 blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(piece);
             }
-        }
+        }//*/
     }
 
     private void removePiece(Piece piece) {
-        if (piece != null) {
+        // FIXME: UID dependency
+        /*if (piece != null) {
             if (piece.getCoordinate() == null || getPieceOn(piece.getCoordinate()) != piece) {
                 throw new IllegalStateException("Piece Data is out of sync.");
             }
@@ -160,8 +184,9 @@ public class BoardModel {
             } else {
                 blackPieces.get(Integer.toString(piece.getUniqueIdentifier())).setPiece(null);
             }
-            piece.moveTo(squaresToUpdate, null, 0);
-        }
+            piece.moveTo(null, 0);
+            // TODO: update pieces
+        }//*/
     }
 
     public void movePiece(Piece piece, ChessCoordinate endCoordinate, int movesToAdd) {
@@ -186,7 +211,8 @@ public class BoardModel {
     }
 
     private void initPieces() {
-        for (Square[] file : squareArray) {
+        // FIXME: UID dependency
+        /*for (Square[] file : squareArray) {
             for (Square square : file) {
                 Piece piece = square.getPiece();
                 if (piece != null) {
@@ -204,7 +230,7 @@ public class BoardModel {
                     }
                 }
             }
-        }
+        }//*/
     }
 
     public Map<String, PieceHolder> getWhitePieces() {
@@ -261,7 +287,8 @@ public class BoardModel {
     }
 
     private void checkRep() {
-        if (DEBUG_MODE) {
+        // FIXME: UID dependency
+        /*if (DEBUG_MODE) {
             if (squareArray == null || whitePieces == null || blackPieces == null || whiteKing == null || blackKing == null) {
                 throw new RuntimeException("Representation is incorrect.");
             }
@@ -276,7 +303,7 @@ public class BoardModel {
                     }
                 }
             }
-        }
+        }//*/
     }
 
     private int countPieces() {

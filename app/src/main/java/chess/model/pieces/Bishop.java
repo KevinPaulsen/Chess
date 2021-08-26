@@ -2,9 +2,8 @@ package chess.model.pieces;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.GameModel;
+import chess.model.BoardModel;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,42 +23,26 @@ public class Bishop extends Piece {
      */
     public Bishop(char color, ChessCoordinate coordinate) {
         super(color, coordinate);
-        movementRules.addAll(getMovementRules());
     }
 
     /**
-     * Constructs a piece from the given piece. The UID of this
-     * piece will be the same as the piece given.
+     * Returns the set of all legal moves this piece can make.
      *
-     * @param piece the piece to create this piece with
+     * @param board    the board this piece is on.
+     * @param lastMove the last made move.
+     * @return the set of all legal moves this piece can make.
      */
-    public Bishop(Piece piece) {
-        super(piece);
-        movementRules.addAll(getMovementRules());
-    }
-
     @Override
-    protected Move makeMove(GameModel gameModel, ChessCoordinate coordinate) {
-        Direction direction = Direction.getNormalDirectionTo(this.coordinate, coordinate);
+    public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
+        moves.clear();
+        attackingCoords.clear();
 
-        if (direction != null && direction.isDiagonal()) {
-            STANDARD_MOVE_MAKER.getMove(coordinate, coordinate, gameModel, Pawn.QUEEN_PROMOTION);
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns the movement rules of this Bishop.
-     *
-     * @return the set of movement rules of this Bishop.
-     */
-    private static Set<MovementRule> getMovementRules() {
-        Set<MovementRule> movementRules = new HashSet<>();
         for (Direction direction : Directions.DIAGONALS.directions) {
-            movementRules.add(new MovementRule(direction, LONG_MOVING_MAX, STANDARD_MOVE_MAKER));
+            for (ChessCoordinate coordinate : getOpenCoordinatesInDirection(board, direction)) {
+                addMove(board, coordinate);
+            }
         }
-        return Collections.unmodifiableSet(movementRules);
+        return moves;
     }
 
     @Override

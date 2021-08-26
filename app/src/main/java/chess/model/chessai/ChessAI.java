@@ -130,9 +130,9 @@ public class ChessAI {
         unorderedList.sort((Move move1, Move move2) -> {
             int score;
             if (maximizingPlayer) {
-                score = move1.valueScore(gameModel) - move2.valueScore(gameModel);
+                score = 0;//move1.valueScore(gameModel) - move2.valueScore(gameModel);
             } else {
-                score = move2.valueScore(gameModel) - move1.valueScore(gameModel);
+                score = 0;//move2.valueScore(gameModel) - move1.valueScore(gameModel);
             }//*/
             return score;
         });
