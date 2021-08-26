@@ -49,7 +49,7 @@ public class Pawn extends Piece {
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
         moves.clear();
-        attackingCoords.clear();
+        clearAttacking(board);
 
         // Straight Moving Moves
         ChessCoordinate nextCoordinate = straightMove.next(coordinate);
@@ -68,6 +68,8 @@ public class Pawn extends Piece {
         addCapture(board, captureLeft, lastMove);
         addCapture(board, captureRight, lastMove);
 
+        // TODO: promotion
+
         return moves;
     }
 
@@ -80,15 +82,19 @@ public class Pawn extends Piece {
      */
     private void addCapture(BoardModel board, Direction direction, Move lastMove) {
         ChessCoordinate nextCoord = direction.next(coordinate);
-        Piece piece = board.getPieceOn(nextCoord);
-        attackingCoords.add(nextCoord);
+        if (nextCoord != null) {
+            Piece piece = board.getPieceOn(nextCoord);
 
-        if (piece != null && piece.color != color) {
-            moves.add(new Move(nextCoord, this, null, piece));
-        }
+            attackingCoords.add(nextCoord);
+            board.getSquare(nextCoord).addAttacker(this);
 
-        if (canPassant(lastMove, direction.getRun())) {
-            moves.add(new Move(nextCoord, this, null, lastMove.getMovingPiece()));
+            if (piece != null && piece.color != color) {
+                moves.add(new Move(nextCoord, this, null, piece));
+            }
+
+            if (canPassant(lastMove, direction.getRun())) {
+                moves.add(new Move(nextCoord, this, null, lastMove.getMovingPiece()));
+            }
         }
     }
 

@@ -38,6 +38,10 @@ public class BoardModel {
         initPieces();
     }
 
+    /**
+     * TODO: FIX THIS
+     * @param boardModel
+     */
     public BoardModel(BoardModel boardModel) {
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();

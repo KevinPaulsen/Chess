@@ -106,7 +106,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         }
 
         if (e.getButton() == MouseEvent.BUTTON3 && gameModel.getBoard().getPieceOn(endCoordinate) != null) {
-            System.out.println(gameModel.getBoard().getPieceOn(endCoordinate).updateLegalMoves(gameModel.getBoard(), gameModel.getLastMove()));
+            System.out.println(gameModel.getBoard().getPieceOn(endCoordinate).getMoves());
         }
     }
 

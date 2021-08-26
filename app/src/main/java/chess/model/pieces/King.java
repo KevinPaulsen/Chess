@@ -43,7 +43,7 @@ public class King extends Piece {
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
         moves.clear();
-        attackingCoords.clear();
+        clearAttacking(board);
 
         for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
             ChessCoordinate coordinate = direction.next(getCoordinate());

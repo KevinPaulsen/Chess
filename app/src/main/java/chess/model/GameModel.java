@@ -2,36 +2,84 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.Move;
+import chess.model.pieces.Direction;
+import chess.model.pieces.Directions;
 import chess.model.pieces.King;
+import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
+/**
+ * This class represents the model for a standard chess game. This
+ * class is responsible for game rules and managing all the parts of
+ * the chess game.
+ */
 public class GameModel {
 
+    /**
+     * Toggle for if check rep should be called.
+     */
     private static final boolean DEBUG_MODE = false;
 
+    /**
+     * The model for the bard of the chess game.
+     */
     private final BoardModel board;
+
+    /**
+     * The list of past moves that have occurred in this chess game.
+     */
     private final List<Move> moveHistory;
 
+    /**
+     * This set of all pieces that need to be updated. This gets cleared and
+     * updated at the end of each move.
+     */
+    private final Set<Piece> piecesToUpdate;
+
+    /**
+     * The tracker for which players turn it is to move.
+     */
     private char turn;
+
+    /**
+     * The flag for when the game is over.
+     */
     private boolean isOver;
+
+    /**
+     * The tracer for which player has won, this field is uninitialized
+     * until a winner has won.
+     */
     private char winner;
 
+    /**
+     * The default constructor that creates a normal game.
+     */
     public GameModel() {
         this.board = ChessBoardFactory.createNormalBoard();
         this.turn = 'w';
         this.moveHistory = new ArrayList<>();
+        this.piecesToUpdate = new HashSet<>();
         initPieces();
         checkRep();
     }
 
+    /**
+     * TODO: FIX THIS
+     *
+     * @param gameModel
+     */
     public GameModel(GameModel gameModel) {
         this.board = new BoardModel(gameModel.getBoard());
         this.moveHistory = new ArrayList<>(gameModel.moveHistory);
+        this.piecesToUpdate = new HashSet<>(gameModel.piecesToUpdate);
         //moveHistory.replaceAll(Move::new);
         this.turn = gameModel.getTurn();
         this.isOver = gameModel.isOver;
@@ -40,14 +88,10 @@ public class GameModel {
         checkRep();
     }
 
-    public GameModel(BoardModel board) {
-        this.board = board;
-        this.turn = 'w';
-        this.moveHistory = new ArrayList<>();
-        initPieces();
-        checkRep();
-    }
-
+    /**
+     * Initializes all the pieces. This method linearly goes through
+     * each piece and ensures all the piece-board data is properly set.
+     */
     private void initPieces() {
         for (Piece piece : board.getBlackPieces()) {
             if (piece != null) {
@@ -61,6 +105,9 @@ public class GameModel {
         }
     }
 
+    /**
+     * @return the board model of this game.
+     */
     public BoardModel getBoard() {
         return board;
     }
@@ -120,39 +167,75 @@ public class GameModel {
         return didMove;
     }
 
+    /**
+     * Update add and update all the relevant pieces after a move has occurred.
+     *
+     * @param move the move that just occurred
+     */
     private void updateAfterMove(Move move) {
-        initPieces();
-        /*
-        board.getSquare(move.getEndingCoordinate()).update(this);
-        board.getSquare(move.getStartingCoordinate()).update(this);
+        // Update moving piece beginning and end square
+        piecesToUpdate.addAll(getPiecesToAdd(move.getStartingCoordinate()));
+        piecesToUpdate.addAll(getPiecesToAdd(move.getEndingCoordinate()));
 
-        updatePossiblePawn(move.getStartingCoordinate());
-        updatePossiblePawn(move.getEndingCoordinate());
+        // Update interacting piece beginning and end square
+        piecesToUpdate.addAll(getPiecesToAdd(move.getInteractingPieceStart()));
+        piecesToUpdate.addAll(getPiecesToAdd(move.getInteractingPieceEnd()));
 
-        if (move.getInteractingPiece() != null && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
-            board.getSquare(move.getInteractingPieceStart()).update(this);
-            board.getSquare(move.getInteractingPieceEnd()).update(this);
-            updatePossiblePawn(move.getStartingCoordinate());
-            updatePossiblePawn(move.getEndingCoordinate());
-        }//*/
+        // Update black and white king square
+        piecesToUpdate.add(board.getWhiteKing());
+        piecesToUpdate.add(board.getBlackKing());
+
+        // Check if there are any pawns that need to be updated
+        List<Pawn> pawnUpdate = new ArrayList<>();
+        if (move.getMovingPiece() instanceof Pawn) {
+            for (Direction direction : Directions.STRAIGHTS.directions) {
+                Pawn pawn = checkAndAddPawn(move.getEndingCoordinate(), direction);
+                if (pawn != null) {
+                    pawnUpdate.add(pawn);
+                }
+            }
+        }
+
+        // Update each piece, then clear the set of piece to update, then add all possible pawns.
+        piecesToUpdate.forEach(piece -> piece.updateLegalMoves(board, getLastMove()));
+        piecesToUpdate.clear();
+        piecesToUpdate.addAll(pawnUpdate);
     }
 
-    private void updatePossiblePawn(ChessCoordinate coordinate) {
-        Piece piece1 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() + 2));
-        Piece piece2 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() + 1));
-        Piece piece3 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() - 1));
-        Piece piece4 = board.getPieceOn(BoardModel.getChessCoordinate(coordinate.getFile(), coordinate.getRank() - 2));
+    /**
+     * Return the set of pieces to update associated with a particular square.
+     *
+     * @param coordinate the coordinate to get pieces to update from.
+     * @return the set of pieces to update.
+     */
+    private Set<Piece> getPiecesToAdd(ChessCoordinate coordinate) {
+        if (coordinate == null) {
+            return Set.of();
+        }
+        Square square = board.getSquare(coordinate);
+        Set<Piece> attackers = square.getAttackers();
+        if (square.getPiece() != null) {
+            attackers.add(square.getPiece());
+        }
 
-        // FIXME: What is this?
-        /*if (piece1 instanceof Pawn && piece1.getColor() == 'b') {
-            piece1.updateAttacking(this);
-        } else if (piece2 instanceof Pawn && piece2.getColor() == 'b') {
-            piece2.updateAttacking(this);
-        } else if (piece3 instanceof Pawn && piece3.getColor() == 'w') {
-            piece3.updateAttacking(this);
-        } else if (piece4 instanceof Pawn && piece4.getColor() == 'w') {
-            piece4.updateAttacking(this);
-        }//*/
+        return attackers;
+    }
+
+    /**
+     * Look for a pawn in the given direction. If there is a pawn,
+     * add it to pieces to update and return the pawn.
+     *
+     * @param coordinate the coordinate to look from.
+     * @param direction the direction to look in.
+     * @return the pawn found or null if no pawn is found.
+     */
+    private Pawn checkAndAddPawn(ChessCoordinate coordinate, Direction direction) {
+        Piece possiblePawn = board.getPieceOn(direction.next(coordinate));
+        if (possiblePawn instanceof Pawn) {
+            piecesToUpdate.add(possiblePawn);
+            return (Pawn) possiblePawn;
+        }
+        return null;
     }
 
     private void checkGameOver(final boolean isWhitesMove) {
@@ -192,7 +275,7 @@ public class GameModel {
 
     private void updateSquares() {
         for (Square square : board.getSquaresToUpdate()) {
-            square.update(this);
+            square.update(board, getLastMove());
         }
     }
 

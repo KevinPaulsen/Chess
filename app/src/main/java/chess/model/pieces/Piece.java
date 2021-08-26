@@ -3,7 +3,6 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
-import chess.model.GameModel;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -85,13 +84,6 @@ public abstract class Piece {
     }
 
     /**
-     * @return the number of times this piece has moved
-     */
-    public int getTimesMoved() {
-        return timesMoved;
-    }
-
-    /**
      * @return the coordinate this piece is on
      */
     public ChessCoordinate getCoordinate() {
@@ -134,7 +126,8 @@ public abstract class Piece {
     }
 
     /**
-     * Generates and adds the move associated with the given coordinate.
+     * Generates and adds the move associated with the given coordinate. It
+     * also adds the coordinate to the square and adds this piece as an attacker.
      *
      * @param board the board this piece is on.
      * @param coordinate the coordinate this piece is on.
@@ -142,6 +135,8 @@ public abstract class Piece {
     protected void addMove(BoardModel board, ChessCoordinate coordinate) {
         if (coordinate != null) {
             attackingCoords.add(coordinate);
+            board.getSquare(coordinate).addAttacker(this);
+
             Piece endPiece = board.getPieceOn(coordinate);
             if (endPiece == null) {
                 moves.add(new Move(coordinate, this));
@@ -151,6 +146,22 @@ public abstract class Piece {
         }
     }
 
+    /**
+     * Clears the set of attacking coordinates, and removes this piece from
+     * the square attacking list.
+     *
+     * @param board the board this piece is on.
+     */
+    protected void clearAttacking(BoardModel board) {
+        for (ChessCoordinate coordinate : attackingCoords) {
+            board.getSquare(coordinate).removeAttacker(this);
+        }
+        attackingCoords.clear();
+    }
+
+    /**
+     * @return the opposite color of this piece.
+     */
     protected char oppositeColor() {
         return color == 'w' ? 'b' : 'w';
     }

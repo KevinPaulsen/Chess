@@ -36,7 +36,7 @@ public class Rook extends Piece {
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
         moves.clear();
-        attackingCoords.clear();
+        clearAttacking(board);
 
         for (Direction direction : Directions.STRAIGHTS.directions) {
             for (ChessCoordinate coordinate : getOpenCoordinatesInDirection(board, direction)) {
