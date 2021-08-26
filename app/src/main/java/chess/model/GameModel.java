@@ -158,9 +158,15 @@ public class GameModel {
             board.move(move);
             moveHistory.add(move);
             updateAfterMove(move);
-            turn = (turn == 'w') ? 'b' : 'w';
-            //checkGameOver(turn == 'w');
-            didMove = true;
+
+            if (legalPosition()) {
+                turn = (turn == 'w') ? 'b' : 'w';
+                didMove = true;
+            } else {
+                board.undoMove(move);
+                moveHistory.remove(move);
+                updateAfterMove(move);
+            }
         }
 
         checkRep();
@@ -187,12 +193,10 @@ public class GameModel {
 
         // Check if there are any pawns that need to be updated
         List<Pawn> pawnUpdate = new ArrayList<>();
-        if (move.getMovingPiece() instanceof Pawn) {
-            for (Direction direction : Directions.STRAIGHTS.directions) {
-                Pawn pawn = checkAndAddPawn(move.getEndingCoordinate(), direction);
-                if (pawn != null) {
-                    pawnUpdate.add(pawn);
-                }
+        for (Direction direction : Directions.STRAIGHTS.directions) {
+            Pawn pawn = checkAndAddPawn(move.getEndingCoordinate(), direction);
+            if (move.getMovingPiece() instanceof Pawn && pawn != null) {
+                pawnUpdate.add(pawn);
             }
         }
 
@@ -236,6 +240,15 @@ public class GameModel {
             return (Pawn) possiblePawn;
         }
         return null;
+    }
+
+    /**
+     * @return weather the current position is legal to end on. If it is not, then
+     *         false is returned. Otherwise true is returned.
+     */
+    private boolean legalPosition() {
+        King relevantKing = (turn == 'w') ? board.getWhiteKing() : board.getBlackKing();
+        return !relevantKing.isAttacked(board);
     }
 
     private void checkGameOver(final boolean isWhitesMove) {

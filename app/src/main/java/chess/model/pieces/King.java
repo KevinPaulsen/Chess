@@ -3,6 +3,7 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
+import chess.model.Square;
 
 import java.util.Set;
 
@@ -79,6 +80,10 @@ public class King extends Piece {
                 && potentialRook.color == color
                 && potentialRook.timesMoved == 0
                 && timesMoved == 0;
+    }
+
+    public boolean isAttacked(BoardModel board) {
+        return board.getSquare(coordinate).isAttackedBy(oppositeColor());
     }
 
     @Override

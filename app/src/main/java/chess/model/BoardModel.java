@@ -99,12 +99,6 @@ public class BoardModel {
         }
     }
 
-    private boolean pawnMovesTwice(Move move) {
-        return move.getMovingPiece() instanceof Pawn
-                && Math.abs(move.getStartingCoordinate().getRank()
-                - move.getEndingCoordinate().getRank()) == 2;
-    }
-
     public void undoMove(Move move) {
         if (move != null) {
             if (move.doesPromote()) {
@@ -188,7 +182,7 @@ public class BoardModel {
                     throw new IllegalStateException("Attempted to remove piece that was not held.");
                 }
             }
-            piece.moveTo(null, 0);
+            piece.removeFrom(this);
         }
     }
 

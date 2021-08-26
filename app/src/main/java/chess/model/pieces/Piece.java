@@ -15,6 +15,8 @@ import java.util.Set;
  */
 public abstract class Piece {
 
+    private static int PIECE_COUNT = 0;
+
     /**
      * The color of this Piece
      */
@@ -40,6 +42,8 @@ public abstract class Piece {
      */
     protected final Set<ChessCoordinate> attackingCoords;
 
+    private final int UID;
+
     /**
      * Constructs a new Piece with the given color and on the given coordinate.
      *
@@ -50,6 +54,8 @@ public abstract class Piece {
         this.color = color;
         this.timesMoved = 0;
         this.coordinate = coordinate;
+        this.UID = PIECE_COUNT;
+        PIECE_COUNT++;
         moves = new HashSet<>();
         attackingCoords = new HashSet<>();
     }
@@ -90,19 +96,23 @@ public abstract class Piece {
         return coordinate;
     }
 
+    public void removeFrom(BoardModel board) {
+        moves.clear();
+        clearAttacking(board);
+        coordinate = null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Piece)) return false;
         Piece piece = (Piece) o;
-        return color == piece.color
-                && timesMoved == piece.timesMoved
-                && Objects.equals(coordinate, piece.coordinate);
+        return UID == piece.UID;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(color, timesMoved, coordinate);
+        return Objects.hash(UID);
     }
 
     /**
