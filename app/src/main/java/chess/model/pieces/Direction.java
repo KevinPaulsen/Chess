@@ -47,6 +47,20 @@ public class Direction {
         return next;
     }
 
+    /**
+     * @return the rise of this direction
+     */
+    public int getRise() {
+        return rise;
+    }
+
+    /**
+     * @return the run of this direction
+     */
+    public int getRun() {
+        return run;
+    }
+
     private static int scaleToOne(int num) {
         return num == 0 ? 0 : num / Math.abs(num);
     }

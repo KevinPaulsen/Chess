@@ -64,14 +64,32 @@ public class Pawn extends Piece {
             }
         }
 
-        // Left Capture
-        addMove(board, captureLeft.next(coordinate));
+        // Diagonal Captures.
+        addCapture(board, captureLeft, lastMove);
+        addCapture(board, captureRight, lastMove);
 
-        // Right Capture
-        addMove(board, captureRight.next(coordinate));
-
-        // TODO: EnPassant
         return moves;
+    }
+
+    /**
+     * Checks to see if a capture is possible in the given direction. If it is,
+     * it adds the move to the available captures.
+     *
+     * @param board the boardModel this piece is on.
+     * @param direction the direction to check captures.
+     */
+    private void addCapture(BoardModel board, Direction direction, Move lastMove) {
+        ChessCoordinate nextCoord = direction.next(coordinate);
+        Piece piece = board.getPieceOn(nextCoord);
+        attackingCoords.add(nextCoord);
+
+        if (piece != null && piece.color != color) {
+            moves.add(new Move(nextCoord, this, null, piece));
+        }
+
+        if (canPassant(lastMove, direction.getRun())) {
+            moves.add(new Move(nextCoord, this, null, lastMove.getMovingPiece()));
+        }
     }
 
     /**
@@ -82,12 +100,16 @@ public class Pawn extends Piece {
      * @return if we can take EnPassant
      */
     private boolean canPassant(Move lastMove, int direction) {
-        return lastMove != null && lastMove.getMovingPiece() instanceof Pawn
-                && lastMove.getMovingPiece().color != color
-                && lastMove.getEndingCoordinate().equals(BoardModel
-                .getChessCoordinate(coordinate.getFile() + direction, coordinate.getRank()))
-                && Math.abs(lastMove.getStartingCoordinate().getRank()
+        if (lastMove == null) {
+            return false;
+        }
+        boolean pawnMovedLast = lastMove.getMovingPiece() instanceof Pawn;
+        boolean pieceIsOpposingColor = lastMove.getMovingPiece().color != color;
+        boolean pieceIsNextToThis = lastMove.getEndingCoordinate().equals(BoardModel
+                .getChessCoordinate(coordinate.getFile() + direction, coordinate.getRank()));
+        boolean pieceMovedTwoSpaces = Math.abs(lastMove.getStartingCoordinate().getRank()
                 - lastMove.getEndingCoordinate().getRank()) == 2;
+        return pawnMovedLast && pieceIsOpposingColor && pieceIsNextToThis && pieceMovedTwoSpaces;
     }
 
     @Override
