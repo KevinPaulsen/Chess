@@ -4,6 +4,7 @@ import chess.Move;
 import chess.model.pieces.Knight;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
@@ -76,7 +77,76 @@ public class GameModelTest {
     };
 
     @Test
-    public void moveAndUndo() {
+    public void testStartingPositionDepth0() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 0);
+        Assert.assertEquals("Wrong number of nodes found.", 1, numPositions);
+    }
+
+    @Test
+    public void testStartingPositionDepth1() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 1);
+        Assert.assertEquals("Wrong number of nodes found.", 20, numPositions);
+    }
+
+    @Test
+    public void testStartingPositionDepth2() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 2);
+        Assert.assertEquals("Wrong number of nodes found.", 400, numPositions);
+    }
+
+    @Test
+    public void testStartingPositionDepth3() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 3);
+        Assert.assertEquals("Wrong number of nodes found.", 8902, numPositions);
+    }
+
+    @Test
+    public void testStartingPositionDepth4() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 4);
+        Assert.assertEquals("Wrong number of nodes found.", 197_281, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth0() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
+        int numPositions = countNumPositions(game, 0);
+        Assert.assertEquals("Wrong number of nodes found.", 1, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth1() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
+        int numPositions = countNumPositions(game, 1);
+        Assert.assertEquals("Wrong number of nodes found.", 44, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth2() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
+        int numPositions = countNumPositions(game, 2);
+        Assert.assertEquals("Wrong number of nodes found.", 1_486, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth3() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
+        int numPositions = countNumPositions(game, 3);
+        Assert.assertEquals("Wrong number of nodes found.", 62_379, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth4() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
+        int numPositions = countNumPositions(game, 4);
+        Assert.assertEquals("Wrong number of nodes found.", 2_103_487, numPositions);
+    }
+
+    public static void main() {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
 
         game.move(BoardModel.getChessCoordinate(0, 1), BoardModel.getChessCoordinate(0, 3));
@@ -92,11 +162,7 @@ public class GameModelTest {
         System.out.println("" + (end - start) + " ms");
     }
 
-    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
-    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/P7/1PP1NnPP/RNBQK2R b KQ - 0 8
-    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/P7/1PP1N1PP/RNBnK2R w KQ - 0 9
-
-    public int countNumPositions1(GameModel game, int depth) {
+    public static int countNumPositions1(GameModel game, int depth) {
         System.out.println();
         int sum = 0;
         for (Move move : List.copyOf(game.getLegalMoves(game.getTurn()))) {
@@ -108,14 +174,12 @@ public class GameModelTest {
             }
         }
 
-        int test = 9_329;
-
         System.out.println();
         return sum;
 
     }
 
-    private int countNumPositions(GameModel game, int depth) {
+    private static int countNumPositions(GameModel game, int depth) {
         if (depth <= 0) {
             return 1;
         }
