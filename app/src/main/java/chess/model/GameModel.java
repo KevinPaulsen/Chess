@@ -173,12 +173,28 @@ public class GameModel {
         return didMove;
     }
 
+    public void undoMove(Move move) {
+        checkRep();
+        if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
+            board.undoMove(move);
+            moveHistory.remove(moveHistory.size() - 1);
+            turn = (turn == 'w') ? 'b' : 'w';
+            isOver = false;
+            winner = 'N';
+            updateAfterMove(move);
+        }
+        checkRep();
+    }
+
     /**
      * Update add and update all the relevant pieces after a move has occurred.
      *
      * @param move the move that just occurred
      */
     private void updateAfterMove(Move move) {
+        if (move.toString().equals("bxa4") && !piecesToUpdate.isEmpty()) {
+            System.out.println("bxa4");
+        }
         // Update moving piece beginning and end square
         piecesToUpdate.addAll(getPiecesToAdd(move.getStartingCoordinate()));
         piecesToUpdate.addAll(getPiecesToAdd(move.getEndingCoordinate()));
@@ -192,15 +208,17 @@ public class GameModel {
         piecesToUpdate.add(board.getBlackKing());
 
         // Check if there are any pawns that need to be updated due to blockage
-        updateRelevantPawns(move.getStartingCoordinate());
-        updateRelevantPawns(move.getEndingCoordinate());
+        for (Direction direction : Directions.VERTICAL.directions) {
+            checkDirectionForPawn(move.getStartingCoordinate(), direction, 2);
+            checkDirectionForPawn(move.getEndingCoordinate(), direction, 2);
+        }
 
         // Check if a pawn needs to be updated due to EnPassant possibilities
         List<Pawn> pawnUpdate = new ArrayList<>();
-        if (move.getMovingPiece() instanceof Pawn) {
+        if (getLastMove() != null && getLastMove().getMovingPiece() instanceof Pawn) {
             for (Direction direction : Directions.LATERAL.directions) {
-                Pawn pawn = checkDirectionForPawn(move.getEndingCoordinate(), direction);
-                if (pawn != null) {
+                Pawn pawn = checkDirectionForPawn(getLastMove().getEndingCoordinate(), direction, 1);
+                if (pawn != null && (pawn.canPassant(getLastMove(), 1) || pawn.canPassant(getLastMove(), -1))) {
                     pawnUpdate.add(pawn);
                 }
             }
@@ -239,19 +257,15 @@ public class GameModel {
      * @param direction the direction to look in.
      * @return the pawn found or null if no pawn is found.
      */
-    private Pawn checkDirectionForPawn(ChessCoordinate coordinate, Direction direction) {
-        Piece possiblePawn = board.getPieceOn(direction.next(coordinate));
-        if (possiblePawn instanceof Pawn) {
-            piecesToUpdate.add(possiblePawn);
-            return (Pawn) possiblePawn;
+    private Pawn checkDirectionForPawn(ChessCoordinate coordinate, Direction direction, int distance) {
+        for (int offset = 0; offset < distance; offset++, coordinate = direction.next(coordinate)) {
+            Piece possiblePawn = board.getPieceOn(direction.next(coordinate));
+            if (possiblePawn instanceof Pawn) {
+                piecesToUpdate.add(possiblePawn);
+                return (Pawn) possiblePawn;
+            }
         }
         return null;
-    }
-
-    private void updateRelevantPawns(ChessCoordinate coordinate) {
-        for (Direction direction : Directions.VERTICAL.directions) {
-            checkDirectionForPawn(coordinate, direction);
-        }
     }
 
     /**
@@ -286,30 +300,8 @@ public class GameModel {
         }
     }
 
-    public void undoMove(Move move) {
-        checkRep();
-        if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
-            board.undoMove(move);
-            moveHistory.remove(moveHistory.size() - 1);
-            turn = (turn == 'w') ? 'b' : 'w';
-            isOver = false;
-            winner = 'N';
-        }
-        checkRep();
-    }
-
     public List<Move> getLegalMoves(char color) {
-        List<Move> result = new ArrayList<>(40);
-
-        Collection<Piece> relevantPieces = color == 'w' ? board.getWhitePieces() : board.getBlackPieces();
-
-        for (Piece piece: relevantPieces) {
-            if (piece != null) {
-                result.addAll(piece.updateLegalMoves(board, getLastMove()));
-            }
-        }
-
-        return result;
+        return color == 'w' ? board.getWhiteMoves() : board.getBlackMoves();
     }
 
     public Move cloneMove(Move move) {

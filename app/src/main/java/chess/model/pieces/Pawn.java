@@ -55,6 +55,9 @@ public class Pawn extends Piece {
         ChessCoordinate nextCoordinate = straightMove.next(coordinate);
 
         if (board.getPieceOn(nextCoordinate) == null) {
+            if (nextCoordinate == null) {
+                System.out.println("oof");
+            }
             if (nextCoordinate.getRank() % 7 == 0) {
                 addAllPromotions(nextCoordinate, null);
             } else {
@@ -122,7 +125,7 @@ public class Pawn extends Piece {
      * @param direction the direction we are attempting to take EnPassant
      * @return if we can take EnPassant
      */
-    private boolean canPassant(Move lastMove, int direction) {
+    public boolean canPassant(Move lastMove, int direction) {
         if (lastMove == null) {
             return false;
         }

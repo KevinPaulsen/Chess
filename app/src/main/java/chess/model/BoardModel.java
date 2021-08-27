@@ -6,8 +6,10 @@ import chess.model.pieces.King;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -23,13 +25,13 @@ public class BoardModel {
      * This is the set of all possible moves white can make. These moves are
      * 'sudo-legal' because they do not account for king checks.
      */
-    private final Set<Move> whiteMoves;
+    private final List<Move> whiteMoves;
 
     /**
      * This is the set of all possible moves black can make. These moves are
      * 'sudo-legal' because they do not account for king checks.
      */
-    private final Set<Move> blackMoves;
+    private final List<Move> blackMoves;
 
     private King whiteKing;
     private King blackKing;
@@ -40,8 +42,8 @@ public class BoardModel {
         this.squareArray = makeSquareArray(pieceArray);
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
-        this.whiteMoves = new HashSet<>();
-        this.blackMoves = new HashSet<>();
+        this.whiteMoves = new ArrayList<>();
+        this.blackMoves = new ArrayList<>();
         initPieces();
     }
 
@@ -53,8 +55,8 @@ public class BoardModel {
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
         this.squareArray = boardModel.cloneArray();
-        this.whiteMoves = new HashSet<>();
-        this.blackMoves = new HashSet<>();
+        this.whiteMoves = new ArrayList<>();
+        this.blackMoves = new ArrayList<>();
         initPieces();
     }
 
@@ -92,7 +94,8 @@ public class BoardModel {
     public void move(Move move) {
         if (move != null) {
             if (getPieceOn(move.getEndingCoordinate()) != null
-                    && !move.getInteractingPieceStart().equals(move.getEndingCoordinate())) {
+                    && (move.getInteractingPieceStart() == null
+                    || !move.getInteractingPieceStart().equals(move.getEndingCoordinate()))) {
                 throw new IllegalStateException("This move cannot exist");
             }
 
@@ -282,11 +285,11 @@ public class BoardModel {
         }
     }
 
-    public Set<Move> getWhiteMoves() {
+    public List<Move> getWhiteMoves() {
         return whiteMoves;
     }
 
-    public Set<Move> getBlackMoves() {
+    public List<Move> getBlackMoves() {
         return blackMoves;
     }
 
