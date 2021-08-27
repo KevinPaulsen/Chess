@@ -42,7 +42,7 @@ public class Queen extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearMoves(board.getSudoLegalMoves());
+        clearMoves(board);
         clearAttacking(board);
 
         for (Direction direction : Directions.ALL_DIRECTIONS.directions) {

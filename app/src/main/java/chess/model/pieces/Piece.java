@@ -110,7 +110,7 @@ public abstract class Piece {
      * @param board the board this piece is to be removed from.
      */
     public void removeFrom(BoardModel board) {
-        clearMoves(board.getSudoLegalMoves());
+        clearMoves(board);
         clearAttacking(board);
         coordinate = null;
     }
@@ -180,13 +180,21 @@ public abstract class Piece {
         attackingCoords.clear();
     }
 
-    protected void clearMoves(Set<Move> sudoLegalMoves) {
-        moves.forEach(sudoLegalMoves::remove);
+    protected void clearMoves(BoardModel board) {
+        if (color == 'w') {
+            moves.forEach(board.getWhiteMoves()::remove);
+        } else {
+            moves.forEach(board.getBlackMoves()::remove);
+        }
         moves.clear();
     }
 
     protected void syncMoves(BoardModel board) {
-        board.getSudoLegalMoves().addAll(moves);
+        if (color == 'w') {
+            board.getWhiteMoves().addAll(moves);
+        } else {
+            board.getBlackMoves().addAll(moves);
+        }
     }
 
     /**
