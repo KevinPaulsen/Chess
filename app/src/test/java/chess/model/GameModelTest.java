@@ -53,45 +53,59 @@ public class GameModelTest {
         }
     }
 
-    private final static int[][] TEST_BOARD = {
+    private final static int[][] TEST_BOARD_1 = {
+            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY, EMPTY},
+            {EMPTY, EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, B_PAWN, B_KING},
+            {W_KING, EMPTY, EMPTY, W_PAWN, EMPTY, B_PAWN, EMPTY, EMPTY},
+            {W_ROOK, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, W_PAWN, B_PAWN, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, B_KNIGHT, EMPTY, B_BISHOP, EMPTY, B_PAWN, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, W_PAWN, W_KNIGHT, EMPTY, B_ROOK, EMPTY},
+    };
+
+    private final static int[][] TEST_BOARD_2 = {
             {W_ROOK, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_ROOK},
-            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KNIGHT},
-            {W_BISHOP, W_PAWN, W_KNIGHT, EMPTY, EMPTY, EMPTY, B_PAWN, B_BISHOP},
-            {W_QUEEN, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_QUEEN},
-            {W_KING, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KING},
-            {W_BISHOP, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_BISHOP},
             {W_KNIGHT, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KNIGHT},
+            {W_BISHOP, W_PAWN, EMPTY, W_BISHOP, EMPTY, B_PAWN, EMPTY, B_BISHOP},
+            {W_QUEEN, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, W_PAWN, B_QUEEN},
+            {W_KING, W_KNIGHT, EMPTY, EMPTY, EMPTY, EMPTY, B_BISHOP, EMPTY},
+            {EMPTY, B_KNIGHT, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KING},
+            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY},
             {W_ROOK, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_ROOK},
     };
 
-
-
     @Test
     public void moveAndUndo() {
-        GameModel game = new GameModel();
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2, true, false), 'w');
 
-        game.move(BoardModel.getChessCoordinate(1, 0), BoardModel.getChessCoordinate(2, 2));
-        game.move(BoardModel.getChessCoordinate(4, 6), BoardModel.getChessCoordinate(4, 5));
-        game.move(BoardModel.getChessCoordinate(2, 2), BoardModel.getChessCoordinate(3, 4));
+        game.move(BoardModel.getChessCoordinate(0, 1), BoardModel.getChessCoordinate(0, 3));
+        game.move(BoardModel.getChessCoordinate(0, 6), BoardModel.getChessCoordinate(0, 5));
+        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(3, 3));
+        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(4, 2));
 
         long start = System.currentTimeMillis();
 
-        System.out.println("Positions: " + countNumPositions1(game, 1));
+        System.out.println("Positions: " + countNumPositions1(game, 3));
 
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }
-    //position fen rnbqkbnr/pppp1ppp/4p3/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 1 1
+
+    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
+    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/P7/1PP1NnPP/RNBQK2R b KQ - 0 8
+    // rnbq1k1r/pp1Pbppp/2p5/8/2B5/P7/1PP1N1PP/RNBnK2R w KQ - 0 9
 
     public int countNumPositions1(GameModel game, int depth) {
         System.out.println();
         int sum = 0;
         for (Move move : List.copyOf(game.getLegalMoves(game.getTurn()))) {
-            game.move(move);
-            int num = countNumPositions(game, depth - 1);
-            System.out.println(move.toString() + ": " + num);
-            sum += num;
-            game.undoMove(move);
+            if (game.move(move)) {
+                int num = countNumPositions(game, depth - 1);
+                System.out.println(move.toString() + ": " + num);
+                sum += num;
+                game.undoMove(move);
+            }
         }
 
         int test = 9_329;
@@ -107,9 +121,10 @@ public class GameModelTest {
         }
         int sum = 0;
         for (Move move : List.copyOf(game.getLegalMoves(game.getTurn()))) {
-            game.move(move);
-            sum += countNumPositions(game, depth - 1);
-            game.undoMove(move);
+            if (game.move(move)) {
+                sum += countNumPositions(game, depth - 1);
+                game.undoMove(move);
+            }
         }
         return sum;
     }

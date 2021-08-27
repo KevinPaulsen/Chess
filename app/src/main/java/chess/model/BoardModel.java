@@ -38,13 +38,24 @@ public class BoardModel {
 
     private static final ChessCoordinate[][] CHESS_COORDINATES = createChessCoordinates();
 
-    public BoardModel(Piece[][] pieceArray) {
+    public BoardModel(Piece[][] pieceArray, boolean whiteCastle, boolean blackCastle) {
         this.squareArray = makeSquareArray(pieceArray);
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
         this.whiteMoves = new ArrayList<>();
         this.blackMoves = new ArrayList<>();
         initPieces();
+
+        if (!whiteCastle) {
+            ChessCoordinate coordinate = whiteKing.getCoordinate();
+            removePiece(whiteKing);
+            addPiece(whiteKing, coordinate, 1);
+        }
+        if (!blackCastle) {
+            ChessCoordinate coordinate = blackKing.getCoordinate();
+            removePiece(blackKing);
+            addPiece(blackKing, coordinate, 1);
+        }
     }
 
     /**
@@ -165,7 +176,7 @@ public class BoardModel {
         if (piece != null) {
             if (piece.getCoordinate() == null || getPieceOn(piece.getCoordinate()) != piece) {
                 throw new IllegalStateException("Piece Data is out of sync.");
-            }
+            }//*/
 
             squareArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()].setPiece(null);
             if (piece.getColor() == 'w') {

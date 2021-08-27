@@ -3,6 +3,7 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
+import chess.model.ChessBoardFactory;
 
 import java.util.Set;
 
@@ -68,18 +69,28 @@ public class King extends Piece {
     }
 
     private boolean canCastle(BoardModel board, Direction direction) {
+        if (timesMoved > 0 || board.getSquare(coordinate).isAttackedBy(oppositeColor())) {
+            return false;
+        }
+
+        boolean canCastle = true;
         ChessCoordinate searchCoord = direction.next(coordinate);
-        for (int offset = 0; offset < (direction == RIGHT ? 2 : 3); offset++, searchCoord = direction.next(searchCoord)) {
-            if (board.getPieceOn(searchCoord) != null && (offset == 2
-                    || !board.getSquare(searchCoord).isAttackedBy(oppositeColor()))) {
-                return false;
+
+        for (int offset = 1;
+             searchCoord != null;
+             searchCoord = direction.next(searchCoord), offset++) {
+
+            Piece pieceOnCoord = board.getPieceOn(searchCoord);
+            if (pieceOnCoord != null) {
+                break;
+            }
+            if (offset <= 2 && board.getSquare(searchCoord).isAttackedBy(oppositeColor())) {
+                canCastle = false;
+                break;
             }
         }
-        Piece potentialRook = board.getPieceOn(searchCoord);
-        return potentialRook instanceof Rook
-                && potentialRook.color == color
-                && potentialRook.timesMoved == 0
-                && timesMoved == 0;
+        Piece piece = board.getPieceOn(searchCoord);
+        return canCastle && piece instanceof Rook && piece.color == color && piece.timesMoved == 0;
     }
 
     public boolean isAttacked(BoardModel board) {

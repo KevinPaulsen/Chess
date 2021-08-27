@@ -71,10 +71,18 @@ public class GameModel {
         checkRep();
     }
 
+    public GameModel(BoardModel board, char turn) {
+        this.board = board;
+        this.turn = turn;
+        this.moveHistory = new ArrayList<>();
+        this.piecesToUpdate = new HashSet<>();
+
+        initPieces();
+        checkRep();
+    }
+
     /**
      * TODO: FIX THIS
-     *
-     * @param gameModel
      */
     public GameModel(GameModel gameModel) {
         this.board = new BoardModel(gameModel.getBoard());
@@ -192,9 +200,6 @@ public class GameModel {
      * @param move the move that just occurred
      */
     private void updateAfterMove(Move move) {
-        if (move.toString().equals("bxa4") && !piecesToUpdate.isEmpty()) {
-            System.out.println("bxa4");
-        }
         // Update moving piece beginning and end square
         piecesToUpdate.addAll(getPiecesToAdd(move.getStartingCoordinate()));
         piecesToUpdate.addAll(getPiecesToAdd(move.getEndingCoordinate()));

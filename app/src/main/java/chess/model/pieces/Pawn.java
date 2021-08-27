@@ -55,16 +55,13 @@ public class Pawn extends Piece {
         ChessCoordinate nextCoordinate = straightMove.next(coordinate);
 
         if (board.getPieceOn(nextCoordinate) == null) {
-            if (nextCoordinate == null) {
-                System.out.println("oof");
-            }
             if (nextCoordinate.getRank() % 7 == 0) {
                 addAllPromotions(nextCoordinate, null);
             } else {
                 moves.add(new Move(nextCoordinate, this));
             }
 
-            if (timesMoved == 0) {
+            if (canMoveTwice()) {
                 nextCoordinate = straightMove.next(nextCoordinate);
                 if (board.getPieceOn(nextCoordinate) == null) {
                     moves.add(new Move(nextCoordinate, this));
@@ -76,10 +73,13 @@ public class Pawn extends Piece {
         addCapture(board, captureLeft, lastMove);
         addCapture(board, captureRight, lastMove);
 
-        // TODO: promotion
-
         syncMoves(board);
         return moves;
+    }
+
+    private boolean canMoveTwice() {
+        return (color == 'w' && coordinate.getRank() == 1)
+                || (color == 'b' && coordinate.getRank() == 6);
     }
 
     private void addAllPromotions(ChessCoordinate coordinate, Piece capturedPiece) {

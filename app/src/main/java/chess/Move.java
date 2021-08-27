@@ -10,6 +10,8 @@ import java.util.Objects;
  */
 public class Move {
 
+    private static int currentMove = 0;
+
     /**
      * The coordinate the piece starts on.
      */
@@ -45,6 +47,8 @@ public class Move {
      * The piece the moving piece gets promoted to.
      */
     private final Piece promotedPiece;
+
+    private final int moveNumber;
 
     /**
      * Creates a move that does not capture or do anything special.
@@ -99,6 +103,8 @@ public class Move {
         this.interactingPieceEnd = interactingPieceEnd;
         this.interactingPiece = interactingPiece;
         this.promotedPiece = promotedPiece;
+        this.moveNumber = currentMove;
+        currentMove++;
     }
 
     /**
@@ -196,17 +202,11 @@ public class Move {
         if (this == o) return true;
         if (!(o instanceof Move)) return false;
         Move move = (Move) o;
-        return Objects.equals(startingCoordinate, move.startingCoordinate)
-                && Objects.equals(endingCoordinate, move.endingCoordinate)
-                && Objects.equals(movingPiece, move.movingPiece)
-                && Objects.equals(interactingPieceStart, move.interactingPieceStart)
-                && Objects.equals(interactingPieceEnd, move.interactingPieceEnd)
-                && Objects.equals(interactingPiece, move.interactingPiece)
-                && Objects.equals(promotedPiece, move.promotedPiece);
+        return moveNumber == move.moveNumber && Objects.equals(startingCoordinate, move.startingCoordinate) && Objects.equals(endingCoordinate, move.endingCoordinate) && Objects.equals(movingPiece, move.movingPiece) && Objects.equals(interactingPieceStart, move.interactingPieceStart) && Objects.equals(interactingPieceEnd, move.interactingPieceEnd) && Objects.equals(interactingPiece, move.interactingPiece) && Objects.equals(promotedPiece, move.promotedPiece);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd, interactingPiece, promotedPiece);
+        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd, interactingPiece, promotedPiece, moveNumber);
     }
 }
