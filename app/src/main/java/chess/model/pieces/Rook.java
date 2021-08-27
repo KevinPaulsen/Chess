@@ -28,6 +28,16 @@ public class Rook extends Piece {
     }
 
     /**
+     * Creates a Rook from a pawn. This is used for promotion. The UID and
+     * all other properties of this piece are the exact same as the given pawn.
+     *
+     * @param pawn the pawn that is promoted.
+     */
+    public Rook(Pawn pawn) {
+        super(pawn);
+    }
+
+    /**
      * Updates the set of all legal moves this piece can make.
      *
      * @param board    the board this piece is on.

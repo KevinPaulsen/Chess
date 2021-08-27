@@ -183,6 +183,11 @@ public class Move {
             result.append(endingCoordinate.toString());
         }
 
+        if (doesPromote()) {
+            result.append("=");
+            result.append(promotedPiece.toString());
+        }
+
         return result.toString();
     }
 

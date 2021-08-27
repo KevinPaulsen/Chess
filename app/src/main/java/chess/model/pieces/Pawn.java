@@ -53,8 +53,13 @@ public class Pawn extends Piece {
 
         // Straight Moving Moves
         ChessCoordinate nextCoordinate = straightMove.next(coordinate);
+
         if (board.getPieceOn(nextCoordinate) == null) {
-            moves.add(new Move(nextCoordinate, this));
+            if (nextCoordinate.getRank() % 7 == 0) {
+                addAllPromotions(nextCoordinate, null);
+            } else {
+                moves.add(new Move(nextCoordinate, this));
+            }
 
             if (timesMoved == 0) {
                 nextCoordinate = straightMove.next(nextCoordinate);
@@ -73,6 +78,13 @@ public class Pawn extends Piece {
         return moves;
     }
 
+    private void addAllPromotions(ChessCoordinate coordinate, Piece capturedPiece) {
+        moves.add(new Move(coordinate, this, null, capturedPiece, new Bishop(this)));
+        moves.add(new Move(coordinate, this, null, capturedPiece, new Knight(this)));
+        moves.add(new Move(coordinate, this, null, capturedPiece, new Rook(this)));
+        moves.add(new Move(coordinate, this, null, capturedPiece, new Queen(this)));
+    }
+
     /**
      * Checks to see if a capture is possible in the given direction. If it is,
      * it adds the move to the available captures.
@@ -89,7 +101,11 @@ public class Pawn extends Piece {
             board.getSquare(nextCoord).addAttacker(this);
 
             if (piece != null && piece.color != color) {
-                moves.add(new Move(nextCoord, this, null, piece));
+                if (nextCoord.getRank() % 7 == 0) {
+                    addAllPromotions(nextCoord, piece);
+                } else {
+                    moves.add(new Move(nextCoord, this, null, piece));
+                }
             }
 
             if (canPassant(lastMove, direction.getRun())) {

@@ -166,6 +166,7 @@ public class GameModel {
                 board.undoMove(move);
                 moveHistory.remove(move);
                 updateAfterMove(move);
+                System.out.println("KING IN CHECK");
             }
         }
 
@@ -191,12 +192,18 @@ public class GameModel {
         piecesToUpdate.add(board.getWhiteKing());
         piecesToUpdate.add(board.getBlackKing());
 
-        // Check if there are any pawns that need to be updated
+        // Check if there are any pawns that need to be updated due to blockage
+        updateRelevantPawns(move.getStartingCoordinate());
+        updateRelevantPawns(move.getEndingCoordinate());
+
+        // Check if a pawn needs to be updated due to EnPassant possibilities
         List<Pawn> pawnUpdate = new ArrayList<>();
-        for (Direction direction : Directions.STRAIGHTS.directions) {
-            Pawn pawn = checkAndAddPawn(move.getEndingCoordinate(), direction);
-            if (move.getMovingPiece() instanceof Pawn && pawn != null) {
-                pawnUpdate.add(pawn);
+        if (move.getMovingPiece() instanceof Pawn) {
+            for (Direction direction : Directions.LATERAL.directions) {
+                Pawn pawn = checkDirectionForPawn(move.getEndingCoordinate(), direction);
+                if (pawn != null) {
+                    pawnUpdate.add(pawn);
+                }
             }
         }
 
@@ -233,13 +240,19 @@ public class GameModel {
      * @param direction the direction to look in.
      * @return the pawn found or null if no pawn is found.
      */
-    private Pawn checkAndAddPawn(ChessCoordinate coordinate, Direction direction) {
+    private Pawn checkDirectionForPawn(ChessCoordinate coordinate, Direction direction) {
         Piece possiblePawn = board.getPieceOn(direction.next(coordinate));
         if (possiblePawn instanceof Pawn) {
             piecesToUpdate.add(possiblePawn);
             return (Pawn) possiblePawn;
         }
         return null;
+    }
+
+    private void updateRelevantPawns(ChessCoordinate coordinate) {
+        for (Direction direction : Directions.VERTICAL.directions) {
+            checkDirectionForPawn(coordinate, direction);
+        }
     }
 
     /**

@@ -42,7 +42,7 @@ public abstract class Piece {
      */
     protected final Set<ChessCoordinate> attackingCoords;
 
-    private final int UID;
+    protected final int uid;
 
     /**
      * Constructs a new Piece with the given color and on the given coordinate.
@@ -54,13 +54,20 @@ public abstract class Piece {
         this.color = color;
         this.timesMoved = 0;
         this.coordinate = coordinate;
-        this.UID = PIECE_COUNT;
+        this.uid = PIECE_COUNT;
         PIECE_COUNT++;
         moves = new HashSet<>();
         attackingCoords = new HashSet<>();
     }
 
-    //public abstract void updateAttacking(GameModel gameModel);
+    protected Piece(Pawn pawn) {
+        this.color = pawn.color;
+        this.timesMoved = pawn.timesMoved;
+        this.coordinate = pawn.coordinate;
+        this.uid = pawn.uid;
+        moves = pawn.moves;
+        attackingCoords = pawn.attackingCoords;
+    }
 
     /**
      * Updates the set of all legal moves this piece can make.
@@ -96,6 +103,11 @@ public abstract class Piece {
         return coordinate;
     }
 
+    /**
+     * Remove this piece from the given board.
+     *
+     * @param board the board this piece is to be removed from.
+     */
     public void removeFrom(BoardModel board) {
         moves.clear();
         clearAttacking(board);
@@ -107,12 +119,12 @@ public abstract class Piece {
         if (this == o) return true;
         if (!(o instanceof Piece)) return false;
         Piece piece = (Piece) o;
-        return UID == piece.UID;
+        return uid == piece.uid;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(UID);
+        return Objects.hash(uid);
     }
 
     /**

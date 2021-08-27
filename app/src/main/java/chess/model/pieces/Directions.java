@@ -26,6 +26,14 @@ public enum Directions {
             new Direction(-2, 1),
             new Direction(-2, -1)
     )),
+    VERTICAL (Set.of(
+            new Direction(1, 0),
+            new Direction(-1, 0)
+    )),
+    LATERAL (Set.of(
+            new Direction(0, 1),
+            new Direction(0, -1)
+    )),
     ALL_DIRECTIONS (Set.of(
             new Direction(1, 1),
             new Direction(1, -1),

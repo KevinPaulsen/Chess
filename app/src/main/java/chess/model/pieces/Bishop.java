@@ -26,6 +26,16 @@ public class Bishop extends Piece {
     }
 
     /**
+     * Creates a Bishop from a pawn. This is used for promotion. The UID and
+     * all other properties of this piece are the exact same as the given pawn.
+     *
+     * @param pawn the pawn that is promoted.
+     */
+    public Bishop(Pawn pawn) {
+        super(pawn);
+    }
+
+    /**
      * Returns the set of all legal moves this piece can make.
      *
      * @param board    the board this piece is on.
