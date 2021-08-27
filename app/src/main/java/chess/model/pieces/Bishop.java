@@ -4,7 +4,6 @@ import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,7 +43,7 @@ public class Bishop extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        moves.clear();
+        clearMoves(board.getSudoLegalMoves());
         clearAttacking(board);
 
         for (Direction direction : Directions.DIAGONALS.directions) {
@@ -52,6 +51,7 @@ public class Bishop extends Piece {
                 addMove(board, coordinate);
             }
         }
+        syncMoves(board);
         return moves;
     }
 

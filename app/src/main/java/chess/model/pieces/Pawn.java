@@ -48,7 +48,7 @@ public class Pawn extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        moves.clear();
+        clearMoves(board.getSudoLegalMoves());
         clearAttacking(board);
 
         // Straight Moving Moves
@@ -75,6 +75,7 @@ public class Pawn extends Piece {
 
         // TODO: promotion
 
+        syncMoves(board);
         return moves;
     }
 

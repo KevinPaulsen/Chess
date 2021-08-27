@@ -3,7 +3,6 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
-import chess.model.Square;
 
 import java.util.Set;
 
@@ -43,7 +42,7 @@ public class King extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        moves.clear();
+        clearMoves(board.getSudoLegalMoves());
         clearAttacking(board);
 
         for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
@@ -64,6 +63,7 @@ public class King extends Piece {
             moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
         }
 
+        syncMoves(board);
         return moves;
     }
 

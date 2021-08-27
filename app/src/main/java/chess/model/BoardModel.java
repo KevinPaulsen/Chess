@@ -19,7 +19,11 @@ public class BoardModel {
     private final Set<Piece> whitePieces;
     private final Set<Piece> blackPieces;
 
-    private final Set<Square> squaresToUpdate;
+    /**
+     * This is the set of all possible moves. These moves are 'sudo-legal' because
+     * they do not account for king checks.
+     */
+    private final Set<Move> sudoLegalMoves;
 
     private King whiteKing;
     private King blackKing;
@@ -30,7 +34,7 @@ public class BoardModel {
         this.squareArray = makeSquareArray(pieceArray);
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
-        this.squaresToUpdate = new HashSet<>();
+        sudoLegalMoves = new HashSet<>();
         initPieces();
     }
 
@@ -42,7 +46,7 @@ public class BoardModel {
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
         this.squareArray = boardModel.cloneArray();
-        this.squaresToUpdate = new HashSet<>();
+        sudoLegalMoves = new HashSet<>();
         initPieces();
     }
 
@@ -112,10 +116,6 @@ public class BoardModel {
                 }
             }
         }
-    }
-
-    public Set<Square> getSquaresToUpdate() {
-        return squaresToUpdate;
     }
 
     public Piece getPieceOn(ChessCoordinate coordinate) {
@@ -272,6 +272,10 @@ public class BoardModel {
             }
             System.out.println();
         }
+    }
+
+    public Set<Move> getSudoLegalMoves() {
+        return sudoLegalMoves;
     }
 
     public Square getSquare(ChessCoordinate coordinate) {

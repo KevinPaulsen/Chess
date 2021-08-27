@@ -3,10 +3,7 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
-import chess.model.GameModel;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,13 +40,14 @@ public class Knight extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        moves.clear();
+        clearMoves(board.getSudoLegalMoves());
         clearAttacking(board);
 
         for (Direction direction : Directions.KNIGHTS.directions) {
             ChessCoordinate coordinate = direction.next(getCoordinate());
             addMove(board, coordinate);
         }
+        syncMoves(board);
         return moves;
     }
 

@@ -166,7 +166,6 @@ public class GameModel {
                 board.undoMove(move);
                 moveHistory.remove(move);
                 updateAfterMove(move);
-                System.out.println("KING IN CHECK");
             }
         }
 
@@ -297,12 +296,6 @@ public class GameModel {
             winner = 'N';
         }
         checkRep();
-    }
-
-    private void updateSquares() {
-        for (Square square : board.getSquaresToUpdate()) {
-            square.update(board, getLastMove());
-        }
     }
 
     public List<Move> getLegalMoves(char color) {

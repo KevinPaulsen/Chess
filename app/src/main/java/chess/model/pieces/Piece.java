@@ -74,6 +74,7 @@ public abstract class Piece {
      *
      * @param board the board this piece is on.
      * @param lastMove the last made move.
+     * @return the set of moves this piece can make.
      */
     public abstract Set<Move> updateLegalMoves(BoardModel board, Move lastMove);
 
@@ -109,7 +110,7 @@ public abstract class Piece {
      * @param board the board this piece is to be removed from.
      */
     public void removeFrom(BoardModel board) {
-        moves.clear();
+        clearMoves(board.getSudoLegalMoves());
         clearAttacking(board);
         coordinate = null;
     }
@@ -175,10 +176,17 @@ public abstract class Piece {
      * @param board the board this piece is on.
      */
     protected void clearAttacking(BoardModel board) {
-        for (ChessCoordinate coordinate : attackingCoords) {
-            board.getSquare(coordinate).removeAttacker(this);
-        }
+        attackingCoords.forEach(coordinate -> board.getSquare(coordinate).removeAttacker(this));
         attackingCoords.clear();
+    }
+
+    protected void clearMoves(Set<Move> sudoLegalMoves) {
+        moves.forEach(sudoLegalMoves::remove);
+        moves.clear();
+    }
+
+    protected void syncMoves(BoardModel board) {
+        board.getSudoLegalMoves().addAll(moves);
     }
 
     /**
