@@ -1,11 +1,11 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.Move;
 import chess.model.BoardModel;
-import chess.model.ChessBoardFactory;
+import com.google.common.collect.ImmutableList;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is an implementation of Piece. This class hold the information
@@ -31,72 +31,37 @@ public class King extends Piece {
      * @param coordinate the given coordinate
      */
     public King(char color, ChessCoordinate coordinate) {
-        super(color, coordinate);
-    }
-
-    /**
-     * Returns the set of all legal moves this piece can make.
-     *
-     * @param board    the board this piece is on.
-     * @param lastMove the last made move.
-     * @return the set of all legal moves this piece can make.
-     */
-    @Override
-    public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearAttacking(board);
-
-        for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
-            ChessCoordinate coordinate = direction.next(getCoordinate());
-            addMove(board, coordinate);
-        }
-
-        if (canCastle(board, RIGHT)) {
-            ChessCoordinate kingEnd = BoardModel.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank());
-            ChessCoordinate rookStart = BoardModel.getChessCoordinate(coordinate.getFile() + 3, coordinate.getRank());
-            ChessCoordinate rookEnd = BoardModel.getChessCoordinate(coordinate.getFile() + 1, coordinate.getRank());
-            moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
-        }
-        if (canCastle(board, LEFT)) {
-            ChessCoordinate kingEnd = BoardModel.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank());
-            ChessCoordinate rookStart = BoardModel.getChessCoordinate(coordinate.getFile() - 4, coordinate.getRank());
-            ChessCoordinate rookEnd = BoardModel.getChessCoordinate(coordinate.getFile() - 1, coordinate.getRank());
-            moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
-        }
-
-        return moves;
-    }
-
-    private boolean canCastle(BoardModel board, Direction direction) {
-        if (timesMoved > 0 || board.getSquare(coordinate).isAttackedBy(oppositeColor())) {
-            return false;
-        }
-
-        boolean canCastle = true;
-        ChessCoordinate searchCoord = direction.next(coordinate);
-
-        for (int offset = 1;
-             searchCoord != null;
-             searchCoord = direction.next(searchCoord), offset++) {
-
-            Piece pieceOnCoord = board.getPieceOn(searchCoord);
-            if (pieceOnCoord != null) {
-                break;
-            }
-            if (offset <= 2 && board.getSquare(searchCoord).isAttackedBy(oppositeColor())) {
-                canCastle = false;
-                break;
-            }
-        }
-        Piece piece = board.getPieceOn(searchCoord);
-        return canCastle && piece instanceof Rook && piece.color == color && piece.timesMoved == 0;
-    }
-
-    public boolean isAttacked(BoardModel board) {
-        return board.getSquare(coordinate).isAttackedBy(oppositeColor());
+        super(generateReachableCoordinates(King::generateReachableCoordsAt), color, coordinate);
     }
 
     @Override
     public String toString() {
         return "K";
+    }
+
+    /**
+     * This method will return a List of Lists of ChessCoordinates. The second list
+     * will always be exactly 10 elements long. The fist 8 are the 8 directions the
+     * king can move. The 9th, is castling King-side, the 10th is castling Queen-side.
+     *
+     * @param coordinate the coordinate the king is at.
+     * @return list of lists of ChessCoordinates that represent the squares the king can move.
+     */
+    @SuppressWarnings("ConstantConditions")
+    private static List<List<ChessCoordinate>> generateReachableCoordsAt(ChessCoordinate coordinate) {
+        List<List<ChessCoordinate>> result = new ArrayList<>();
+
+        for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
+            ChessCoordinate nextCoord = direction.next(coordinate);
+            result.add(nextCoord == null ? List.of() : List.of(nextCoord));
+        }
+
+        // If on castling square
+        if (coordinate.getFile() == 4 && coordinate.getRank() % 7 == 0) {
+            result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank())));
+            result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank())));
+        }
+
+        return ImmutableList.copyOf(result);
     }
 }

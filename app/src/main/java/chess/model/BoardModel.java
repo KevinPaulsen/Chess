@@ -124,7 +124,7 @@ public class BoardModel {
     private void addPiece(Piece piece, ChessCoordinate coordinate, int movesToAdd) {
         if (piece != null && coordinate != null) {
             squareArray[coordinate.getFile()][coordinate.getRank()].setPiece(piece);
-            piece.moveTo(coordinate, movesToAdd);
+            piece.moveTo(coordinate);
             if (piece.getColor() == 'w') {
                 if (!whitePieces.add(piece)) {
                     throw new RuntimeException("This piece already exists on the board.");
@@ -158,7 +158,7 @@ public class BoardModel {
                     throw new IllegalStateException("Attempted to remove piece that was not held.");
                 }
             }
-            piece.removeFrom(this);
+            // FIXME: pieces probably not being removed from sets.
         }
     }
 

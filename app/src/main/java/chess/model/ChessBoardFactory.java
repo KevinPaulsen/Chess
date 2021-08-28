@@ -2,12 +2,14 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.model.pieces.Bishop;
+import chess.model.pieces.BlackPawn;
 import chess.model.pieces.King;
 import chess.model.pieces.Knight;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 import chess.model.pieces.Queen;
 import chess.model.pieces.Rook;
+import chess.model.pieces.WhitePawn;
 
 /**
  * This public class is capable of creating new and custom ChessBoards.
@@ -106,7 +108,7 @@ public class ChessBoardFactory {
         Piece piece = null;
         switch (pieceInt) {
             case W_PAWN:
-                piece = new Pawn('w', coordinate);
+                piece = new WhitePawn('w', coordinate);
                 break;
             case W_ROOK:
                 piece = new Rook('w', coordinate);
@@ -124,7 +126,7 @@ public class ChessBoardFactory {
                 piece = new Queen('w', coordinate);
                 break;
             case B_PAWN:
-                piece = new Pawn('b', coordinate);
+                piece = new BlackPawn('b', coordinate);
                 break;
             case B_ROOK:
                 piece = new Rook('b', coordinate);

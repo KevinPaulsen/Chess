@@ -90,27 +90,6 @@ public class Square {
         return didRemove;
     }
 
-    /**
-     * Updates the legal moves of the piece on this square. It also
-     * updates the legal moves of all the pieces that are attacking this
-     * square.
-     *
-     * @param board
-     * @param lastMove
-     */
-    public void update(BoardModel board, Move lastMove) {
-        if (piece != null) {
-            piece.updateLegalMoves(board, lastMove);
-        }
-
-        for (Piece piece : whiteAttackers) {
-            piece.updateLegalMoves(board, lastMove);
-        }
-        for (Piece piece : blackAttackers) {
-            piece.updateLegalMoves(board, lastMove);
-        }//*/
-    }
-
     public int numAttackers(char color) {
         int isAttacked;
         if (color == 'w') {

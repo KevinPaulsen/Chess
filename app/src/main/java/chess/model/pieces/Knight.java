@@ -1,10 +1,10 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.Move;
-import chess.model.BoardModel;
+import com.google.common.collect.ImmutableList;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is an implementation of Piece. This class implements a Knight Piece that
@@ -19,7 +19,7 @@ public class Knight extends Piece {
      * @param coordinate the coordinate of this knight
      */
     public Knight(char color, ChessCoordinate coordinate) {
-        super(color, coordinate);
+        super(generateReachableCoordinates(Knight::generateReachableCoordsAt), color, coordinate);
     }
 
     /**
@@ -29,28 +29,22 @@ public class Knight extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Knight(Pawn pawn) {
-        super(pawn);
-    }
-
-    /**
-     * Updates the set of all legal moves this piece can make.
-     *
-     * @param board    the board this piece is on.
-     * @param lastMove the last made move.
-     */
-    @Override
-    public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearAttacking(board);
-
-        for (Direction direction : Directions.KNIGHTS.directions) {
-            ChessCoordinate coordinate = direction.next(getCoordinate());
-            addMove(board, coordinate);
-        }
-        return moves;
+        super(pawn, generateReachableCoordinates(Knight::generateReachableCoordsAt));
     }
 
     @Override
     public String toString() {
         return "N";
+    }
+
+    private static List<List<ChessCoordinate>> generateReachableCoordsAt(ChessCoordinate coordinate) {
+        List<List<ChessCoordinate>> result = new ArrayList<>();
+
+        for (Direction direction : Directions.KNIGHTS.directions) {
+            ChessCoordinate nextCoord = direction.next(coordinate);
+            result.add(nextCoord == null ? List.of() : List.of(nextCoord));
+        }
+
+        return ImmutableList.copyOf(result);
     }
 }

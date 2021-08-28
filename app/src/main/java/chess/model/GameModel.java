@@ -130,12 +130,12 @@ public class GameModel {
     private void initPieces() {
         for (Piece piece : board.getBlackPieces()) {
             if (piece != null) {
-                piece.updateLegalMoves(board, getLastMove());
+                // FIXME: get pieces
             }
         }
         for (Piece piece : board.getWhitePieces()) {
             if (piece != null) {
-                piece.updateLegalMoves(board, getLastMove());
+                // FIXME: get pieces
             }
         }
     }
@@ -164,7 +164,7 @@ public class GameModel {
             Move currentMove = null;
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
-                for (Move move : movingPiece.getMoves()) {
+                for (Move move : legalMoves) {
                     if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
                         currentMove = move;
                         break;
@@ -248,14 +248,10 @@ public class GameModel {
         if (getLastMove() != null && getLastMove().getMovingPiece() instanceof Pawn) {
             for (Direction direction : Directions.LATERAL.directions) {
                 Pawn pawn = checkDirectionForPawn(getLastMove().getEndingCoordinate(), direction, 1);
-                if (pawn != null && (pawn.canPassant(getLastMove(), 1) || pawn.canPassant(getLastMove(), -1))) {
-                    pawnUpdate.add(pawn);
-                }
             }
         }
 
         // Update each piece, then clear the set of piece to update, then add all possible pawns.
-        piecesToUpdate.forEach(piece -> piece.updateLegalMoves(board, getLastMove()));
         piecesToUpdate.clear();
         piecesToUpdate.addAll(pawnUpdate);
     }
@@ -304,7 +300,7 @@ public class GameModel {
      */
     private boolean legalPosition() {
         King relevantKing = (turn == 'w') ? board.getWhiteKing() : board.getBlackKing();
-        return !relevantKing.isAttacked(board);
+        return true;
     }
 
     public List<Move> getLegalMoves(char color) {

@@ -1,10 +1,10 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.Move;
-import chess.model.BoardModel;
+import com.google.common.collect.ImmutableList;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is an implementation of Piece. This implementation specifies the
@@ -21,7 +21,7 @@ public class Rook extends Piece {
      * @param coordinate the coordinate of this rook
      */
     public Rook(char color, ChessCoordinate coordinate) {
-        super(color, coordinate);
+        super(generateReachableCoordinates(Rook::generateReachableCoordsAt), color, coordinate);
     }
 
     /**
@@ -31,28 +31,26 @@ public class Rook extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Rook(Pawn pawn) {
-        super(pawn);
-    }
-
-    /**
-     * Updates the set of all legal moves this piece can make.
-     *
-     * @param board    the board this piece is on.
-     * @param lastMove the last made move.
-     */
-    @Override
-    public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearAttacking(board);
-
-        for (Direction direction : Directions.STRAIGHTS.directions) {
-            for (ChessCoordinate coordinate : getOpenCoordinatesInDirection(board, direction)) {
-                addMove(board, coordinate);
-            }
-        }
-        return moves;
+        super(pawn, generateReachableCoordinates(Rook::generateReachableCoordsAt));
     }
 
     public String toString() {
         return "R";
+    }
+
+    private static List<List<ChessCoordinate>> generateReachableCoordsAt(ChessCoordinate coordinate) {
+        List<List<ChessCoordinate>> result = new ArrayList<>();
+
+        for (Direction direction : Directions.STRAIGHTS.directions) {
+            List<ChessCoordinate> ray = new ArrayList<>();
+            for (ChessCoordinate currentCoord = direction.next(coordinate);
+                 currentCoord != null;
+                 currentCoord = direction.next(currentCoord)) {
+                ray.add(currentCoord);
+            }
+            result.add(ImmutableList.copyOf(ray));
+        }
+
+        return ImmutableList.copyOf(result);
     }
 }

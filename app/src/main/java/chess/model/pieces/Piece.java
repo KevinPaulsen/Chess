@@ -1,10 +1,10 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.Move;
 import chess.model.BoardModel;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -15,17 +15,13 @@ import java.util.Set;
  */
 public abstract class Piece {
 
+    /**
+     * The static count of how many pieces have been created. This
+     * is used to uniquely identify each piece.
+     */
     private static int PIECE_COUNT = 0;
 
-    /**
-     * The color of this Piece
-     */
-    protected final char color;
-
-    /**
-     * The number of times this piece has moved, cannot be less than 0.
-     */
-    protected int timesMoved;
+    private final List<List<ChessCoordinate>>[][] reachableCoordinatesMap;
 
     /**
      * The coordinate this piece is at
@@ -33,61 +29,63 @@ public abstract class Piece {
     protected ChessCoordinate coordinate;
 
     /**
-     * The set of moves this piece can make, this is ignoring checks.
+     * The color of this Piece
      */
-    protected final Set<Move> moves;
+    protected final char color;
 
     /**
-     * The set of coordinates this piece is attacking
+     * The unique ID of this piece.
      */
-    protected final Set<ChessCoordinate> attackingCoords;
-
     protected final int uid;
 
     /**
      * Constructs a new Piece with the given color and on the given coordinate.
      *
+     * @param reachableCoordinatesMap the map of reachable coordinates.
      * @param color the color of this Piece.
      * @param coordinate the coordinate of this Piece.
      */
-    public Piece(char color, ChessCoordinate coordinate) {
-        this.color = color;
-        this.timesMoved = 0;
-        this.coordinate = coordinate;
-        this.uid = PIECE_COUNT;
+    protected Piece(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color, ChessCoordinate coordinate) {
+        this(reachableCoordinatesMap, color, coordinate, PIECE_COUNT);
         PIECE_COUNT++;
-        moves = new HashSet<>();
-        attackingCoords = new HashSet<>();
-    }
-
-    protected Piece(Pawn pawn) {
-        this.color = pawn.color;
-        this.timesMoved = pawn.timesMoved;
-        this.coordinate = pawn.coordinate;
-        this.uid = pawn.uid;
-        moves = pawn.moves;
-        attackingCoords = pawn.attackingCoords;
     }
 
     /**
-     * Updates the set of all legal moves this piece can make.
+     * Creates a piece from a pawn. This piece has the same UID as the pawn. This
+     * should only be used for promotion.
      *
-     * @param board the board this piece is on.
-     * @param lastMove the last made move.
-     * @return the set of moves this piece can make.
+     * @param reachableCoordinatesMap the map of reachable coordinates.
+     * @param pawn the pawn that is being promoted.
      */
-    public abstract Set<Move> updateLegalMoves(BoardModel board, Move lastMove);
-
-    /**
-     * @return all the moves this piece can make
-     */
-    public Set<Move> getMoves() {
-        return moves;
+    protected Piece(Pawn pawn, List<List<ChessCoordinate>>[][] reachableCoordinatesMap) {
+        this(reachableCoordinatesMap, pawn.getColor(), pawn.coordinate, pawn.uid);
     }
 
-    public void moveTo(ChessCoordinate coordinate, int movesToAdd) {
+    /**
+     * Constructs a new piece with the given information.
+     *
+     * @param reachableCoordinatesMap the map of reachable coordinates.
+     * @param color the color of this piece.
+     * @param coordinate the coordinate of this piece.
+     * @param uid the unique ID if this piece.
+     */
+    protected Piece(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color,
+                    ChessCoordinate coordinate, int uid) {
+        this.reachableCoordinatesMap = reachableCoordinatesMap;
+        this.color = color;
         this.coordinate = coordinate;
-        this.timesMoved += movesToAdd;
+        this.uid = uid;
+    }
+
+    /**
+     * Returns a list of arrays that represent all the final coordinates that
+     * can be reached from this coordinate. The exact representation of this List
+     * may vary from implementation to implementation.
+     *
+     * @return the list of arrays which are all the final coordinates that can be reached from this position.
+     */
+    public List<List<ChessCoordinate>> getFinalCoordinates() {
+        return reachableCoordinatesMap[coordinate.getFile()][coordinate.getRank()];
     }
 
     /**
@@ -97,21 +95,15 @@ public abstract class Piece {
         return color;
     }
 
+    public void moveTo(ChessCoordinate coordinate) {
+        this.coordinate = coordinate;
+    }
+
     /**
      * @return the coordinate this piece is on
      */
     public ChessCoordinate getCoordinate() {
         return coordinate;
-    }
-
-    /**
-     * Remove this piece from the given board.
-     *
-     * @param board the board this piece is to be removed from.
-     */
-    public void removeFrom(BoardModel board) {
-        clearAttacking(board);
-        coordinate = null;
     }
 
     @Override
@@ -127,62 +119,20 @@ public abstract class Piece {
         return Objects.hash(uid);
     }
 
-    /**
-     * Returns a set of the coordinates in the given direction up to and including the first
-     * obstructing piece.
-     *
-     * @param boardModel the board model this piece is in.
-     * @param direction the direction to get coordinates in.
-     * @return a set of the coordinates in the given direction.
-     */
-    protected Set<ChessCoordinate> getOpenCoordinatesInDirection(BoardModel boardModel, Direction direction) {
-        Set<ChessCoordinate> openCoordinates = new HashSet<>();
-        for (ChessCoordinate nextCoordinate = direction.next(coordinate);
-             nextCoordinate != null; nextCoordinate = direction.next(nextCoordinate)) {
-            openCoordinates.add(nextCoordinate);
-            if (boardModel.getPieceOn(nextCoordinate) != null) {
-                break;
+    @SuppressWarnings("unchecked")
+    protected static List<List<ChessCoordinate>>[][] generateReachableCoordinates(ReachableCoordGenerable generable) {
+        List<List<ChessCoordinate>>[][] result = new List[8][8];
+
+        for (int file = 0; file < result.length; file++) {
+            for (int rank = 0; rank < result[0].length; rank++) {
+                result[file][rank] = generable.generateReachableCoordsAt(BoardModel.getChessCoordinate(file, rank));
             }
         }
-        return openCoordinates;
+
+        return result;
     }
 
-    /**
-     * Generates and adds the move associated with the given coordinate. It
-     * also adds the coordinate to the square and adds this piece as an attacker.
-     *
-     * @param board the board this piece is on.
-     * @param coordinate the coordinate this piece is on.
-     */
-    protected void addMove(BoardModel board, ChessCoordinate coordinate) {
-        if (coordinate != null) {
-            attackingCoords.add(coordinate);
-            board.getSquare(coordinate).addAttacker(this);
-
-            Piece endPiece = board.getPieceOn(coordinate);
-            if (endPiece == null) {
-                moves.add(new Move(coordinate, this));
-            } else if (endPiece.color != color) {
-                moves.add(new Move(coordinate, this, null, endPiece));
-            }
-        }
-    }
-
-    /**
-     * Clears the set of attacking coordinates, and removes this piece from
-     * the square attacking list.
-     *
-     * @param board the board this piece is on.
-     */
-    protected void clearAttacking(BoardModel board) {
-        attackingCoords.forEach(coordinate -> board.getSquare(coordinate).removeAttacker(this));
-        attackingCoords.clear();
-    }
-
-    /**
-     * @return the opposite color of this piece.
-     */
-    protected char oppositeColor() {
-        return color == 'w' ? 'b' : 'w';
+    protected interface ReachableCoordGenerable {
+        List<List<ChessCoordinate>> generateReachableCoordsAt(ChessCoordinate coordinate);
     }
 }
