@@ -226,12 +226,8 @@ public class GameModel {
      */
     private void updateAfterMove(Move move) {
         // Update moving piece beginning and end square
-        piecesToUpdate.addAll(getPiecesToAdd(move.getStartingCoordinate()));
-        piecesToUpdate.addAll(getPiecesToAdd(move.getEndingCoordinate()));
 
         // Update interacting piece beginning and end square
-        piecesToUpdate.addAll(getPiecesToAdd(move.getInteractingPieceStart()));
-        piecesToUpdate.addAll(getPiecesToAdd(move.getInteractingPieceEnd()));
 
         // Update black and white king square
         piecesToUpdate.add(board.getWhiteKing());
@@ -254,25 +250,6 @@ public class GameModel {
         // Update each piece, then clear the set of piece to update, then add all possible pawns.
         piecesToUpdate.clear();
         piecesToUpdate.addAll(pawnUpdate);
-    }
-
-    /**
-     * Return the set of pieces to update associated with a particular square.
-     *
-     * @param coordinate the coordinate to get pieces to update from.
-     * @return the set of pieces to update.
-     */
-    private Set<Piece> getPiecesToAdd(ChessCoordinate coordinate) {
-        if (coordinate == null) {
-            return Set.of();
-        }
-        Square square = board.getSquare(coordinate);
-        Set<Piece> attackers = square.getAttackers();
-        if (square.getPiece() != null) {
-            attackers.add(square.getPiece());
-        }
-
-        return attackers;
     }
 
     /**

@@ -2,7 +2,6 @@ package chess.view;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.Square;
 import chess.model.pieces.Piece;
 
 import javax.swing.JPanel;
@@ -31,7 +30,7 @@ public class ChessBoardView extends JPanel {
      * @param mouseListener the mouseListener for the PieceViews to use.
      * @param motionListener the MouseMotionListener for the PieceViews to use.
      */
-    public ChessBoardView(Square[][] board, MouseListener mouseListener,
+    public ChessBoardView(Piece[][] board, MouseListener mouseListener,
                           MouseMotionListener motionListener) {
         this.setLayout(new OverlayLayout(this));
         squaresPanel = new JPanel(new GridLayout(8, 8));
@@ -94,12 +93,12 @@ public class ChessBoardView extends JPanel {
      * @param mouseListener the MouseListener for the PieceViews to use
      * @param motionListener the MouseMotionListener for the PieceViews to use
      */
-    private void initBoardView(Square[][] board, MouseListener mouseListener,
+    private void initBoardView(Piece[][] board, MouseListener mouseListener,
                                MouseMotionListener motionListener) {
         piecesPanel.setOpaque(false);
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
-                Piece piece = board[file][rank].getPiece();
+                Piece piece = board[file][rank];
                 ChessPieceView pieceView = makePieceView(piece, mouseListener, motionListener);
                 piecesPanel.add(pieceView);
                 squaresPanel.add(makeSquare(rank, file));
@@ -109,11 +108,11 @@ public class ChessBoardView extends JPanel {
         this.add(squaresPanel);
     }
 
-    public void slowUpdateBoard(Square[][] board, MouseListener mouseListener, MouseMotionListener motionListener) {
+    public void slowUpdateBoard(Piece[][] board, MouseListener mouseListener, MouseMotionListener motionListener) {
         piecesPanel.removeAll();
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
-                Piece piece = board[file][rank].getPiece();
+                Piece piece = board[file][rank];
                 ChessPieceView pieceView = makePieceView(piece, mouseListener, motionListener);
                 piecesPanel.add(pieceView);
             }
