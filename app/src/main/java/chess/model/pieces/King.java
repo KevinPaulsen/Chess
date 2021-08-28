@@ -43,7 +43,6 @@ public class King extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearMoves(board);
         clearAttacking(board);
 
         for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
@@ -64,7 +63,6 @@ public class King extends Piece {
             moves.add(new Move(kingEnd, this, rookEnd, board.getPieceOn(rookStart)));
         }
 
-        syncMoves(board);
         return moves;
     }
 

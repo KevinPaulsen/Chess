@@ -6,7 +6,6 @@ import chess.model.pieces.King;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -15,47 +14,23 @@ import java.util.Set;
 
 public class BoardModel {
 
+    private static final ChessCoordinate[][] CHESS_COORDINATES = createChessCoordinates();
+
     // The array the hold all the pieces. They are stored in the format [file][rank]
     private final Square[][] squareArray;
 
     private final Set<Piece> whitePieces;
     private final Set<Piece> blackPieces;
 
-    /**
-     * This is the set of all possible moves white can make. These moves are
-     * 'sudo-legal' because they do not account for king checks.
-     */
-    private final List<Move> whiteMoves;
-
-    /**
-     * This is the set of all possible moves black can make. These moves are
-     * 'sudo-legal' because they do not account for king checks.
-     */
-    private final List<Move> blackMoves;
-
     private King whiteKing;
     private King blackKing;
 
-    private static final ChessCoordinate[][] CHESS_COORDINATES = createChessCoordinates();
 
-    public BoardModel(Piece[][] pieceArray, boolean whiteCastle, boolean blackCastle) {
+    public BoardModel(Piece[][] pieceArray) {
         this.squareArray = makeSquareArray(pieceArray);
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
-        this.whiteMoves = new ArrayList<>();
-        this.blackMoves = new ArrayList<>();
         initPieces();
-
-        if (!whiteCastle) {
-            ChessCoordinate coordinate = whiteKing.getCoordinate();
-            removePiece(whiteKing);
-            addPiece(whiteKing, coordinate, 1);
-        }
-        if (!blackCastle) {
-            ChessCoordinate coordinate = blackKing.getCoordinate();
-            removePiece(blackKing);
-            addPiece(blackKing, coordinate, 1);
-        }
     }
 
     /**
@@ -65,20 +40,8 @@ public class BoardModel {
     public BoardModel(BoardModel boardModel) {
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
-        this.squareArray = boardModel.cloneArray();
-        this.whiteMoves = new ArrayList<>();
-        this.blackMoves = new ArrayList<>();
+        this.squareArray = new Square[8][8];
         initPieces();
-    }
-
-    private Square[][] cloneArray() {
-        Square[][] pieceArray = new Square[this.squareArray.length][this.squareArray.length];
-        for (int file = 0; file < pieceArray.length; file++) {
-            for (int rank = 0; rank < pieceArray.length; rank++) {
-                pieceArray[file][rank] = new Square(this.squareArray[file][rank]);
-            }
-        }
-        return pieceArray;
     }
 
     private Square[][] makeSquareArray(Piece[][] pieceArray) {
@@ -89,10 +52,6 @@ public class BoardModel {
             }
         }
         return squareArray;
-    }
-
-    public Square[][] getPieceArray() {
-        return squareArray.clone();
     }
 
     /**
@@ -121,6 +80,11 @@ public class BoardModel {
         }
     }
 
+    /**
+     * Undoes the given move.
+     *
+     * @param move the move to undo.
+     */
     public void undoMove(Move move) {
         if (move != null) {
             if (move.doesPromote()) {
@@ -140,6 +104,12 @@ public class BoardModel {
         }
     }
 
+    /**
+     * Gets the piece on the given ChessCoordinate.
+     *
+     * @param coordinate the coordinate of the requested piece is at.
+     * @return the piece on the given coordinate.
+     */
     public Piece getPieceOn(ChessCoordinate coordinate) {
         return coordinate == null ? null : squareArray[coordinate.getFile()][coordinate.getRank()].getPiece();
     }
@@ -176,7 +146,7 @@ public class BoardModel {
         if (piece != null) {
             if (piece.getCoordinate() == null || getPieceOn(piece.getCoordinate()) != piece) {
                 throw new IllegalStateException("Piece Data is out of sync.");
-            }//*/
+            }
 
             squareArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()].setPiece(null);
             if (piece.getColor() == 'w') {
@@ -207,20 +177,9 @@ public class BoardModel {
         }
     }
 
-    public static ChessCoordinate getChessCoordinate(int file, int rank) {
-        return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[file][rank] : null;
-    }
-
-    private static ChessCoordinate[][] createChessCoordinates() {
-        ChessCoordinate[][] chessCoordinates = new ChessCoordinate[8][8];
-        for (int file = 0; file < 8; file++) {
-            for (int rank = 0; rank < 8; rank++) {
-                chessCoordinates[file][rank] = new ChessCoordinate(file, rank);
-            }
-        }
-        return chessCoordinates;
-    }
-
+    /**
+     * Initialize the pieces, and local references to the relevant pieces.
+     */
     private void initPieces() {
         for (Square[] file : squareArray) {
             for (Square square : file) {
@@ -244,21 +203,33 @@ public class BoardModel {
                     }
                 }
             }
-        }//*/
+        }
     }
 
+    /**
+     * @return the set of white pieces on this board.
+     */
     public Set<Piece> getWhitePieces() {
         return whitePieces;
     }
 
+    /**
+     * @return the set of black pieces on this board.
+     */
     public Set<Piece> getBlackPieces() {
         return blackPieces;
     }
 
+    /**
+     * @return the reference to the white king.
+     */
     public King getWhiteKing() {
         return whiteKing;
     }
 
+    /**
+     * @return the reference to the black king.
+     */
     public King getBlackKing() {
         return blackKing;
     }
@@ -268,7 +239,9 @@ public class BoardModel {
         if (this == o) return true;
         if (!(o instanceof BoardModel)) return false;
         BoardModel that = (BoardModel) o;
-        return Arrays.equals(squareArray, that.squareArray) && Objects.equals(whiteKing, that.whiteKing) && Objects.equals(blackKing, that.blackKing);
+        return Arrays.equals(squareArray, that.squareArray)
+                && Objects.equals(whiteKing, that.whiteKing)
+                && Objects.equals(blackKing, that.blackKing);
     }
 
     @Override
@@ -278,6 +251,26 @@ public class BoardModel {
         return result;
     }
 
+    /**
+     * @param coordinate the coordinate to get the square from.
+     * @return the square at the given coordinate.
+     */
+    public Square getSquare(ChessCoordinate coordinate) {
+        return squareArray[coordinate.getFile()][coordinate.getRank()];
+    }
+
+    /**
+     * TODO: Remove this function
+     *
+     * @return the 2D array of pieces.
+     */
+    public Square[][] getPieceArray() {
+        return squareArray.clone();
+    }
+
+    /**
+     * Prints the board to the console. Used only for debug purposes.
+     */
     public void printBoard() {
         for (Square[] pieces : squareArray) {
             for (Square square : pieces) {
@@ -296,15 +289,31 @@ public class BoardModel {
         }
     }
 
-    public List<Move> getWhiteMoves() {
-        return whiteMoves;
+    /**
+     * Gets the chess coordinate at the given file and rank. If the requested
+     * coordinate does not exist, null is returned.
+     *
+     * @param file the file of the chess coordinate.
+     * @param rank the rank of the chess coordinate.
+     * @return the coordinate with the requested file and rank.
+     */
+    public static ChessCoordinate getChessCoordinate(int file, int rank) {
+        return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[file][rank] : null;
     }
 
-    public List<Move> getBlackMoves() {
-        return blackMoves;
+    /**
+     * Create a 2D map of the chess coordinates.
+     *
+     * @return the 2D array of chess coordinates.
+     */
+    private static ChessCoordinate[][] createChessCoordinates() {
+        ChessCoordinate[][] chessCoordinates = new ChessCoordinate[8][8];
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                chessCoordinates[file][rank] = new ChessCoordinate(file, rank);
+            }
+        }
+        return chessCoordinates;
     }
 
-    public Square getSquare(ChessCoordinate coordinate) {
-        return squareArray[coordinate.getFile()][coordinate.getRank()];
-    }
 }

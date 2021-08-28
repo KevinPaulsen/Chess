@@ -43,7 +43,6 @@ public class Bishop extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearMoves(board);
         clearAttacking(board);
 
         for (Direction direction : Directions.DIAGONALS.directions) {
@@ -51,7 +50,6 @@ public class Bishop extends Piece {
                 addMove(board, coordinate);
             }
         }
-        syncMoves(board);
         return moves;
     }
 

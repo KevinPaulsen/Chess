@@ -40,14 +40,12 @@ public class Knight extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearMoves(board);
         clearAttacking(board);
 
         for (Direction direction : Directions.KNIGHTS.directions) {
             ChessCoordinate coordinate = direction.next(getCoordinate());
             addMove(board, coordinate);
         }
-        syncMoves(board);
         return moves;
     }
 

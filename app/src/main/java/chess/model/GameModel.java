@@ -9,7 +9,6 @@ import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -44,54 +43,82 @@ public class GameModel {
     private final Set<Piece> piecesToUpdate;
 
     /**
+     * The collection of legal moves that can be made in this game.
+     */
+    private final List<Move> legalMoves;
+
+    /**
      * The tracker for which players turn it is to move.
      */
     private char turn;
 
     /**
-     * The flag for when the game is over.
+     * The current target for an En Passant capture. This is null
+     * if no En Passant is possible.
      */
-    private boolean isOver;
+    private ChessCoordinate enPassantTarget;
 
     /**
-     * The tracer for which player has won, this field is uninitialized
-     * until a winner has won.
+     * The flag for if white can castle king-side.
      */
-    private char winner;
+    private boolean whiteKingCastle;
+
+    /**
+     * The flag for if white can castle queen-side.
+     */
+    private boolean whiteQueenCastle;
+
+    /**
+     * The flag for if black can castle king-side.
+     */
+
+    private boolean blackKingCastle;
+    /**
+     * The flag for if black can castle queen-side.
+     */
+    private boolean blackQueenCastle;
 
     /**
      * The default constructor that creates a normal game.
      */
     public GameModel() {
-        this.board = ChessBoardFactory.createNormalBoard();
-        this.turn = 'w';
-        this.moveHistory = new ArrayList<>();
-        this.piecesToUpdate = new HashSet<>();
-        initPieces();
-        checkRep();
-    }
-
-    public GameModel(BoardModel board, char turn) {
-        this.board = board;
-        this.turn = turn;
-        this.moveHistory = new ArrayList<>();
-        this.piecesToUpdate = new HashSet<>();
-
-        initPieces();
-        checkRep();
+        this(ChessBoardFactory.createNormalBoard(), 'w', true,
+                true, true, true, null);
     }
 
     /**
      * TODO: FIX THIS
      */
+    @SuppressWarnings("all")
     public GameModel(GameModel gameModel) {
-        this.board = new BoardModel(gameModel.getBoard());
-        this.moveHistory = new ArrayList<>(gameModel.moveHistory);
-        this.piecesToUpdate = new HashSet<>(gameModel.piecesToUpdate);
-        //moveHistory.replaceAll(Move::new);
-        this.turn = gameModel.getTurn();
-        this.isOver = gameModel.isOver;
-        this.winner = gameModel.winner;
+        this(null, 'w', false, false, false,
+                false, null);
+    }
+
+    /**
+     * Creates a Game model with all the needed information.
+     *
+     * @param board the board this game model follows.
+     * @param turn the current turn.
+     * @param whiteKingCastle weather white can castle King-side.
+     * @param whiteQueenCastle weather white can castle Queen-side.
+     * @param blackKingCastle weather black can castle King-side.
+     * @param blackQueenCastle weather black can castle Queen-side.
+     * @param enPassantTarget the target coordinate for En Passant.
+     */
+    public GameModel(BoardModel board, char turn, boolean whiteKingCastle, boolean whiteQueenCastle,
+                     boolean blackKingCastle, boolean blackQueenCastle, ChessCoordinate enPassantTarget) {
+        this.board = board;
+        this.turn = turn;
+        this.whiteKingCastle = whiteKingCastle;
+        this.whiteQueenCastle = whiteQueenCastle;
+        this.blackKingCastle = blackKingCastle;
+        this.blackQueenCastle = blackQueenCastle;
+        this.enPassantTarget = enPassantTarget;
+        this.moveHistory = new ArrayList<>();
+        this.legalMoves = new ArrayList<>();
+        this.piecesToUpdate = new HashSet<>();
+
         initPieces();
         checkRep();
     }
@@ -187,8 +214,6 @@ public class GameModel {
             board.undoMove(move);
             moveHistory.remove(moveHistory.size() - 1);
             turn = (turn == 'w') ? 'b' : 'w';
-            isOver = false;
-            winner = 'N';
             updateAfterMove(move);
         }
         checkRep();
@@ -282,31 +307,8 @@ public class GameModel {
         return !relevantKing.isAttacked(board);
     }
 
-    private void checkGameOver(final boolean isWhitesMove) {
-        King relevantKing = isWhitesMove ? board.getWhiteKing() : board.getBlackKing();
-        boolean foundMove = false;
-        Collection<Piece> relevantPieces = isWhitesMove ? board.getWhitePieces() : board.getBlackPieces();
-        for (Piece piece : relevantPieces) {
-            if (piece != null && !piece.updateLegalMoves(board, getLastMove()).isEmpty()) {
-                foundMove = true;
-                break;
-            }
-        }//*/
-        if (foundMove) {
-            isOver = false;
-            winner = 'N';
-        } else {
-            isOver = true;
-            if (board.getSquare(relevantKing.getCoordinate()).numAttackers(isWhitesMove ? 'b' : 'w') != 0) {
-                winner = isWhitesMove ? 'b' : 'w';
-            } else {
-                winner = 's';
-            }
-        }
-    }
-
     public List<Move> getLegalMoves(char color) {
-        return color == 'w' ? board.getWhiteMoves() : board.getBlackMoves();
+        return legalMoves;
     }
 
     public Move cloneMove(Move move) {
@@ -319,20 +321,8 @@ public class GameModel {
         return moveHistory.size() == 0 ? null : moveHistory.get(moveHistory.size() - 1);
     }
 
-    public List<Move> getMoveHistory() {
-        return moveHistory;
-    }
-
     public char getTurn() {
         return turn;
-    }
-
-    public boolean isOver() {
-        return isOver;
-    }
-
-    public char getWinner() {
-        return winner;
     }
 
     @Override

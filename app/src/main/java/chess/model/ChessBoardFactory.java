@@ -60,7 +60,7 @@ public class ChessBoardFactory {
      * @return the ChessBoard with all pieces in their starting positions.
      */
     public static BoardModel createNormalBoard() {
-        return createChessBoard(normalBoard, true, true);
+        return createChessBoard(normalBoard);
     }
 
     /**
@@ -72,12 +72,12 @@ public class ChessBoardFactory {
      * @param board any non-null integer array that is 8x8.
      * @return a ChessBoard from the given 'board'
      */
-    public static BoardModel createChessBoard(int[][] board, boolean whiteCastle, boolean blackCastle) {
+    public static BoardModel createChessBoard(int[][] board) {
         if (board.length != 8 || board[0].length != 8) {
             throw new IllegalArgumentException("Board must be 8x8.");
         }
 
-        return new BoardModel(createSquareArray(board), whiteCastle, blackCastle);
+        return new BoardModel(createSquareArray(board));
     }
 
     /**

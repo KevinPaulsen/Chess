@@ -113,7 +113,8 @@ public class ChessAI {
     }
 
     private Evaluation miniMax(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
-        if (depth == 0 || game.isOver()) {
+        // TODO: Or game over
+        if (depth == 0) {
             return evaluator.evaluate(game);
         }
 

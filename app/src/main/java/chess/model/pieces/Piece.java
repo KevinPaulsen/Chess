@@ -110,7 +110,6 @@ public abstract class Piece {
      * @param board the board this piece is to be removed from.
      */
     public void removeFrom(BoardModel board) {
-        clearMoves(board);
         clearAttacking(board);
         coordinate = null;
     }
@@ -178,23 +177,6 @@ public abstract class Piece {
     protected void clearAttacking(BoardModel board) {
         attackingCoords.forEach(coordinate -> board.getSquare(coordinate).removeAttacker(this));
         attackingCoords.clear();
-    }
-
-    protected void clearMoves(BoardModel board) {
-        if (color == 'w') {
-            moves.forEach(board.getWhiteMoves()::remove);
-        } else {
-            moves.forEach(board.getBlackMoves()::remove);
-        }
-        moves.clear();
-    }
-
-    protected void syncMoves(BoardModel board) {
-        if (color == 'w') {
-            board.getWhiteMoves().addAll(moves);
-        } else {
-            board.getBlackMoves().addAll(moves);
-        }
     }
 
     /**

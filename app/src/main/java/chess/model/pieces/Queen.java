@@ -42,7 +42,6 @@ public class Queen extends Piece {
      */
     @Override
     public Set<Move> updateLegalMoves(BoardModel board, Move lastMove) {
-        clearMoves(board);
         clearAttacking(board);
 
         for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
@@ -50,7 +49,6 @@ public class Queen extends Piece {
                 addMove(board, coordinate);
             }
         }
-        syncMoves(board);
         return moves;
     }
 

@@ -19,20 +19,6 @@ public class PieceValueEvaluator implements Evaluator {
 
     @Override
     public Evaluation evaluate(GameModel game) {
-        if (game.isOver()) {
-            double score = 0;
-            switch (game.getWinner()) {
-                case 'w':
-                    score = 10_000;
-                    break;
-                case 'b':
-                    score = -10_000;
-                    break;
-                case 's':
-                    score = 0;
-            }
-            return new Evaluation(score, 0);
-        }
         int whiteScore = 0;
         int blackScore = 0;
 
