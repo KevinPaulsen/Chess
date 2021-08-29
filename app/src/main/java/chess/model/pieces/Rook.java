@@ -13,6 +13,12 @@ import java.util.List;
 public class Rook extends Piece {
 
     /**
+     * The map of reachable coordinates Rooks can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(Rook::generateReachableCoordsAt);
+
+    /**
      * Creates a new Rook with the given color and placed on the given
      * coordinate. This sets the Movement rules to the movement rules of
      * a rook.
@@ -21,7 +27,7 @@ public class Rook extends Piece {
      * @param coordinate the coordinate of this rook
      */
     public Rook(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(Rook::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     /**

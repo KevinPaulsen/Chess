@@ -13,13 +13,19 @@ import java.util.List;
 public class Knight extends Piece {
 
     /**
+     * The map of reachable coordinates Knights can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(Knight::generateReachableCoordsAt);
+
+    /**
      * Creates a Knight with the given color and coordinate.
      *
      * @param color the color of this knight
      * @param coordinate the coordinate of this knight
      */
     public Knight(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(Knight::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     /**

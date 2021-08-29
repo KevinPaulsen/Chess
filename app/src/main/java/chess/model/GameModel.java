@@ -280,6 +280,14 @@ public class GameModel {
         return true;
     }
 
+    public boolean canKingSideCastle(char color) {
+        return color == 'w' ? whiteKingCastle : blackKingCastle;
+    }
+
+    public boolean canQueenSideCastle(char color) {
+        return color == 'w' ? whiteQueenCastle : blackQueenCastle;
+    }
+
     public List<Move> getLegalMoves(char color) {
         return legalMoves;
     }

@@ -15,6 +15,12 @@ import java.util.List;
 public class King extends Piece {
 
     /**
+     * The map of reachable coordinates Kings can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(King::generateReachableCoordsAt);
+
+    /**
      * Reference to right direction
      */
     private static final Direction RIGHT = new Direction(0, 1);
@@ -31,7 +37,7 @@ public class King extends Piece {
      * @param coordinate the given coordinate
      */
     public King(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(King::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     @Override

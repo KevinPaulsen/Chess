@@ -13,13 +13,19 @@ import java.util.List;
 public class WhitePawn extends Pawn {
 
     /**
+     * The map of reachable coordinates white pawns can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(WhitePawn::generateReachableCoordsAt);
+
+    /**
      * Creates a pawn with the given color and coordinate
      *
      * @param color      the color of this pawn
      * @param coordinate the coordinate of this pawn
      */
     public WhitePawn(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(WhitePawn::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     /**

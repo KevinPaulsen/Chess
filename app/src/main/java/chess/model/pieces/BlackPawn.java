@@ -13,13 +13,19 @@ import java.util.List;
 public class BlackPawn extends Pawn {
 
     /**
+     * The map of reachable coordinates black pawns can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(BlackPawn::generateReachableCoordsAt);
+
+    /**
      * Creates a pawn with the given color and coordinate
      *
      * @param color      the color of this pawn
      * @param coordinate the coordinate of this pawn
      */
     public BlackPawn(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(BlackPawn::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     /**

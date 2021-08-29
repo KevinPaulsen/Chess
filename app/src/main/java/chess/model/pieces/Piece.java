@@ -3,10 +3,8 @@ package chess.model.pieces;
 import chess.ChessCoordinate;
 import chess.model.BoardModel;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * This class is an abstract representation of a Piece. Any piece can implement

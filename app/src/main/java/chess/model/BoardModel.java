@@ -2,9 +2,13 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.Move;
+import chess.model.pieces.Bishop;
 import chess.model.pieces.King;
+import chess.model.pieces.Knight;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
+import chess.model.pieces.Queen;
+import chess.model.pieces.Rook;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,6 +25,17 @@ public class BoardModel {
     private final Set<Piece> whitePieces;
     private final Set<Piece> blackPieces;
 
+    private final Set<Queen> whiteQueens;
+    private final Set<Queen> blackQueens;
+    private final Set<Rook> whiteRooks;
+    private final Set<Rook> blackRooks;
+    private final Set<Bishop> whiteBishops;
+    private final Set<Bishop> blackBishops;
+    private final Set<Knight> whiteKnights;
+    private final Set<Knight> blackKnights;
+    private final Set<Pawn> whitePawns;
+    private final Set<Pawn> blackPawns;
+
     private King whiteKing;
     private King blackKing;
 
@@ -29,6 +44,18 @@ public class BoardModel {
         this.pieceArray = pieceArray;
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
+
+        this.whiteQueens = new HashSet<>();
+        this.blackQueens = new HashSet<>();
+        this.whiteRooks = new HashSet<>();
+        this.blackRooks= new HashSet<>();
+        this.whiteBishops = new HashSet<>();
+        this.blackBishops = new HashSet<>();
+        this.whiteKnights = new HashSet<>();
+        this.blackKnights = new HashSet<>();
+        this.whitePawns = new HashSet<>();
+        this.blackPawns = new HashSet<>();
+
         initPieces();
     }
 
@@ -37,10 +64,7 @@ public class BoardModel {
      * @param boardModel
      */
     public BoardModel(BoardModel boardModel) {
-        this.whitePieces = new HashSet<>();
-        this.blackPieces = new HashSet<>();
-        this.pieceArray = new Piece[8][8];
-        initPieces();
+        this(boardModel.pieceArray);
     }
 
     /**
@@ -179,7 +203,38 @@ public class BoardModel {
                         } else {
                             blackKing = (King) piece;
                         }
+                    } else if (piece instanceof Queen) {
+                        if (piece.getColor() == 'w') {
+                            whiteQueens.add((Queen) piece);
+                        } else {
+                            blackQueens.add((Queen) piece);
+                        }
+                    } else if (piece instanceof Rook) {
+                        if (piece.getColor() == 'w') {
+                            whiteRooks.add((Rook) piece);
+                        } else {
+                            blackRooks.add((Rook) piece);
+                        }
+                    } else if (piece instanceof Bishop) {
+                        if (piece.getColor() == 'w') {
+                            whiteBishops.add((Bishop) piece);
+                        } else {
+                            blackBishops.add((Bishop) piece);
+                        }
+                    } else if (piece instanceof Knight) {
+                        if (piece.getColor() == 'w') {
+                            whiteKnights.add((Knight) piece);
+                        } else {
+                            blackKnights.add((Knight) piece);
+                        }
+                    } else if (piece instanceof Pawn) {
+                        if (piece.getColor() == 'w') {
+                            whitePawns.add((Pawn) piece);
+                        } else {
+                            blackPawns.add((Pawn) piece);
+                        }
                     }
+
                     if (piece.getColor() == 'w') {
                         if (!whitePieces.add(piece)) {
                             throw new IllegalStateException("Adding piece that already exists on board.");
@@ -220,6 +275,66 @@ public class BoardModel {
      */
     public King getBlackKing() {
         return blackKing;
+    }
+
+    /**
+     * @param color the color of the queen to get.
+     * @return the set of queens of the requested color on this board.
+     */
+    public Set<Queen> getQueens(char color) {
+        if (color == 'w') {
+            return whiteQueens;
+        } else {
+            return blackQueens;
+        }
+    }
+
+    /**
+     * @param color the color of the rooks to get.
+     * @return the set of rooks of the requested color on this board.
+     */
+    public Set<Rook> getRooks(char color) {
+        if (color == 'w') {
+            return whiteRooks;
+        } else {
+            return blackRooks;
+        }
+    }
+
+    /**
+     * @param color the color of the bishops to get.
+     * @return the set of bishops of the requested color on this board.
+     */
+    public Set<Bishop> getBishops(char color) {
+        if (color == 'w') {
+            return whiteBishops;
+        } else {
+            return blackBishops;
+        }
+    }
+
+    /**
+     * @param color the color of the Knights to get.
+     * @return the set of Knights of the requested color on this board.
+     */
+    public Set<Knight> getKnights(char color) {
+        if (color == 'w') {
+            return whiteKnights;
+        } else {
+            return blackKnights;
+        }
+    }
+
+    /**
+     * @param color the color of the Pawns to get.
+     * @return the set of Pawns of the requested color on this board.
+     */
+    public Set<Pawn> getPawns(char color) {
+        if (color == 'w') {
+            return whitePawns;
+        } else {
+            return blackPawns;
+        }
     }
 
     @Override

@@ -13,6 +13,12 @@ import java.util.List;
 public class Bishop extends Piece {
 
     /**
+     * The map of reachable coordinates bishops can get to from each position on the board.
+     */
+    public static final List<List<ChessCoordinate>>[][] REACHABLE_COORDINATES_MAP =
+            generateReachableCoordinates(Bishop::generateReachableCoordsAt);
+
+    /**
      * Creates a new bishop with the given color and placed on the given
      * coordinate. This sets the Movement rules to the movement rules of
      * a bishop.
@@ -21,7 +27,7 @@ public class Bishop extends Piece {
      * @param coordinate the coordinate of this Bishop
      */
     public Bishop(char color, ChessCoordinate coordinate) {
-        super(generateReachableCoordinates(Bishop::generateReachableCoordsAt), color, coordinate);
+        super(REACHABLE_COORDINATES_MAP, color, coordinate);
     }
 
     /**

@@ -117,15 +117,10 @@ public class GameModelTest {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
                 true, true, false, false, null);
 
-        game.move(BoardModel.getChessCoordinate(0, 1), BoardModel.getChessCoordinate(0, 3));
-        game.move(BoardModel.getChessCoordinate(0, 6), BoardModel.getChessCoordinate(0, 5));
-        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(3, 3));
-        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(4, 2));
-
         long start = System.currentTimeMillis();
-
-        System.out.println("Positions: " + countNumPositions1(game, 3));
-
+        MoveGenerator generator = new MoveGenerator(game);
+        System.out.println(generator.generateMoves());
+        //System.out.println("Positions: " + countNumPositions1(game, 3));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }
