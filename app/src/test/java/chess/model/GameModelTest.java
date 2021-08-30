@@ -120,17 +120,23 @@ public class GameModelTest {
         Assert.assertEquals("Wrong number of nodes found.", 2_103_487, numPositions);
     }
 
+    private static final int A = 0;
+    private static final int B = 1;
+    private static final int C = 2;
+    private static final int D = 3;
+    private static final int E = 4;
+    private static final int F = 5;
+    private static final int G = 6;
+    private static final int H = 7;
+
     @Test
     public void privateTest() {
-        /*GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
                 true, true, false, false, null);//*/
-        GameModel game = new GameModel();
+        //GameModel game = new GameModel();
 
-        game.move(BoardModel.getChessCoordinate(5, 1), BoardModel.getChessCoordinate(5, 3));
-        game.move(BoardModel.getChessCoordinate(4, 6), BoardModel.getChessCoordinate(4, 4));
-        game.move(BoardModel.getChessCoordinate(4, 0), BoardModel.getChessCoordinate(5, 1));
-        game.move(BoardModel.getChessCoordinate(3, 7), BoardModel.getChessCoordinate(5, 5));
-        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(7, 4));
+        game.move(BoardModel.getChessCoordinate(D, 1 - 1), BoardModel.getChessCoordinate(D, 6 - 1));
+        game.move(BoardModel.getChessCoordinate(F, 2 - 1), BoardModel.getChessCoordinate(H, 1 - 1));
 
         long start = System.currentTimeMillis();
         System.out.println("Positions: " + countNumPositions1(game, 1));

@@ -20,8 +20,12 @@ public class FastMap {
         this.map |= map.map;
     }
 
-    public void markSquare(long mask) {
+    public void mergeMask(long mask) {
         map |= mask;
+    }
+
+    public void flip(long mask) {
+        map = map & ~mask;
     }
 
     public boolean isMarked(int squareNum) {

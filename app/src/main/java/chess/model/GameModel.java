@@ -2,12 +2,10 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.pieces.Direction;
-import chess.model.pieces.Directions;
-import chess.model.pieces.King;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 import chess.model.pieces.Rook;
+import chess.util.FastMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +17,26 @@ import java.util.Objects;
  * the chess game.
  */
 public class GameModel {
+
+    /**
+     * The bit mask that represents that white can king-side castle.
+     */
+    private static final long WHITE_KING_SIDE_CASTLE_MASK = 1L;
+
+    /**
+     * The bit mask that represents that white can king-side castle.
+     */
+    private static final long WHITE_QUEEN_SIDE_CASTLE_MASK = 2L;
+
+    /**
+     * The bit mask that represents that white can king-side castle.
+     */
+    private static final long BLACK_KING_SIDE_CASTLE_MASK = 4L;
+
+    /**
+     * The bit mask that represents that white can king-side castle.
+     */
+    private static final long BLACK_QUEEN_SIDE_CASTLE_MASK = 8L;
 
     /**
      * Toggle for if check rep should be called.
@@ -36,6 +54,12 @@ public class GameModel {
     private final List<Move> moveHistory;
 
     /**
+     * The list of each state the board was in before each move. This List
+     * should be 1 larger than moveHistory.
+     */
+    private final List<FastMap> stateHistory;
+
+    /**
      * The tracker for which players turn it is to move.
      */
     private char turn;
@@ -45,25 +69,6 @@ public class GameModel {
      * if no En Passant is possible.
      */
     private ChessCoordinate enPassantTarget;
-
-    /**
-     * The flag for if white can castle king-side.
-     */
-    private boolean whiteKingCastle;
-
-    /**
-     * The flag for if white can castle queen-side.
-     */
-    private boolean whiteQueenCastle;
-
-    /**
-     * The flag for if black can castle king-side.
-     */
-    private boolean blackKingCastle;
-    /**
-     * The flag for if black can castle queen-side.
-     */
-    private boolean blackQueenCastle;
 
     /**
      * The default constructor that creates a normal game.
@@ -97,14 +102,23 @@ public class GameModel {
                      boolean blackKingCastle, boolean blackQueenCastle, ChessCoordinate enPassantTarget) {
         this.board = board;
         this.turn = turn;
-        this.whiteKingCastle = whiteKingCastle;
-        this.whiteQueenCastle = whiteQueenCastle;
-        this.blackKingCastle = blackKingCastle;
-        this.blackQueenCastle = blackQueenCastle;
         this.enPassantTarget = enPassantTarget;
         this.moveHistory = new ArrayList<>();
+        this.stateHistory = new ArrayList<>();
+
+        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
 
         checkRep();
+    }
+
+    private void addInitialState(boolean whiteKingCastle, boolean whiteQueenCastle,
+                                 boolean blackKingCastle, boolean blackQueenCastle) {
+        FastMap stateMap = new FastMap();
+        stateMap.mergeMask(whiteKingCastle ? WHITE_KING_SIDE_CASTLE_MASK : 0);
+        stateMap.mergeMask(whiteQueenCastle ? WHITE_QUEEN_SIDE_CASTLE_MASK : 0);
+        stateMap.mergeMask(blackKingCastle ? BLACK_KING_SIDE_CASTLE_MASK : 0);
+        stateMap.mergeMask(blackQueenCastle ? BLACK_QUEEN_SIDE_CASTLE_MASK : 0);
+        stateHistory.add(stateMap);
     }
 
     /**
@@ -169,36 +183,48 @@ public class GameModel {
         return didMove;
     }
 
-    private void checkEnPassant(Move move) {
-        if (move.getMovingPiece() instanceof Pawn
-                && Math.abs(move.getStartingCoordinate().getRank() - move.getEndingCoordinate().getRank()) == 2) {
-            int rank = (int) (0.6 * (move.getStartingCoordinate().getRank() - 3.5) + 3.5);
-            enPassantTarget = BoardModel.getChessCoordinate(move.getEndingCoordinate().getFile(), rank);
+    private void checkEnPassant(Move lastMove) {
+        if (lastMove != null) {
+            if (lastMove.getMovingPiece() instanceof Pawn
+                    && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
+                int rank = (int) (0.6 * (lastMove.getStartingCoordinate().getRank() - 3.5) + 3.5);
+                enPassantTarget = BoardModel.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
+            } else {
+                enPassantTarget = null;
+            }
         } else {
             enPassantTarget = null;
         }
     }
 
     private void checkCastling() {
-        if (canKingSideCastle(turn)) {
-            if (turn == 'w') {
-                whiteKingCastle = board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook;
-            } else {
-                blackKingCastle = board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook;
-            }
-        } else if (canQueenSideCastle(turn)) {
-            if (turn == 'w') {
-                whiteQueenCastle = board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook;
-            } else {
-                blackQueenCastle = board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook;
-            }
+        FastMap state = new FastMap();
+        state.merge(stateHistory.get(stateHistory.size() - 1));
+        if (canKingSideCastle('w')
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook)) {
+            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
+        if (canKingSideCastle('b')
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook)) {
+            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+        }
+        if (canQueenSideCastle('w')
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook)) {
+            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+        }
+        if (canQueenSideCastle('b')
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook)) {
+            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+        }
+        stateHistory.add(state);
     }
 
     public void undoMove(Move move) {
         checkRep();
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
             board.undoMove(move);
+            checkEnPassant(moveHistory.size() >= 2 ? moveHistory.get(moveHistory.size() - 2) : null);
+            stateHistory.remove(stateHistory.size() - 1);
             moveHistory.remove(moveHistory.size() - 1);
             turn = (turn == 'w') ? 'b' : 'w';
         }
@@ -206,11 +232,13 @@ public class GameModel {
     }
 
     public boolean canKingSideCastle(char color) {
-        return color == 'w' ? whiteKingCastle : blackKingCastle;
+        FastMap currentState = stateHistory.get(stateHistory.size() - 1);
+        return color == 'w' ? currentState.isMarked(0) : currentState.isMarked(2);
     }
 
     public boolean canQueenSideCastle(char color) {
-        return color == 'w' ? whiteQueenCastle : blackQueenCastle;
+        FastMap currentState = stateHistory.get(stateHistory.size() - 1);
+        return color == 'w' ? currentState.isMarked(1) : currentState.isMarked(3);
     }
 
     public ChessCoordinate getEnPassantTarget() {
