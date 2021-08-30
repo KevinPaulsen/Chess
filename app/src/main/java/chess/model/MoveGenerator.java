@@ -144,6 +144,15 @@ public class MoveGenerator {
                 }
             }
         }
+
+        King opponentKing = turn == 'w' ? board.getBlackKing() : board.getWhiteKing();
+
+        // Calculate King Attacks
+        for (List<ChessCoordinate> ray : opponentKing.getFinalCoordinates()) {
+            for (ChessCoordinate coordinate : ray) {
+                opponentAttackMap.mergeMask(coordinate.getBitMask());
+            }
+        }
     }
 
     private void calculatePinsAndCheckRays(BoardModel board, List<List<ChessCoordinate>> raysToCheck,
@@ -393,10 +402,13 @@ public class MoveGenerator {
         if (targetPiece == null) {
             ChessCoordinate enPassantTarget = game.getEnPassantTarget();
             if (enPassantTarget != null && enPassantTarget.equals(captureCoord)) {
-                if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())) {
-                    // TODO: Deal with enPassant causes check
-                    targetPiece = board.getPieceOn(left.next(pawn.getCoordinate()));
-                    moves.add(new Move(captureCoord, pawn, null, targetPiece));
+                targetPiece = board.getPieceOn(left.next(pawn.getCoordinate()));
+                if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())
+                        || checkRayMap.isMarked(targetPiece.getCoordinate().getOndDimIndex())) {
+                    if (targetPiece != null && !areAligned(pawn.getCoordinate(), friendlyKing.getCoordinate(), targetPiece.getCoordinate())
+                            || !longRangeAttacker(pawn, targetPiece)) {
+                        moves.add(new Move(captureCoord, pawn, null, targetPiece));
+                    }
                 }
                 // TODO: Deal with enPassant discovery
             }
@@ -415,6 +427,32 @@ public class MoveGenerator {
                 }
             }
         }
+    }
+
+    private boolean longRangeAttacker(Pawn pawn, Piece capturedPiece) {
+
+        BoardModel board = game.getBoard();
+        int xDiff = pawn.getCoordinate().getFile() - friendlyKing.getCoordinate().getFile();
+        Direction kingToPawn = xDiff > 0 ? Directions.RIGHT : Directions.LEFT;
+        boolean longRangeAttackerExists = false;
+
+        for (ChessCoordinate searchCoord = kingToPawn.next(friendlyKing.getCoordinate());
+             searchCoord != null;
+             searchCoord = kingToPawn.next(searchCoord)) {
+            Piece targetPiece = board.getPieceOn(searchCoord);
+
+            if (targetPiece == null || targetPiece == pawn || targetPiece == capturedPiece) {
+                continue;
+            }
+
+            if (targetPiece.getColor() != friendlyKing.getColor()
+                    && targetPiece instanceof Queen || targetPiece instanceof Rook) {
+                longRangeAttackerExists = true;
+            }
+            break;
+        }
+
+        return longRangeAttackerExists;
     }
 
     private boolean isPinned(ChessCoordinate coordinate) {

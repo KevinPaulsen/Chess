@@ -10,7 +10,7 @@ import static chess.model.ChessBoardFactory.*;
 
 public class GameModelTest {
 
-    private final static int[][] TEST_BOARD_1 = {
+    private final static int[][] TEST_BOARD_COMPLEX = {
             {W_ROOK, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_ROOK},
             {W_KNIGHT, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KNIGHT},
             {W_BISHOP, W_PAWN, EMPTY, W_BISHOP, EMPTY, B_PAWN, EMPTY, B_BISHOP},
@@ -115,7 +115,7 @@ public class GameModelTest {
 
     @Test
     public void testComplexPositionDepth0() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_1), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
         int numPositions = countNumPositions(game, 0);
         Assert.assertEquals("Wrong number of nodes found.", 1, numPositions);
@@ -123,7 +123,7 @@ public class GameModelTest {
 
     @Test
     public void testComplexPositionDepth1() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_1), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
         int numPositions = countNumPositions(game, 1);
         Assert.assertEquals("Wrong number of nodes found.", 44, numPositions);
@@ -131,7 +131,7 @@ public class GameModelTest {
 
     @Test
     public void testComplexPositionDepth2() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_1), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
         int numPositions = countNumPositions(game, 2);
         Assert.assertEquals("Wrong number of nodes found.", 1_486, numPositions);
@@ -139,7 +139,7 @@ public class GameModelTest {
 
     @Test
     public void testComplexPositionDepth3() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_1), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
         int numPositions = countNumPositions(game, 3);
         Assert.assertEquals("Wrong number of nodes found.", 62_379, numPositions);
@@ -147,7 +147,7 @@ public class GameModelTest {
 
     @Test
     public void testComplexPositionDepth4() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_1), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
         int numPositions = countNumPositions(game, 4);
         Assert.assertEquals("Wrong number of nodes found.", 2_103_487, numPositions);
@@ -201,20 +201,23 @@ public class GameModelTest {
         Assert.assertEquals("Wrong number of nodes found.", 1_001_929, numPositions);
     }
 
+    @Test
+    public void testPawnBoardDepth6() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_PAWNS), 'w',
+                false, false, false, false, null);
+        int numPositions = countNumPositions(game, 6);
+        Assert.assertEquals("Wrong number of nodes found.", 25_685_493, numPositions);
+    }
+
     @SuppressWarnings("all")
     @Test
-    public void privateTest() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_PAWNS), 'w',
+    private void privateTest() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 false, false, false, false, null);//*/
         //GameModel game = new GameModel();
 
-        //game.move(BoardModel.getChessCoordinate(E, 1 - 1), BoardModel.getChessCoordinate(F, 2 - 1));
-        //game.move(BoardModel.getChessCoordinate(H, 7 - 1), BoardModel.getChessCoordinate(H, 5 - 1));
-        //game.move(BoardModel.getChessCoordinate(F, 2 - 1), BoardModel.getChessCoordinate(G, 3 - 1));
-        //game.move(BoardModel.getChessCoordinate(H, 6 - 1), BoardModel.getChessCoordinate(H, 5 - 1));
-
         long start = System.currentTimeMillis();
-        System.out.println("Positions: " + countNumPositions1(game, 4));
+        System.out.println("Positions: " + countNumPositions1(game, 1));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }
