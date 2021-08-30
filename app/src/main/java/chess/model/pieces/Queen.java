@@ -37,7 +37,7 @@ public class Queen extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Queen(Pawn pawn) {
-        super(pawn, generateReachableCoordinates(Queen::generateReachableCoordsAt));
+        super(pawn, REACHABLE_COORDINATES_MAP);
     }
 
     @Override

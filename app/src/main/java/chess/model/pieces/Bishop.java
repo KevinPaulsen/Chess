@@ -37,7 +37,7 @@ public class Bishop extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Bishop(Pawn pawn) {
-        super(pawn, generateReachableCoordinates(Bishop::generateReachableCoordsAt));
+        super(pawn, REACHABLE_COORDINATES_MAP);
     }
 
     @Override

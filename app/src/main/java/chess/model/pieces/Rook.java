@@ -37,7 +37,7 @@ public class Rook extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Rook(Pawn pawn) {
-        super(pawn, generateReachableCoordinates(Rook::generateReachableCoordsAt));
+        super(pawn, REACHABLE_COORDINATES_MAP);
     }
 
     public String toString() {

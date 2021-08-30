@@ -35,7 +35,7 @@ public class Knight extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Knight(Pawn pawn) {
-        super(pawn, generateReachableCoordinates(Knight::generateReachableCoordsAt));
+        super(pawn, REACHABLE_COORDINATES_MAP);
     }
 
     @Override
