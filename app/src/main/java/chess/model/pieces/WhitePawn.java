@@ -48,16 +48,16 @@ public class WhitePawn extends Pawn {
                 straightMoves.add(Directions.UP.next(straightMoves.get(0)));
             }
 
-            // Add the left diagonal
-            if (coordinate.getFile() > 0) {
-                result.add(List.of(Directions.UP_LEFT.next(coordinate)));
+            // Add the right diagonal
+            if (coordinate.getFile() < 7) {
+                result.add(List.of(Directions.UP_RIGHT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
 
-            // Add the right diagonal
-            if (coordinate.getFile() < 7) {
-                result.add(List.of(Directions.UP_RIGHT.next(coordinate)));
+            // Add the left diagonal
+            if (coordinate.getFile() > 0) {
+                result.add(List.of(Directions.UP_LEFT.next(coordinate)));
             } else {
                 result.add(List.of());
             }

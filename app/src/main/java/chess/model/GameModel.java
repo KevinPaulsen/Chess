@@ -44,7 +44,7 @@ public class GameModel {
      * The current target for an En Passant capture. This is null
      * if no En Passant is possible.
      */
-    private final ChessCoordinate enPassantTarget;
+    private ChessCoordinate enPassantTarget;
 
     /**
      * The flag for if white can castle king-side.
@@ -160,12 +160,23 @@ public class GameModel {
             board.move(move);
             moveHistory.add(move);
             checkCastling();
+            checkEnPassant(move);
             turn = (turn == 'w') ? 'b' : 'w';
             didMove = true;
         }
 
         checkRep();
         return didMove;
+    }
+
+    private void checkEnPassant(Move move) {
+        if (move.getMovingPiece() instanceof Pawn
+                && Math.abs(move.getStartingCoordinate().getRank() - move.getEndingCoordinate().getRank()) == 2) {
+            int rank = (int) (0.6 * (move.getStartingCoordinate().getRank() - 3.5) + 3.5);
+            enPassantTarget = BoardModel.getChessCoordinate(move.getEndingCoordinate().getFile(), rank);
+        } else {
+            enPassantTarget = null;
+        }
     }
 
     private void checkCastling() {

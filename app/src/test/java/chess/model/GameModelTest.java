@@ -74,6 +74,13 @@ public class GameModelTest {
     }
 
     @Test
+    public void testStartingPositionDepth5() {
+        GameModel game = new GameModel();
+        int numPositions = countNumPositions(game, 5);
+        Assert.assertEquals("Wrong number of nodes found.", 4_865_609, numPositions);
+    }
+
+    @Test
     public void testComplexPositionDepth0() {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
                 true, true, false, false, null);
@@ -119,8 +126,14 @@ public class GameModelTest {
                 true, true, false, false, null);//*/
         GameModel game = new GameModel();
 
+        game.move(BoardModel.getChessCoordinate(5, 1), BoardModel.getChessCoordinate(5, 3));
+        game.move(BoardModel.getChessCoordinate(4, 6), BoardModel.getChessCoordinate(4, 4));
+        game.move(BoardModel.getChessCoordinate(4, 0), BoardModel.getChessCoordinate(5, 1));
+        game.move(BoardModel.getChessCoordinate(3, 7), BoardModel.getChessCoordinate(5, 5));
+        //game.move(BoardModel.getChessCoordinate(3, 0), BoardModel.getChessCoordinate(7, 4));
+
         long start = System.currentTimeMillis();
-        System.out.println("Positions: " + countNumPositions1(game, 3));
+        System.out.println("Positions: " + countNumPositions1(game, 1));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }
