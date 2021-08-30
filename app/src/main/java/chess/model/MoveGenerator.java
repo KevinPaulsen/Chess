@@ -25,15 +25,13 @@ public class MoveGenerator {
 
     private final GameModel game;
     private final List<Move> moves;
-    private boolean inCheck;
-    private boolean inDoubleCheck;
-    private boolean pinsExistInPosition;
-
     private final King friendlyKing;
-
     private final FastMap checkRayMap;
     private final FastMap pinRayMap;
     private final FastMap opponentAttackMap;
+    private boolean inCheck;
+    private boolean inDoubleCheck;
+    private boolean pinsExistInPosition;
 
     public MoveGenerator(GameModel game) {
         this.game = game;
@@ -47,6 +45,41 @@ public class MoveGenerator {
         this.checkRayMap = new FastMap();
         this.pinRayMap = new FastMap();
         this.opponentAttackMap = new FastMap();
+    }
+
+    /**
+     * Updates the given sliding piece's attack map. Adds all the squares this piece
+     * can move to to the given map. This will go though the firendly king, and
+     * continue the ray past it.
+     *
+     * @param board          the board the piece is on.
+     * @param attackingPiece the attacking piece to update.
+     * @param map            the map to mark.
+     */
+    private static void updateSlidingAttackPiece(BoardModel board, Piece attackingPiece, FastMap map) {
+        for (List<ChessCoordinate> potentialRay : attackingPiece.getFinalCoordinates()) {
+            for (ChessCoordinate coordinate : potentialRay) {
+                Piece targetPiece = board.getPieceOn(coordinate);
+                map.mergeMask(coordinate.getBitMask());
+
+                if (targetPiece != null && !(targetPiece instanceof King
+                        && targetPiece.getColor() != attackingPiece.getColor())) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static boolean areAligned(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
+                                      ChessCoordinate coordinate3) {
+        float product1 = (coordinate1.getRank() - coordinate2.getRank()) * (coordinate1.getFile() - coordinate3.getFile());
+        float product2 = (coordinate1.getFile() - coordinate2.getFile()) * (coordinate1.getRank() - coordinate3.getRank());
+        return product1 == product2;
+    }
+
+    private static List<List<ChessCoordinate>> getReachableCoords(
+            List<List<ChessCoordinate>>[][] reachableCoordinatesMap, ChessCoordinate coordinate) {
+        return reachableCoordinatesMap[coordinate.getFile()][coordinate.getRank()];
     }
 
     public List<Move> generateMoves() {
@@ -112,6 +145,13 @@ public class MoveGenerator {
         }
     }
 
+    /*
+
+    squareInCheckRay(coord)
+    squareIsAttacked(coord)
+
+     */
+
     private void calculatePinsAndCheckRays(BoardModel board, List<List<ChessCoordinate>> raysToCheck,
                                            boolean isDiagonal, char turn) {
         for (List<ChessCoordinate> ray : raysToCheck) {
@@ -176,36 +216,6 @@ public class MoveGenerator {
 
         return slidingAttackMap;
     }
-
-    /**
-     * Updates the given sliding piece's attack map. Adds all the squares this piece
-     * can move to to the given map. This will go though the firendly king, and
-     * continue the ray past it.
-     *
-     * @param board the board the piece is on.
-     * @param attackingPiece the attacking piece to update.
-     * @param map the map to mark.
-     */
-    private static void updateSlidingAttackPiece(BoardModel board, Piece attackingPiece, FastMap map) {
-        for (List<ChessCoordinate> potentialRay : attackingPiece.getFinalCoordinates()) {
-            for (ChessCoordinate coordinate : potentialRay) {
-                Piece targetPiece = board.getPieceOn(coordinate);
-                map.mergeMask(coordinate.getBitMask());
-
-                if (targetPiece != null && !(targetPiece instanceof King
-                        && targetPiece.getColor() != attackingPiece.getColor())) {
-                    break;
-                }
-            }
-        }
-    }
-
-    /*
-
-    squareInCheckRay(coord)
-    squareIsAttacked(coord)
-
-     */
 
     private void generateKingMoves() {
         BoardModel board = game.getBoard();
@@ -353,10 +363,10 @@ public class MoveGenerator {
             boolean isPinned = isPinned(pawn.getCoordinate());
 
             for (ChessCoordinate targetCoord : finalCoordinates.get(0)) {
-                if (!inCheck || checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
-                    if (!isPinned || areAligned(pawn.getCoordinate(), friendlyKing.getCoordinate(), targetCoord)) {
-                        Piece targetPiece = board.getPieceOn(targetCoord);
-                        if (targetPiece == null) {
+                if (!isPinned || areAligned(pawn.getCoordinate(), friendlyKing.getCoordinate(), targetCoord)) {
+                    Piece targetPiece = board.getPieceOn(targetCoord);
+                    if (targetPiece == null) {
+                        if (!inCheck || checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
                             if ((pawn instanceof WhitePawn && targetCoord.getRank() == 7)
                                     || (pawn instanceof BlackPawn && targetCoord.getRank() == 0)) {
                                 // Promotion square
@@ -367,9 +377,9 @@ public class MoveGenerator {
                             } else {
                                 moves.add(new Move(targetCoord, pawn));
                             }
-                        } else {
-                            break;
                         }
+                    } else {
+                        break;
                     }
                 }
             }
@@ -414,18 +424,6 @@ public class MoveGenerator {
                 }
             }
         }
-    }
-
-    private static boolean areAligned(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
-                                      ChessCoordinate coordinate3) {
-        float product1 = (coordinate1.getRank() - coordinate2.getRank()) * (coordinate1.getFile() - coordinate3.getFile());
-        float product2 = (coordinate1.getFile() - coordinate2.getFile()) * (coordinate1.getRank() - coordinate3.getRank());
-        return product1 == product2;
-    }
-
-    private static List<List<ChessCoordinate>> getReachableCoords(
-            List<List<ChessCoordinate>>[][] reachableCoordinatesMap, ChessCoordinate coordinate) {
-        return reachableCoordinatesMap[coordinate.getFile()][coordinate.getRank()];
     }
 
     private boolean isPinned(ChessCoordinate coordinate) {
