@@ -389,17 +389,19 @@ public class MoveGenerator {
             return;
         }
 
-        if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())) {
-            Piece targetPiece = board.getPieceOn(captureCoord);
-            if (targetPiece == null) {
-                ChessCoordinate enPassantTarget = game.getEnPassantTarget();
-                if (enPassantTarget != null && enPassantTarget.equals(captureCoord)) {
-                    // TODO: Deal with enPassant discovery
+        Piece targetPiece = board.getPieceOn(captureCoord);
+        if (targetPiece == null) {
+            ChessCoordinate enPassantTarget = game.getEnPassantTarget();
+            if (enPassantTarget != null && enPassantTarget.equals(captureCoord)) {
+                if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())) {
                     // TODO: Deal with enPassant causes check
                     targetPiece = board.getPieceOn(left.next(pawn.getCoordinate()));
                     moves.add(new Move(captureCoord, pawn, null, targetPiece));
                 }
-            } else {
+                // TODO: Deal with enPassant discovery
+            }
+        } else {
+            if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())) {
                 if (targetPiece.getColor() != pawn.getColor()) {
                     if ((pawn instanceof WhitePawn && captureCoord.getRank() == 7)
                             || (pawn instanceof BlackPawn && captureCoord.getRank() == 0)) {
