@@ -61,6 +61,9 @@ public class WhitePawn extends Pawn {
             } else {
                 result.add(List.of());
             }
+        } else {
+            result.add(List.of());
+            result.add(List.of());
         }
         result.add(0, ImmutableList.copyOf(straightMoves));
 

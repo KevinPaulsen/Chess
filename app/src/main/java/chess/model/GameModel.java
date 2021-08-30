@@ -7,6 +7,7 @@ import chess.model.pieces.Directions;
 import chess.model.pieces.King;
 import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
+import chess.model.pieces.Rook;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,22 +49,21 @@ public class GameModel {
     /**
      * The flag for if white can castle king-side.
      */
-    private final boolean whiteKingCastle;
+    private boolean whiteKingCastle;
 
     /**
      * The flag for if white can castle queen-side.
      */
-    private final boolean whiteQueenCastle;
+    private boolean whiteQueenCastle;
 
     /**
      * The flag for if black can castle king-side.
      */
-
-    private final boolean blackKingCastle;
+    private boolean blackKingCastle;
     /**
      * The flag for if black can castle queen-side.
      */
-    private final boolean blackQueenCastle;
+    private boolean blackQueenCastle;
 
     /**
      * The default constructor that creates a normal game.
@@ -159,12 +159,29 @@ public class GameModel {
         if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
+            checkCastling();
             turn = (turn == 'w') ? 'b' : 'w';
             didMove = true;
         }
 
         checkRep();
         return didMove;
+    }
+
+    private void checkCastling() {
+        if (canKingSideCastle(turn)) {
+            if (turn == 'w') {
+                whiteKingCastle = board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook;
+            } else {
+                blackKingCastle = board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook;
+            }
+        } else if (canQueenSideCastle(turn)) {
+            if (turn == 'w') {
+                whiteQueenCastle = board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook;
+            } else {
+                blackQueenCastle = board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook;
+            }
+        }
     }
 
     public void undoMove(Move move) {

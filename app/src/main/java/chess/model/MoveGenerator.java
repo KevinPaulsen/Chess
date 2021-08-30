@@ -208,6 +208,7 @@ public class MoveGenerator {
         King movingKing = game.getTurn() == 'w' ? board.getWhiteKing() : board.getBlackKing();
         List<List<ChessCoordinate>> possibleEndCoordinates = movingKing.getFinalCoordinates();
 
+        // Add moves for the regular king moves
         for (int endCoordIdx = 0; endCoordIdx < 8; endCoordIdx++) {
             for (ChessCoordinate targetCoord : possibleEndCoordinates.get(endCoordIdx)) {
                 Piece targetPiece = board.getPieceOn(targetCoord);
@@ -229,6 +230,7 @@ public class MoveGenerator {
             }
         }
 
+        // Add castling moves
         for (int endCoordIdx = 8; endCoordIdx <= 9; endCoordIdx++) {
             for (ChessCoordinate targetCoord : possibleEndCoordinates.get(endCoordIdx)) {
                 Piece targetPiece = board.getPieceOn(targetCoord);
@@ -237,33 +239,40 @@ public class MoveGenerator {
                     continue;
                 }
 
+                boolean canCastle = true;
                 if (targetCoord.getFile() == 6) {
                     if (game.canKingSideCastle(movingKing.getColor())) {
-                        ChessCoordinate searchCoord = targetCoord;
+                        ChessCoordinate searchCoord = friendlyKing.getCoordinate();
                         for (int numChecked = 0; numChecked < 3;
-                             numChecked++, searchCoord = Directions.RIGHT.next(targetCoord)) {
+                             numChecked++, searchCoord = Directions.RIGHT.next(searchCoord)) {
                             if (board.getPieceOn(searchCoord) != null
                                     || opponentAttackMap.isMarked(searchCoord.getOndDimIndex())) {
+                                canCastle = false;
                                 break;
                             }
                         }
-                        Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(7, targetCoord.getRank()));
-                        ChessCoordinate endInteracting = BoardModel.getChessCoordinate(5, targetCoord.getRank());
-                        moves.add(new Move(targetCoord, movingKing, endInteracting, piece));
+                        if (canCastle) {
+                            Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(7, targetCoord.getRank()));
+                            ChessCoordinate endInteracting = BoardModel.getChessCoordinate(5, targetCoord.getRank());
+                            moves.add(new Move(targetCoord, movingKing, endInteracting, piece));
+                        }
                     }
                 } else {
                     if (game.canQueenSideCastle(movingKing.getColor())) {
-                        ChessCoordinate searchCoord = targetCoord;
+                        ChessCoordinate searchCoord = friendlyKing.getCoordinate();
                         for (int numChecked = 0; numChecked < 3;
-                             numChecked++, searchCoord = Directions.LEFT.next(targetCoord)) {
+                             numChecked++, searchCoord = Directions.LEFT.next(searchCoord)) {
                             if (board.getPieceOn(searchCoord) != null
                                     || opponentAttackMap.isMarked(searchCoord.getOndDimIndex())) {
+                                canCastle = false;
                                 break;
                             }
                         }
-                        Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(0, targetCoord.getRank()));
-                        ChessCoordinate endInteracting = BoardModel.getChessCoordinate(3, targetCoord.getRank());
-                        moves.add(new Move(targetCoord, movingKing, endInteracting, piece));
+                        if (canCastle) {
+                            Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(0, targetCoord.getRank()));
+                            ChessCoordinate endInteracting = BoardModel.getChessCoordinate(3, targetCoord.getRank());
+                            moves.add(new Move(targetCoord, movingKing, endInteracting, piece));
+                        }
                     }
                 }
             }
@@ -277,7 +286,7 @@ public class MoveGenerator {
         for (Piece piece : game.getBoard().getRooks(game.getTurn())) {
             generateSlidingPieceMoves(piece);
         }
-        for (Piece piece : game.getBoard().getRooks(game.getTurn())) {
+        for (Piece piece : game.getBoard().getBishops(game.getTurn())) {
             generateSlidingPieceMoves(piece);
         }
     }
@@ -289,7 +298,7 @@ public class MoveGenerator {
         // If pinned and in check, this piece can't move.
         if (!inCheck || !isPinned) {
             for (List<ChessCoordinate> ray : piece.getFinalCoordinates()) {
-                if (isPinned && !areAligned(piece.getCoordinate(), ray.get(0), friendlyKing.getCoordinate())) {
+                if (ray.size() == 0 || isPinned && !areAligned(piece.getCoordinate(), ray.get(0), friendlyKing.getCoordinate())) {
                     continue;
                 }
                 for (ChessCoordinate targetCoord : ray) {
@@ -297,10 +306,12 @@ public class MoveGenerator {
                         continue;
                     }
                     Piece targetPiece = board.getPieceOn(targetCoord);
-                    if (targetPiece != null && targetPiece.getColor() == game.getTurn()) {
-                        continue;
+                    if (targetPiece != null) {
+                        if (targetPiece.getColor() != game.getTurn()) {
+                            moves.add(new Move(targetCoord, piece, null, targetPiece));
+                        }
+                        break;
                     }
-                    moves.add(new Move(targetCoord, piece, null, targetPiece));
                 }
             }
         }
@@ -314,8 +325,12 @@ public class MoveGenerator {
             }
 
             for (List<ChessCoordinate> ray : knight.getFinalCoordinates()) {
-                for (ChessCoordinate coordinate : ray) {
-                    moves.add(new Move(coordinate, knight, null, board.getPieceOn(coordinate)));
+                for (ChessCoordinate targetCoordinate : ray) {
+                    Piece targetPiece = board.getPieceOn(targetCoordinate);
+                    if (targetPiece != null && targetPiece.getColor() == knight.getColor()) {
+                        continue;
+                    }
+                    moves.add(new Move(targetCoordinate, knight, null, targetPiece));
                 }
             }
         }
@@ -363,7 +378,7 @@ public class MoveGenerator {
                 moves.add(new Move(captureRight, pawn, null, targetPiece));
             }
         } else {
-            moves.add(new Move(captureRight, targetPiece, null, targetPiece));
+            moves.add(new Move(captureRight, pawn, null, targetPiece));
         }
     }
 

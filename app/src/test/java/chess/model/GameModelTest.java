@@ -1,5 +1,6 @@
 package chess.model;
 
+import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.pieces.Knight;
 import chess.model.pieces.Pawn;
@@ -114,13 +115,12 @@ public class GameModelTest {
 
     @Test
     public void privateTest() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
-                true, true, false, false, null);
+        /*GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_2), 'w',
+                true, true, false, false, null);//*/
+        GameModel game = new GameModel();
 
         long start = System.currentTimeMillis();
-        MoveGenerator generator = new MoveGenerator(game);
-        System.out.println(generator.generateMoves().size());
-        //System.out.println("Positions: " + countNumPositions1(game, 3));
+        System.out.println("Positions: " + countNumPositions1(game, 3));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }

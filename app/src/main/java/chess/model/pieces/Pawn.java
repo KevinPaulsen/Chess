@@ -20,4 +20,9 @@ public abstract class Pawn extends Piece {
     public Pawn(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color, ChessCoordinate coordinate) {
         super(reachableCoordinatesMap, color, coordinate);
     }
+
+    @Override
+    public String toString() {
+        return "";
+    }
 }

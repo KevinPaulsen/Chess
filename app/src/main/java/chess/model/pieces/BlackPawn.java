@@ -61,8 +61,11 @@ public class BlackPawn extends Pawn {
             } else {
                 result.add(List.of());
             }
+        } else {
+            result.add(List.of());
+            result.add(List.of());
         }
-        result.add(ImmutableList.copyOf(straightMoves));
+        result.add(0, ImmutableList.copyOf(straightMoves));
 
 
         return ImmutableList.copyOf(result);

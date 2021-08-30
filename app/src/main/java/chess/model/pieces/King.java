@@ -21,16 +21,6 @@ public class King extends Piece {
             generateReachableCoordinates(King::generateReachableCoordsAt);
 
     /**
-     * Reference to right direction
-     */
-    private static final Direction RIGHT = new Direction(0, 1);
-
-    /**
-     * Reference to right direction
-     */
-    private static final Direction LEFT = new Direction(0, -1);
-
-    /**
      * Creates a new king with the given color and coordinate.
      *
      * @param color the given color
@@ -66,6 +56,9 @@ public class King extends Piece {
         if (coordinate.getFile() == 4 && coordinate.getRank() % 7 == 0) {
             result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank())));
             result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank())));
+        } else {
+            result.add(List.of());
+            result.add(List.of());
         }
 
         return ImmutableList.copyOf(result);
