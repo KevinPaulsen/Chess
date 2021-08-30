@@ -27,6 +27,8 @@ public class MoveGenerator {
     private boolean inDoubleCheck;
     private boolean pinsExistInPosition;
 
+    private final King friendlyKing;
+
     private final FastMap checkRayMap;
     private final FastMap pinRayMap;
     private final FastMap opponentAttackMap;
@@ -38,22 +40,31 @@ public class MoveGenerator {
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
 
+        this.friendlyKing = game.getTurn() == 'w' ? game.getBoard().getWhiteKing() : game.getBoard().getBlackKing();
+
         this.checkRayMap = new FastMap();
         this.pinRayMap = new FastMap();
         this.opponentAttackMap = new FastMap();
     }
 
     public List<Move> generateMoves() {
-
         calculateAttackData();
 
         generateKingMoves();
+
+        if (inDoubleCheck) {
+            return moves;
+        }
+
+        generateSlidingMoves();
+        generateKnightMoves();
+        generatePawnMoves();
 
         return moves;
     }
 
     private void calculateAttackData() {
-        FastMap slidingAttackMap = calculateSlidingAttackMap(game);
+        opponentAttackMap.merge(calculateSlidingAttackMap(game));
 
         BoardModel board = game.getBoard();
         char turn = game.getTurn();
@@ -193,7 +204,6 @@ public class MoveGenerator {
      */
 
     private void generateKingMoves() {
-
         BoardModel board = game.getBoard();
         King movingKing = game.getTurn() == 'w' ? board.getWhiteKing() : board.getBlackKing();
         List<List<ChessCoordinate>> possibleEndCoordinates = movingKing.getFinalCoordinates();
@@ -260,9 +270,118 @@ public class MoveGenerator {
         }
     }
 
+    private void generateSlidingMoves() {
+        for (Piece piece : game.getBoard().getQueens(game.getTurn())) {
+            generateSlidingPieceMoves(piece);
+        }
+        for (Piece piece : game.getBoard().getRooks(game.getTurn())) {
+            generateSlidingPieceMoves(piece);
+        }
+        for (Piece piece : game.getBoard().getRooks(game.getTurn())) {
+            generateSlidingPieceMoves(piece);
+        }
+    }
+
+    private void generateSlidingPieceMoves(Piece piece) {
+        BoardModel board = game.getBoard();
+        boolean isPinned = isPinned(piece.getCoordinate());
+
+        // If pinned and in check, this piece can't move.
+        if (!inCheck || !isPinned) {
+            for (List<ChessCoordinate> ray : piece.getFinalCoordinates()) {
+                if (isPinned && !areAligned(piece.getCoordinate(), ray.get(0), friendlyKing.getCoordinate())) {
+                    continue;
+                }
+                for (ChessCoordinate targetCoord : ray) {
+                    if (inCheck && !checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
+                        continue;
+                    }
+                    Piece targetPiece = board.getPieceOn(targetCoord);
+                    if (targetPiece != null && targetPiece.getColor() == game.getTurn()) {
+                        continue;
+                    }
+                    moves.add(new Move(targetCoord, piece, null, targetPiece));
+                }
+            }
+        }
+    }
+
+    private void generateKnightMoves() {
+        BoardModel board = game.getBoard();
+        for (Knight knight : board.getKnights(game.getTurn())) {
+            if (isPinned(knight.getCoordinate())) {
+                continue;
+            }
+
+            for (List<ChessCoordinate> ray : knight.getFinalCoordinates()) {
+                for (ChessCoordinate coordinate : ray) {
+                    moves.add(new Move(coordinate, knight, null, board.getPieceOn(coordinate)));
+                }
+            }
+        }
+    }
+
+    private void generatePawnMoves() {
+        BoardModel board = game.getBoard();
+
+        for (Pawn pawn : board.getPawns(game.getTurn())) {
+            List<List<ChessCoordinate>> finalCoordinates = pawn.getFinalCoordinates();
+            boolean isPinned = isPinned(pawn.getCoordinate());
+
+            if (!isPinned) {
+                for (ChessCoordinate targetCoord : finalCoordinates.get(0)) {
+                    Piece targetPiece = board.getPieceOn(targetCoord);
+                    if (targetPiece == null) {
+                        // TODO: promotion
+                        moves.add(new Move(targetCoord, pawn));
+                    }
+                }
+            }
+
+            for (ChessCoordinate captureRight : finalCoordinates.get(1)) {
+                addAttackingPawnMoves(pawn, isPinned, captureRight, Directions.RIGHT);
+            }
+
+            for (ChessCoordinate captureLeft : finalCoordinates.get(2)) {
+                addAttackingPawnMoves(pawn, isPinned, captureLeft, Directions.LEFT);
+            }
+        }
+    }
+
+    private void addAttackingPawnMoves(Pawn pawn, boolean isPinned, ChessCoordinate captureRight, Direction right) {
+        BoardModel board = game.getBoard();
+        if (isPinned && !areAligned(pawn.getCoordinate(), friendlyKing.getCoordinate(), captureRight)) {
+            return;
+        }
+
+        Piece targetPiece = board.getPieceOn(captureRight);
+        if (targetPiece == null) {
+            ChessCoordinate enPassantTarget = game.getEnPassantTarget();
+            if (enPassantTarget != null && enPassantTarget.equals(captureRight)) {
+                // TODO: Deal with enPassant discovery
+                targetPiece = board.getPieceOn(right.next(pawn.getCoordinate()));
+                moves.add(new Move(captureRight, pawn, null, targetPiece));
+            }
+        } else {
+            moves.add(new Move(captureRight, targetPiece, null, targetPiece));
+        }
+    }
+
+    private static boolean areAligned(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
+                                      ChessCoordinate coordinate3) {
+        float slope1 = ((float) coordinate1.getRank() - coordinate2.getRank()) /
+                (coordinate1.getFile() - coordinate2.getFile());
+        float slope2 = ((float) coordinate1.getRank() - coordinate3.getRank()) /
+                (coordinate1.getFile() - coordinate3.getFile());
+        return slope1 == slope2;
+    }
+
     private static List<List<ChessCoordinate>> getReachableCoords(
             List<List<ChessCoordinate>>[][] reachableCoordinatesMap, ChessCoordinate coordinate) {
         return reachableCoordinatesMap[coordinate.getFile()][coordinate.getRank()];
     }
 
+    private boolean isPinned(ChessCoordinate coordinate) {
+        return pinsExistInPosition && pinRayMap.isMarked(coordinate.getOndDimIndex());
+    }
 }

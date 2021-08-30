@@ -119,7 +119,7 @@ public class GameModelTest {
 
         long start = System.currentTimeMillis();
         MoveGenerator generator = new MoveGenerator(game);
-        System.out.println(generator.generateMoves());
+        System.out.println(generator.generateMoves().size());
         //System.out.println("Positions: " + countNumPositions1(game, 3));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
@@ -128,7 +128,7 @@ public class GameModelTest {
     public static int countNumPositions1(GameModel game, int depth) {
         System.out.println();
         int sum = 0;
-        for (Move move : List.copyOf(game.getLegalMoves(game.getTurn()))) {
+        for (Move move : List.copyOf(game.getLegalMoves())) {
             if (game.move(move)) {
                 int num = countNumPositions(game, depth - 1);
                 System.out.println(move.toString() + ": " + num);
@@ -147,7 +147,7 @@ public class GameModelTest {
             return 1;
         }
         int sum = 0;
-        for (Move move : List.copyOf(game.getLegalMoves(game.getTurn()))) {
+        for (Move move : List.copyOf(game.getLegalMoves())) {
             if (game.move(move)) {
                 sum += countNumPositions(game, depth - 1);
                 game.undoMove(move);

@@ -138,6 +138,8 @@ public class BoardModel {
         if (piece != null && coordinate != null) {
             pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
             piece.moveTo(coordinate);
+
+            addPieceToSet(piece);
             if (piece.getColor() == 'w') {
                 if (!whitePieces.add(piece)) {
                     throw new RuntimeException("This piece already exists on the board.");
@@ -162,6 +164,7 @@ public class BoardModel {
             }
 
             pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
+            removePieceFromSet(piece);
             if (piece.getColor() == 'w') {
                 if (!whitePieces.remove(piece)) {
                     throw new IllegalStateException("Attempted to remove piece that was not held.");
@@ -171,7 +174,34 @@ public class BoardModel {
                     throw new IllegalStateException("Attempted to remove piece that was not held.");
                 }
             }
-            // FIXME: pieces probably not being removed from sets.
+        }
+    }
+
+    private void addPieceToSet(Piece piece) {
+        if (piece instanceof Queen) {
+            (piece.getColor() == 'w' ? whiteQueens : blackQueens).add((Queen) piece);
+        } else if (piece instanceof Rook) {
+            (piece.getColor() == 'w' ? whiteRooks : blackRooks).add((Rook) piece);
+        } else if (piece instanceof Bishop) {
+            (piece.getColor() == 'w' ? whiteBishops : blackBishops).add((Bishop) piece);
+        } else if (piece instanceof Knight) {
+            (piece.getColor() == 'w' ? whiteKnights : blackKnights).add((Knight) piece);
+        } else if (piece instanceof Pawn) {
+            (piece.getColor() == 'w' ? whitePawns : blackPawns).add((Pawn) piece);
+        }
+    }
+
+    private void removePieceFromSet(Piece piece) {
+        if (piece instanceof Queen) {
+            (piece.getColor() == 'w' ? whiteQueens : blackQueens).remove(piece);
+        } else if (piece instanceof Rook) {
+            (piece.getColor() == 'w' ? whiteRooks : blackRooks).remove(piece);
+        } else if (piece instanceof Bishop) {
+            (piece.getColor() == 'w' ? whiteBishops : blackBishops).remove(piece);
+        } else if (piece instanceof Knight) {
+            (piece.getColor() == 'w' ? whiteKnights : blackKnights).remove(piece);
+        } else if (piece instanceof Pawn) {
+            (piece.getColor() == 'w' ? whitePawns : blackPawns).remove(piece);
         }
     }
 
@@ -197,52 +227,18 @@ public class BoardModel {
         for (Piece[] file : pieceArray) {
             for (Piece piece : file) {
                 if (piece != null) {
-                    if (piece instanceof King) {
-                        if (piece.getColor() == 'w') {
-                            whiteKing = (King) piece;
-                        } else {
-                            blackKing = (King) piece;
-                        }
-                    } else if (piece instanceof Queen) {
-                        if (piece.getColor() == 'w') {
-                            whiteQueens.add((Queen) piece);
-                        } else {
-                            blackQueens.add((Queen) piece);
-                        }
-                    } else if (piece instanceof Rook) {
-                        if (piece.getColor() == 'w') {
-                            whiteRooks.add((Rook) piece);
-                        } else {
-                            blackRooks.add((Rook) piece);
-                        }
-                    } else if (piece instanceof Bishop) {
-                        if (piece.getColor() == 'w') {
-                            whiteBishops.add((Bishop) piece);
-                        } else {
-                            blackBishops.add((Bishop) piece);
-                        }
-                    } else if (piece instanceof Knight) {
-                        if (piece.getColor() == 'w') {
-                            whiteKnights.add((Knight) piece);
-                        } else {
-                            blackKnights.add((Knight) piece);
-                        }
-                    } else if (piece instanceof Pawn) {
-                        if (piece.getColor() == 'w') {
-                            whitePawns.add((Pawn) piece);
-                        } else {
-                            blackPawns.add((Pawn) piece);
-                        }
-                    }
+                    addPieceToSet(piece);
 
                     if (piece.getColor() == 'w') {
                         if (!whitePieces.add(piece)) {
                             throw new IllegalStateException("Adding piece that already exists on board.");
                         }
+                        if (piece instanceof King) whiteKing = (King) piece;
                     } else {
                         if (!blackPieces.add(piece)) {
                             throw new IllegalStateException("Adding piece that already exists on board.");
                         }
+                        if (piece instanceof King) blackKing = (King) piece;
                     }
                 }
             }

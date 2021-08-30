@@ -41,7 +41,7 @@ public class ChessAI {
         alphaBetaMap.put("", alphaBeta);
 
         int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(game.getTurn()), maximizingPlayer, game)) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(), maximizingPlayer, game)) {
             GameModel gameClone = new GameModel(game);
             Move cloneMove = gameClone.cloneMove(move);
             gameClone.move(cloneMove);
@@ -88,7 +88,7 @@ public class ChessAI {
         alphaBetaMap.put(treeLocation, alphaBeta);
 
         int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(maximizingPlayer ? 'w' : 'b'), maximizingPlayer, game)) {
+        for (Move move : getOrderedMoves(game.getLegalMoves(), maximizingPlayer, game)) {
             game.move(move);
             Evaluation evaluation = miniMax(game, !maximizingPlayer, new AlphaBeta(alphaBeta), treeLocation + (999 - count), depth - 1);
             evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);

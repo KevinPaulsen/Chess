@@ -9,10 +9,8 @@ import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * This class represents the model for a standard chess game. This
@@ -37,17 +35,6 @@ public class GameModel {
     private final List<Move> moveHistory;
 
     /**
-     * This set of all pieces that need to be updated. This gets cleared and
-     * updated at the end of each move.
-     */
-    private final Set<Piece> piecesToUpdate;
-
-    /**
-     * The collection of legal moves that can be made in this game.
-     */
-    private final List<Move> legalMoves;
-
-    /**
      * The tracker for which players turn it is to move.
      */
     private char turn;
@@ -56,27 +43,27 @@ public class GameModel {
      * The current target for an En Passant capture. This is null
      * if no En Passant is possible.
      */
-    private ChessCoordinate enPassantTarget;
+    private final ChessCoordinate enPassantTarget;
 
     /**
      * The flag for if white can castle king-side.
      */
-    private boolean whiteKingCastle;
+    private final boolean whiteKingCastle;
 
     /**
      * The flag for if white can castle queen-side.
      */
-    private boolean whiteQueenCastle;
+    private final boolean whiteQueenCastle;
 
     /**
      * The flag for if black can castle king-side.
      */
 
-    private boolean blackKingCastle;
+    private final boolean blackKingCastle;
     /**
      * The flag for if black can castle queen-side.
      */
-    private boolean blackQueenCastle;
+    private final boolean blackQueenCastle;
 
     /**
      * The default constructor that creates a normal game.
@@ -116,28 +103,8 @@ public class GameModel {
         this.blackQueenCastle = blackQueenCastle;
         this.enPassantTarget = enPassantTarget;
         this.moveHistory = new ArrayList<>();
-        this.legalMoves = new ArrayList<>();
-        this.piecesToUpdate = new HashSet<>();
 
-        initPieces();
         checkRep();
-    }
-
-    /**
-     * Initializes all the pieces. This method linearly goes through
-     * each piece and ensures all the piece-board data is properly set.
-     */
-    private void initPieces() {
-        for (Piece piece : board.getBlackPieces()) {
-            if (piece != null) {
-                // FIXME: get pieces
-            }
-        }
-        for (Piece piece : board.getWhitePieces()) {
-            if (piece != null) {
-                // FIXME: get pieces
-            }
-        }
     }
 
     /**
@@ -164,7 +131,7 @@ public class GameModel {
             Move currentMove = null;
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
-                for (Move move : legalMoves) {
+                for (Move move : new MoveGenerator(this).generateMoves()) {
                     if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
                         currentMove = move;
                         break;
@@ -192,16 +159,8 @@ public class GameModel {
         if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
-            updateAfterMove(move);
-
-            if (legalPosition()) {
-                turn = (turn == 'w') ? 'b' : 'w';
-                didMove = true;
-            } else {
-                board.undoMove(move);
-                moveHistory.remove(move);
-                updateAfterMove(move);
-            }
+            turn = (turn == 'w') ? 'b' : 'w';
+            didMove = true;
         }
 
         checkRep();
@@ -214,70 +173,8 @@ public class GameModel {
             board.undoMove(move);
             moveHistory.remove(moveHistory.size() - 1);
             turn = (turn == 'w') ? 'b' : 'w';
-            updateAfterMove(move);
         }
         checkRep();
-    }
-
-    /**
-     * Update add and update all the relevant pieces after a move has occurred.
-     *
-     * @param move the move that just occurred
-     */
-    private void updateAfterMove(Move move) {
-        // Update moving piece beginning and end square
-
-        // Update interacting piece beginning and end square
-
-        // Update black and white king square
-        piecesToUpdate.add(board.getWhiteKing());
-        piecesToUpdate.add(board.getBlackKing());
-
-        // Check if there are any pawns that need to be updated due to blockage
-        for (Direction direction : Directions.VERTICAL.directions) {
-            checkDirectionForPawn(move.getStartingCoordinate(), direction, 2);
-            checkDirectionForPawn(move.getEndingCoordinate(), direction, 2);
-        }
-
-        // Check if a pawn needs to be updated due to EnPassant possibilities
-        List<Pawn> pawnUpdate = new ArrayList<>();
-        if (getLastMove() != null && getLastMove().getMovingPiece() instanceof Pawn) {
-            for (Direction direction : Directions.LATERAL.directions) {
-                Pawn pawn = checkDirectionForPawn(getLastMove().getEndingCoordinate(), direction, 1);
-            }
-        }
-
-        // Update each piece, then clear the set of piece to update, then add all possible pawns.
-        piecesToUpdate.clear();
-        piecesToUpdate.addAll(pawnUpdate);
-    }
-
-    /**
-     * Look for a pawn in the given direction. If there is a pawn,
-     * add it to pieces to update and return the pawn.
-     *
-     * @param coordinate the coordinate to look from.
-     * @param direction the direction to look in.
-     * @return the pawn found or null if no pawn is found.
-     */
-    private Pawn checkDirectionForPawn(ChessCoordinate coordinate, Direction direction, int distance) {
-        for (int offset = 0; offset < distance; offset++, coordinate = direction.next(coordinate)) {
-            Piece possiblePawn = board.getPieceOn(direction.next(coordinate));
-            if (possiblePawn instanceof Pawn) {
-                piecesToUpdate.add(possiblePawn);
-                return (Pawn) possiblePawn;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return weather the current position is legal to end on. If it is not, then
-     *         false is returned. Otherwise true is returned.
-     */
-    private boolean legalPosition() {
-        King relevantKing = (turn == 'w') ? board.getWhiteKing() : board.getBlackKing();
-        return true;
     }
 
     public boolean canKingSideCastle(char color) {
@@ -288,8 +185,12 @@ public class GameModel {
         return color == 'w' ? whiteQueenCastle : blackQueenCastle;
     }
 
-    public List<Move> getLegalMoves(char color) {
-        return legalMoves;
+    public ChessCoordinate getEnPassantTarget() {
+        return enPassantTarget;
+    }
+
+    public List<Move> getLegalMoves() {
+        return new MoveGenerator(this).generateMoves();
     }
 
     public Move cloneMove(Move move) {
