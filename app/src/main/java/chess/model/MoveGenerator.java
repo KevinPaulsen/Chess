@@ -138,19 +138,13 @@ public class MoveGenerator {
                     opponentAttackMap.mergeMask(targetCoord.getBitMask());
                     if (targetCoord.equals(kingCoord)) {
                         inDoubleCheck = inCheck;
+                        inCheck = true;
                         checkRayMap.mergeMask(pawn.getCoordinate().getBitMask());
                     }
                 }
             }
         }
     }
-
-    /*
-
-    squareInCheckRay(coord)
-    squareIsAttacked(coord)
-
-     */
 
     private void calculatePinsAndCheckRays(BoardModel board, List<List<ChessCoordinate>> raysToCheck,
                                            boolean isDiagonal, char turn) {
@@ -319,16 +313,11 @@ public class MoveGenerator {
                         if (targetPiece != null && targetPiece.getColor() == piece.getColor()) {
                             break;
                         }
-                        if (inCheck && !checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
-                            continue;
+                        if (!inCheck || checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
+                            moves.add(new Move(targetCoord, piece, null, targetPiece));
                         }
                         if (targetPiece != null) {
-                            if (targetPiece.getColor() != game.getTurn()) {
-                                moves.add(new Move(targetCoord, piece, null, targetPiece));
-                            }
                             break;
-                        } else {
-                            moves.add(new Move(targetCoord, piece));
                         }
                     }
                 }

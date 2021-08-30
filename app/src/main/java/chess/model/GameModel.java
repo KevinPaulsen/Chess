@@ -201,20 +201,24 @@ public class GameModel {
         FastMap state = new FastMap();
         state.merge(stateHistory.get(stateHistory.size() - 1));
         if (canKingSideCastle('w')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook)) {
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook
+                && board.getWhiteKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
         if (canKingSideCastle('b')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook)) {
-            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook
+                && board.getBlackKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 7)))) {
+            state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('w')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook)) {
-            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook
+                && board.getWhiteKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 0)))) {
+            state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('b')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook)) {
-            state.flip(WHITE_KING_SIDE_CASTLE_MASK);
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook
+                && board.getBlackKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 7)))) {
+            state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
         stateHistory.add(state);
     }

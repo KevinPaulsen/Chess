@@ -135,11 +135,13 @@ public class GameModelTest {
                 true, true, false, false, null);//*/
         //GameModel game = new GameModel();
 
-        game.move(BoardModel.getChessCoordinate(C, 4 - 1), BoardModel.getChessCoordinate(B, 3 - 1));
-        game.move(BoardModel.getChessCoordinate(D, 8 - 1), BoardModel.getChessCoordinate(A, 5 - 1));
+        //game.move(BoardModel.getChessCoordinate(E, 1 - 1), BoardModel.getChessCoordinate(F, 2 - 1));
+        //game.move(BoardModel.getChessCoordinate(H, 7 - 1), BoardModel.getChessCoordinate(H, 5 - 1));
+        //game.move(BoardModel.getChessCoordinate(F, 2 - 1), BoardModel.getChessCoordinate(G, 3 - 1));
+        //game.move(BoardModel.getChessCoordinate(H, 6 - 1), BoardModel.getChessCoordinate(H, 5 - 1));
 
         long start = System.currentTimeMillis();
-        System.out.println("Positions: " + countNumPositions1(game, 1));
+        System.out.println("Positions: " + countNumPositions1(game, 3));
         long end = System.currentTimeMillis();
         System.out.println("" + (end - start) + " ms");
     }
