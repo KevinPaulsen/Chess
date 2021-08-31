@@ -1,143 +1,95 @@
 package chess.model.chessai;
 
-import chess.model.GameModel;
 import chess.Move;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import chess.model.GameModel;
 
 public class ChessAI {
 
-    private static final int DEPTH = 6;
+    private static final int DEPTH = 7;
 
-    private final Map<Integer, Evaluation> positionToEval;
-    private final Map<String, AlphaBeta> alphaBetaMap;
     private final Evaluator evaluator;
-    private final Executor executor;
 
-    private Evaluation evaluation;
-
-    private long time;
 
     public ChessAI(Evaluator evaluator) {
         this.evaluator = evaluator;
-        this.positionToEval = new HashMap<>();
-        this.alphaBetaMap = new HashMap<>();
-        this.executor = Executors.newFixedThreadPool(6);
     }
 
     public Move getBestMove(GameModel game) {
-        long startTime = System.currentTimeMillis();
-
-        ArrayList<CompletableFuture<Void>> completableFutures = new ArrayList<>();
         boolean maximizingPlayer = game.getTurn() == 'w';
-        evaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        AlphaBeta alphaBeta = new AlphaBeta();
-        alphaBetaMap.put("", alphaBeta);
 
-        int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(), maximizingPlayer, game)) {
-            GameModel gameClone = new GameModel(game);
-            Move cloneMove = gameClone.cloneMove(move);
-            gameClone.move(cloneMove);
-            completableFutures.add(getFutureEvaluation(gameClone, Integer.toString(999 - count), maximizingPlayer).thenAcceptAsync(evaluation -> {
-                if (maximizingPlayer) {
-                    this.evaluation = Evaluation.max(this.evaluation, new Evaluation(move, evaluation.getEvaluation(), evaluation.getDepth()));
-                    alphaBeta.alphaMax(evaluation.getEvaluation());
-                } else {
-                    this.evaluation = Evaluation.min(this.evaluation, new Evaluation(move, evaluation.getEvaluation(), evaluation.getDepth()));
-                    alphaBeta.betaMin(evaluation.getEvaluation());
-                }
-            }, executor));
-            count++;
-        }
-
-        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
-        time = System.currentTimeMillis() - startTime;
-
-        System.out.println(time);
-        positionToEval.put(game.hashCode(), evaluation);
-        System.out.println("Eval: " + evaluation.getEvaluation());
-        return evaluation.getMove();
-    }
-
-    /**
-     * Returns a Future Evaluation. Calculates the best evaluation from a position asynchronously.
-     *
-     * @param game the game to to move in.
-     * @param maximizingPlayer the best player
-     * @return a future Evaluation
-     */
-    private CompletableFuture<Evaluation> getFutureEvaluation(GameModel game, String treeLocation, boolean maximizingPlayer) {
-        return CompletableFuture.supplyAsync(() -> getBestEvaluation(game, maximizingPlayer, new AlphaBeta(), treeLocation, DEPTH), executor);
-    }
-
-    private Evaluation getBestEvaluation(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
-
-        int hashCode = game.hashCode();
-        if (positionToEval.containsKey(hashCode) && positionToEval.get(hashCode).getDepth() >= depth) {
-            return positionToEval.get(hashCode);
-        }//*/
-
-        Evaluation bestEvaluation = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        alphaBetaMap.put(treeLocation, alphaBeta);
-
-        int count = 0;
-        for (Move move : getOrderedMoves(game.getLegalMoves(), maximizingPlayer, game)) {
+        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        for (Move move : game.getLegalMoves()) {
             game.move(move);
-            Evaluation evaluation = miniMax(game, !maximizingPlayer, new AlphaBeta(alphaBeta), treeLocation + (999 - count), depth - 1);
-            evaluation = new Evaluation(move, evaluation.getEvaluation(), depth);
+            Evaluation moveEval = miniMax(game, new AlphaBeta(), DEPTH - 1);
             game.undoMove(move);
 
             if (maximizingPlayer) {
-                bestEvaluation = Evaluation.max(bestEvaluation, evaluation);
-                alphaBeta.alphaMax(evaluation.getEvaluation());
+                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval.getEvaluation(), DEPTH));
             } else {
-                bestEvaluation = Evaluation.min(bestEvaluation, evaluation);
-                alphaBeta.betaMin(evaluation.getEvaluation());
+                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval.getEvaluation(), DEPTH));
             }
-            alphaBeta.updateFromMap(alphaBetaMap, treeLocation, maximizingPlayer);
-            if (alphaBeta.betaLessThanAlpha()) {
-                break;
-            }
-            count++;
         }
 
-        positionToEval.put(hashCode, bestEvaluation);
-        return bestEvaluation;
+        System.out.println(bestEval.getEvaluation());
+        return bestEval.getMove();
     }
 
-    private Evaluation miniMax(GameModel game, boolean maximizingPlayer, AlphaBeta alphaBeta, String treeLocation, int depth) {
-        // TODO: Or game over
+    private Evaluation miniMax(GameModel game, AlphaBeta alphaBeta, int depth) {
         if (depth == 0) {
             return evaluator.evaluate(game);
         }
+        boolean maximizingPlayer = game.getTurn() == 'w';
 
-        Evaluation bestEvaluation;
-        if (maximizingPlayer) {
-            bestEvaluation = getBestEvaluation(game, true, alphaBeta, treeLocation, depth);
-        } else {
-            bestEvaluation = getBestEvaluation(game, false, alphaBeta, treeLocation, depth);
+        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        for (Move move : game.getLegalMoves()) {
+            game.move(move);
+            Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
+            game.undoMove(move);
+
+            if (maximizingPlayer) {
+                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval.getEvaluation(), depth));
+                alphaBeta.alphaMax(bestEval.getEvaluation());
+            } else {
+                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval.getEvaluation(), depth));
+                alphaBeta.betaMin(bestEval.getEvaluation());
+            }
+
+            if (alphaBeta.betaLessThanAlpha()) {
+                break;
+            }
         }
-        return bestEvaluation;
+        return bestEval;
     }
 
-    private List<Move> getOrderedMoves(List<Move> unorderedList, boolean maximizingPlayer, GameModel gameModel) {
-        unorderedList.sort((Move move1, Move move2) -> {
-            int score;
-            if (maximizingPlayer) {
-                score = 0;//move1.valueScore(gameModel) - move2.valueScore(gameModel);
-            } else {
-                score = 0;//move2.valueScore(gameModel) - move1.valueScore(gameModel);
-            }//*/
-            return score;
-        });
-        return unorderedList;
+    private Evaluation searchAllCaptures(GameModel game, AlphaBeta alphaBeta) {
+
+        boolean maximizingPlayer = game.getTurn() == 'w';
+        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        for (Move move : game.getLegalMoves()) {
+            if (move.getInteractingPiece() != null && move.getInteractingPieceEnd() == null) {
+                game.move(move);
+                Evaluation eval = searchAllCaptures(game, new AlphaBeta(alphaBeta));
+                game.undoMove(move);
+
+                if (maximizingPlayer) {
+                    bestEval = Evaluation.max(bestEval, eval);
+                    alphaBeta.alphaMax(bestEval.getEvaluation());
+                } else {
+                    bestEval = Evaluation.min(bestEval, eval);
+                    alphaBeta.betaMin(bestEval.getEvaluation());
+                }
+
+                if (alphaBeta.betaLessThanAlpha()) {
+                    break;
+                }
+            }
+        }
+
+        if (bestEval == Evaluation.BEST_EVALUATION || bestEval == Evaluation.WORST_EVALUATION) {
+            return evaluator.evaluate(game);
+        }
+
+        return new Evaluation(maximizingPlayer ? alphaBeta.alpha : alphaBeta.beta, 0);
     }
 
     private static class AlphaBeta {
@@ -162,34 +114,16 @@ public class ChessAI {
             return beta <= alpha;
         }
 
-        private void updateFromMap(Map<String, AlphaBeta> alphaBetaMap, String location, boolean maximizingPlayer) {
-            if (location.length() % 3 != 0) {
-                throw new IllegalArgumentException("Location is not formatted properly");
-            }
-
-            for (int idx = 0; idx < location.length(); idx += 3) {
-                AlphaBeta parentAlphaBeta = alphaBetaMap.get(location.substring(0, idx));
-                if (parentAlphaBeta != null) {
-                    alphaMax(parentAlphaBeta.alpha);
-                    betaMin(parentAlphaBeta.beta);//*/
-                }
-            }
-        }
-
-        private boolean alphaMax(double eval) {
+        private void alphaMax(double eval) {
             if (alpha < eval) {
                 alpha = eval;
-                return true;
             }
-            return false;
         }
 
-        private boolean betaMin(double eval) {
+        private void betaMin(double eval) {
             if (eval < beta) {
                 beta = eval;
-                return true;
             }
-            return false;
         }
     }
 }
