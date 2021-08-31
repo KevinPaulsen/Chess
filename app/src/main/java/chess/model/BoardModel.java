@@ -82,13 +82,13 @@ public class BoardModel {
                 throw new IllegalStateException("This move cannot exist");
             }
 
-            movePiece(move.getInteractingPiece(), move.getInteractingPieceEnd(), 0);
+            movePiece(move.getInteractingPiece(), move.getInteractingPieceEnd());
 
             if (move.doesPromote()) {
                 removePiece(move.getMovingPiece());
-                addPiece(move.getPromotedPiece(), move.getEndingCoordinate(), 1);
+                addPiece(move.getPromotedPiece(), move.getEndingCoordinate());
             } else {
-                movePiece(move.getMovingPiece(), move.getEndingCoordinate(), 1);
+                movePiece(move.getMovingPiece(), move.getEndingCoordinate());
             }
         }
     }
@@ -102,16 +102,16 @@ public class BoardModel {
         if (move != null) {
             if (move.doesPromote()) {
                 removePiece(move.getPromotedPiece());
-                addPiece(move.getMovingPiece(), move.getStartingCoordinate(), -1);
+                addPiece(move.getMovingPiece(), move.getStartingCoordinate());
             } else {
-                movePiece(move.getMovingPiece(), move.getStartingCoordinate(), -1);
+                movePiece(move.getMovingPiece(), move.getStartingCoordinate());
             }
 
             if (move.getInteractingPiece() != null) {
                 if (move.getInteractingPieceEnd() == null) {
-                    addPiece(move.getInteractingPiece(), move.getInteractingPieceStart(), 0);
+                    addPiece(move.getInteractingPiece(), move.getInteractingPieceStart());
                 } else {
-                    movePiece(move.getInteractingPiece(), move.getInteractingPieceStart(), 0);
+                    movePiece(move.getInteractingPiece(), move.getInteractingPieceStart());
                 }
             }
         }
@@ -132,9 +132,8 @@ public class BoardModel {
      *
      * @param piece the piece to add.
      * @param coordinate the coordinate to put the piece.
-     * @param movesToAdd the number of moves to add to the piecce.
      */
-    private void addPiece(Piece piece, ChessCoordinate coordinate, int movesToAdd) {
+    private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
             pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
             piece.moveTo(coordinate);
@@ -211,12 +210,16 @@ public class BoardModel {
      *
      * @param piece the piece to move.
      * @param endCoordinate the end coordinate of the piece.
-     * @param movesToAdd the number of moves to add to the piece.
      */
-    public void movePiece(Piece piece, ChessCoordinate endCoordinate, int movesToAdd) {
+    public void movePiece(Piece piece, ChessCoordinate endCoordinate) {
         if (piece != null) {
-            removePiece(piece);
-            addPiece(piece, endCoordinate, movesToAdd);
+            if (endCoordinate == null) {
+                removePiece(piece);
+            } else {
+                pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
+                pieceArray[endCoordinate.getFile()][endCoordinate.getRank()] = piece;
+                piece.moveTo(endCoordinate);
+            }
         }
     }
 

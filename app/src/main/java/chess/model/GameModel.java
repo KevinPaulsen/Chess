@@ -103,8 +103,8 @@ public class GameModel {
         this.board = board;
         this.turn = turn;
         this.enPassantTarget = enPassantTarget;
-        this.moveHistory = new ArrayList<>();
-        this.stateHistory = new ArrayList<>();
+        this.moveHistory = new ArrayList<>(200);
+        this.stateHistory = new ArrayList<>(200);
 
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
 
