@@ -209,15 +209,16 @@ public class GameModelTest {
         Assert.assertEquals("Wrong number of nodes found.", 25_685_493, numPositions);
     }
 
+    @SuppressWarnings("all")
     @Test
     public void privateTest() {
-        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
-                true, true, false, false, null);//*/
+        /*GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
+                true, true, false, false, null);//
         //GameModel game = new GameModel();
 
         long start = System.currentTimeMillis();
         System.out.println("Positions: " + countNumPositions1(game, 5));
         long end = System.currentTimeMillis();
-        System.out.println("" + (end - start) + " ms");
+        System.out.println("" + (end - start) + " ms");// */
     }
 }
