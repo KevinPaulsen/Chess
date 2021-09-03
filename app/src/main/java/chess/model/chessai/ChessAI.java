@@ -5,20 +5,23 @@ import chess.model.GameModel;
 
 public class ChessAI {
 
-    private static final int DEPTH = 7;
+    private static final int DEPTH = 6;
 
     private final Evaluator evaluator;
 
+    private final GameModel game;
 
-    public ChessAI(Evaluator evaluator) {
+
+    public ChessAI(Evaluator evaluator, GameModel game) {
         this.evaluator = evaluator;
+        this.game = game;
     }
 
-    public Move getBestMove(GameModel game) {
+    public Move getBestMove() {
         boolean maximizingPlayer = game.getTurn() == 'w';
 
         Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        for (Move move : game.getLegalMoves()) {
+        for (Move move : evaluator.getSortedMoves(game)) {
             game.move(move);
             Evaluation moveEval = miniMax(game, new AlphaBeta(), DEPTH - 1);
             game.undoMove(move);
@@ -41,7 +44,7 @@ public class ChessAI {
         boolean maximizingPlayer = game.getTurn() == 'w';
 
         Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        for (Move move : game.getLegalMoves()) {
+        for (Move move : evaluator.getSortedMoves(game)) {
             game.move(move);
             Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
             game.undoMove(move);
@@ -59,37 +62,6 @@ public class ChessAI {
             }
         }
         return bestEval;
-    }
-
-    private Evaluation searchAllCaptures(GameModel game, AlphaBeta alphaBeta) {
-
-        boolean maximizingPlayer = game.getTurn() == 'w';
-        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        for (Move move : game.getLegalMoves()) {
-            if (move.getInteractingPiece() != null && move.getInteractingPieceEnd() == null) {
-                game.move(move);
-                Evaluation eval = searchAllCaptures(game, new AlphaBeta(alphaBeta));
-                game.undoMove(move);
-
-                if (maximizingPlayer) {
-                    bestEval = Evaluation.max(bestEval, eval);
-                    alphaBeta.alphaMax(bestEval.getEvaluation());
-                } else {
-                    bestEval = Evaluation.min(bestEval, eval);
-                    alphaBeta.betaMin(bestEval.getEvaluation());
-                }
-
-                if (alphaBeta.betaLessThanAlpha()) {
-                    break;
-                }
-            }
-        }
-
-        if (bestEval == Evaluation.BEST_EVALUATION || bestEval == Evaluation.WORST_EVALUATION) {
-            return evaluator.evaluate(game);
-        }
-
-        return new Evaluation(maximizingPlayer ? alphaBeta.alpha : alphaBeta.beta, 0);
     }
 
     private static class AlphaBeta {

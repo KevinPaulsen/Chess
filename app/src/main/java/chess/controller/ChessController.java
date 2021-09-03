@@ -40,7 +40,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         gameModel = new GameModel();
         //gameModel = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD));
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
-        chessAI = new ChessAI(new PieceValueEvaluator());
+        chessAI = new ChessAI(new PieceValueEvaluator(), gameModel);
         pressedKeyCodes = new HashSet<>();
     }
 
@@ -62,7 +62,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
             if (AI_ON) {
                 futureAIMove = CompletableFuture.runAsync(() -> {
-                    if (gameModel.move(chessAI.getBestMove(gameModel))) {
+                    if (gameModel.move(chessAI.getBestMove())) {
                         view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                         view.pack();
                     }
