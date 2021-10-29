@@ -20,7 +20,7 @@ public class BoardModel {
     private static final ChessCoordinate[][] CHESS_COORDINATES = createChessCoordinates();
 
     // The array that holds all the pieces. They are stored in the format [file][rank]
-    private final Piece[][] pieceArray;
+    private final Piece[] pieceArray;
 
     private final Set<Piece> whitePieces;
     private final Set<Piece> blackPieces;
@@ -40,7 +40,7 @@ public class BoardModel {
     private King blackKing;
 
 
-    public BoardModel(Piece[][] pieceArray) {
+    public BoardModel(Piece[] pieceArray) {
         this.pieceArray = pieceArray;
         this.whitePieces = new HashSet<>();
         this.blackPieces = new HashSet<>();
@@ -48,7 +48,7 @@ public class BoardModel {
         this.whiteQueens = new HashSet<>();
         this.blackQueens = new HashSet<>();
         this.whiteRooks = new HashSet<>();
-        this.blackRooks= new HashSet<>();
+        this.blackRooks = new HashSet<>();
         this.whiteBishops = new HashSet<>();
         this.blackBishops = new HashSet<>();
         this.whiteKnights = new HashSet<>();
@@ -61,10 +61,38 @@ public class BoardModel {
 
     /**
      * TODO: FIX THIS
+     *
      * @param boardModel
      */
     public BoardModel(BoardModel boardModel) {
         this(boardModel.pieceArray);
+    }
+
+    /**
+     * Gets the chess coordinate at the given file and rank. If the requested
+     * coordinate does not exist, null is returned.
+     *
+     * @param file the file of the chess coordinate.
+     * @param rank the rank of the chess coordinate.
+     * @return the coordinate with the requested file and rank.
+     */
+    public static ChessCoordinate getChessCoordinate(int file, int rank) {
+        return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[file][rank] : null;
+    }
+
+    /**
+     * Create a 2D map of the chess coordinates.
+     *
+     * @return the 2D array of chess coordinates.
+     */
+    private static ChessCoordinate[][] createChessCoordinates() {
+        ChessCoordinate[][] chessCoordinates = new ChessCoordinate[8][8];
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                chessCoordinates[file][rank] = new ChessCoordinate(file, rank);
+            }
+        }
+        return chessCoordinates;
     }
 
     /**
@@ -124,18 +152,18 @@ public class BoardModel {
      * @return the piece on the given coordinate.
      */
     public Piece getPieceOn(ChessCoordinate coordinate) {
-        return coordinate == null ? null : pieceArray[coordinate.getFile()][coordinate.getRank()];
+        return coordinate == null ? null : pieceArray[coordinate.getOndDimIndex()];
     }
 
     /**
      * Add piece to the board, and add the given moves to add to the piece.
      *
-     * @param piece the piece to add.
+     * @param piece      the piece to add.
      * @param coordinate the coordinate to put the piece.
      */
     private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
-            pieceArray[coordinate.getFile()][coordinate.getRank()] = piece;
+            pieceArray[coordinate.getOndDimIndex()] = piece;
             piece.moveTo(coordinate);
 
             addPieceToSet(piece);
@@ -162,7 +190,7 @@ public class BoardModel {
                 throw new IllegalStateException("Piece Data is out of sync.");
             }
 
-            pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
+            pieceArray[piece.getCoordinate().getOndDimIndex()] = null;
             removePieceFromSet(piece);
             if (piece.getColor() == 'w') {
                 if (!whitePieces.remove(piece)) {
@@ -208,7 +236,7 @@ public class BoardModel {
      * Moves the piece to the given coordinate, and adds the given number of moves
      * to the piece.
      *
-     * @param piece the piece to move.
+     * @param piece         the piece to move.
      * @param endCoordinate the end coordinate of the piece.
      */
     public void movePiece(Piece piece, ChessCoordinate endCoordinate) {
@@ -216,8 +244,8 @@ public class BoardModel {
             if (endCoordinate == null) {
                 removePiece(piece);
             } else {
-                pieceArray[piece.getCoordinate().getFile()][piece.getCoordinate().getRank()] = null;
-                pieceArray[endCoordinate.getFile()][endCoordinate.getRank()] = piece;
+                pieceArray[piece.getCoordinate().getOndDimIndex()] = null;
+                pieceArray[endCoordinate.getOndDimIndex()] = piece;
                 piece.moveTo(endCoordinate);
             }
         }
@@ -227,22 +255,20 @@ public class BoardModel {
      * Initialize the pieces, and local references to the relevant pieces.
      */
     private void initPieces() {
-        for (Piece[] file : pieceArray) {
-            for (Piece piece : file) {
-                if (piece != null) {
-                    addPieceToSet(piece);
+        for (Piece piece : pieceArray) {
+            if (piece != null) {
+                addPieceToSet(piece);
 
-                    if (piece.getColor() == 'w') {
-                        if (!whitePieces.add(piece)) {
-                            throw new IllegalStateException("Adding piece that already exists on board.");
-                        }
-                        if (piece instanceof King) whiteKing = (King) piece;
-                    } else {
-                        if (!blackPieces.add(piece)) {
-                            throw new IllegalStateException("Adding piece that already exists on board.");
-                        }
-                        if (piece instanceof King) blackKing = (King) piece;
+                if (piece.getColor() == 'w') {
+                    if (!whitePieces.add(piece)) {
+                        throw new IllegalStateException("Adding piece that already exists on board.");
                     }
+                    if (piece instanceof King) whiteKing = (King) piece;
+                } else {
+                    if (!blackPieces.add(piece)) {
+                        throw new IllegalStateException("Adding piece that already exists on board.");
+                    }
+                    if (piece instanceof King) blackKing = (King) piece;
                 }
             }
         }
@@ -358,7 +384,7 @@ public class BoardModel {
      *
      * @return the 2D array of pieces.
      */
-    public Piece[][] getPieceArray() {
+    public Piece[] getPieceArray() {
         return pieceArray.clone();
     }
 
@@ -366,47 +392,18 @@ public class BoardModel {
      * Prints the board to the console. Used only for debug purposes.
      */
     public void printBoard() {
-        for (Piece[] pieces : pieceArray) {
-            for (Piece piece : pieces) {
-                if (piece == null) {
-                    System.out.print("  ");
+        for (Piece piece : pieceArray) {
+            if (piece == null) {
+                System.out.print("  ");
+            } else {
+                if (piece instanceof Pawn) {
+                    System.out.print("P ");
                 } else {
-                    if (piece instanceof Pawn) {
-                        System.out.print("P ");
-                    } else {
-                        System.out.print(piece.toString() + " ");
-                    }
+                    System.out.print(piece.toString() + " ");
                 }
             }
-            System.out.println();
         }
-    }
-
-    /**
-     * Gets the chess coordinate at the given file and rank. If the requested
-     * coordinate does not exist, null is returned.
-     *
-     * @param file the file of the chess coordinate.
-     * @param rank the rank of the chess coordinate.
-     * @return the coordinate with the requested file and rank.
-     */
-    public static ChessCoordinate getChessCoordinate(int file, int rank) {
-        return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[file][rank] : null;
-    }
-
-    /**
-     * Create a 2D map of the chess coordinates.
-     *
-     * @return the 2D array of chess coordinates.
-     */
-    private static ChessCoordinate[][] createChessCoordinates() {
-        ChessCoordinate[][] chessCoordinates = new ChessCoordinate[8][8];
-        for (int file = 0; file < 8; file++) {
-            for (int rank = 0; rank < 8; rank++) {
-                chessCoordinates[file][rank] = new ChessCoordinate(file, rank);
-            }
-        }
-        return chessCoordinates;
+        System.out.println();
     }
 
 }

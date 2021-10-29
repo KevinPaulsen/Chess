@@ -88,11 +88,11 @@ public class ChessBoardFactory {
      * @param board any non-null integer array that is 8x8.
      * @return a Square array from the given 'board'
      */
-    private static Piece[][] createSquareArray(int[][] board) {
-        Piece[][] pieceArray = new Piece[8][8];
+    private static Piece[] createSquareArray(int[][] board) {
+        Piece[] pieceArray = new Piece[64];
         for (int file = 0; file < 8; file++) {
             for (int rank = 0; rank < 8; rank++) {
-                pieceArray[file][rank] = createPiece(board[file][rank], BoardModel.getChessCoordinate(file, rank));
+                pieceArray[rank * 8 + file] = createPiece(board[file][rank], BoardModel.getChessCoordinate(file, rank));
             }
         }
         return pieceArray;
