@@ -25,11 +25,11 @@ public class PieceValueEvaluator implements Evaluator {
         int whiteScore = 0;
         int blackScore = 0;
 
-        for (Piece piece : game.getBoard().getWhitePieces()) {
-            whiteScore += getValue(piece);
+        for (ChessCoordinate coordinate : game.getBoard().getWhitePieces()) {
+            whiteScore += getValue(game.getBoard().getPieceOn(coordinate));
         }
-        for (Piece piece : game.getBoard().getBlackPieces()) {
-            blackScore += getValue(piece);
+        for (ChessCoordinate coordinate : game.getBoard().getBlackPieces()) {
+            blackScore += getValue(game.getBoard().getPieceOn(coordinate));
         }
         return new Evaluation(whiteScore - blackScore, 0);
     }

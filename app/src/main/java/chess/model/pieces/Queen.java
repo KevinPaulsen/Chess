@@ -24,10 +24,9 @@ public class Queen extends Piece {
      * a rook.
      *
      * @param color the color of this rook
-     * @param coordinate the coordinate of this rook
      */
-    public Queen(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public Queen(char color) {
+        super(Queen::generateReachableCoordsAt, color);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Queen extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Queen(Pawn pawn) {
-        super(pawn, REACHABLE_COORDINATES_MAP);
+        super(pawn, Queen::generateReachableCoordsAt);
     }
 
     @Override

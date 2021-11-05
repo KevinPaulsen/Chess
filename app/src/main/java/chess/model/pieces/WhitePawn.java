@@ -22,10 +22,9 @@ public class WhitePawn extends Pawn {
      * Creates a pawn with the given color and coordinate
      *
      * @param color      the color of this pawn
-     * @param coordinate the coordinate of this pawn
      */
-    public WhitePawn(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public WhitePawn(char color) {
+        super(WhitePawn::generateReachableCoordsAt, color);
     }
 
     /**

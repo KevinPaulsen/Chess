@@ -13,12 +13,11 @@ public abstract class Pawn extends Piece {
     /**
      * Constructs a new Piece with the given color and on the given coordinate.
      *
-     * @param reachableCoordinatesMap the map of reachable coordinates.
-     * @param color                   the color of this Piece.
-     * @param coordinate              the coordinate of this Piece.
+     * @param mapMaker   the function that makes the map.
+     * @param color      the color of this Piece.
      */
-    public Pawn(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color, ChessCoordinate coordinate) {
-        super(reachableCoordinatesMap, color, coordinate);
+    public Pawn(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color) {
+        super(mapMaker, color);
     }
 
     @Override

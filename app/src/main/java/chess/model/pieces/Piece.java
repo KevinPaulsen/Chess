@@ -19,12 +19,7 @@ public abstract class Piece {
      */
     private static int PIECE_COUNT = 0;
 
-    private final List<List<ChessCoordinate>>[][] reachableCoordinatesMap;
-
-    /**
-     * The coordinate this piece is at
-     */
-    protected ChessCoordinate coordinate;
+    private final ReachableCoordinatesMap reachableCoordinatesMap;
 
     /**
      * The color of this Piece
@@ -39,12 +34,11 @@ public abstract class Piece {
     /**
      * Constructs a new Piece with the given color and on the given coordinate.
      *
-     * @param reachableCoordinatesMap the map of reachable coordinates.
+     * @param mapMaker the function that makes the map.
      * @param color the color of this Piece.
-     * @param coordinate the coordinate of this Piece.
      */
-    protected Piece(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color, ChessCoordinate coordinate) {
-        this(reachableCoordinatesMap, color, coordinate, PIECE_COUNT);
+    protected Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color) {
+        this(mapMaker, color, PIECE_COUNT);
         PIECE_COUNT++;
     }
 
@@ -52,26 +46,23 @@ public abstract class Piece {
      * Creates a piece from a pawn. This piece has the same UID as the pawn. This
      * should only be used for promotion.
      *
-     * @param reachableCoordinatesMap the map of reachable coordinates.
      * @param pawn the pawn that is being promoted.
+     * @param mapMaker the function that makes the map.
      */
-    protected Piece(Pawn pawn, List<List<ChessCoordinate>>[][] reachableCoordinatesMap) {
-        this(reachableCoordinatesMap, pawn.getColor(), pawn.coordinate, pawn.uid);
+    protected Piece(Pawn pawn, ReachableCoordinatesMap.CoordinateMapMaker mapMaker) {
+        this(mapMaker, pawn.getColor(), pawn.uid);
     }
 
     /**
      * Constructs a new piece with the given information.
      *
-     * @param reachableCoordinatesMap the map of reachable coordinates.
+     * @param mapMaker the function that makes the map.
      * @param color the color of this piece.
-     * @param coordinate the coordinate of this piece.
      * @param uid the unique ID if this piece.
      */
-    protected Piece(List<List<ChessCoordinate>>[][] reachableCoordinatesMap, char color,
-                    ChessCoordinate coordinate, int uid) {
-        this.reachableCoordinatesMap = reachableCoordinatesMap;
+    protected Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, int uid) {
+        this.reachableCoordinatesMap = new ReachableCoordinatesMap(mapMaker);
         this.color = color;
-        this.coordinate = coordinate;
         this.uid = uid;
     }
 
@@ -82,8 +73,8 @@ public abstract class Piece {
      *
      * @return the list of arrays which are all the final coordinates that can be reached from this position.
      */
-    public List<List<ChessCoordinate>> getFinalCoordinates() {
-        return reachableCoordinatesMap[coordinate.getFile()][coordinate.getRank()];
+    public List<List<ChessCoordinate>> getFinalCoordinates(ChessCoordinate coordinate) {
+        return reachableCoordinatesMap.getReachableCoordinatesFrom(coordinate);
     }
 
     /**
@@ -91,17 +82,6 @@ public abstract class Piece {
      */
     public char getColor() {
         return color;
-    }
-
-    public void moveTo(ChessCoordinate coordinate) {
-        this.coordinate = coordinate;
-    }
-
-    /**
-     * @return the coordinate this piece is on
-     */
-    public ChessCoordinate getCoordinate() {
-        return coordinate;
     }
 
     @Override

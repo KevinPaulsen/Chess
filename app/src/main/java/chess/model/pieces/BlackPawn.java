@@ -22,10 +22,9 @@ public class BlackPawn extends Pawn {
      * Creates a pawn with the given color and coordinate
      *
      * @param color      the color of this pawn
-     * @param coordinate the coordinate of this pawn
      */
-    public BlackPawn(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public BlackPawn(char color) {
+        super(BlackPawn::generateReachableCoordsAt, color);
     }
 
     /**

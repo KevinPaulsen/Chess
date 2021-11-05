@@ -61,6 +61,10 @@ public class ChessCoordinate {
         return 0 <= file && file <= 7 && 0 <= rank && rank <= 7;
     }
 
+    public static boolean isInBounds(int oneDimIndex) {
+        return 0 <= oneDimIndex && oneDimIndex <= 63;
+    }
+
     @Override
     public String toString() {
         return charFile + Integer.toString(charRank);

@@ -24,10 +24,9 @@ public class Bishop extends Piece {
      * a bishop.
      *
      * @param color the color of this Bishop
-     * @param coordinate the coordinate of this Bishop
      */
-    public Bishop(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public Bishop(char color) {
+        super(Bishop::generateReachableCoordsAt, color);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Bishop extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Bishop(Pawn pawn) {
-        super(pawn, REACHABLE_COORDINATES_MAP);
+        super(pawn, Bishop::generateReachableCoordsAt);
     }
 
     @Override

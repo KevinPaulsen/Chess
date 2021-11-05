@@ -24,10 +24,9 @@ public class Rook extends Piece {
      * a rook.
      *
      * @param color the color of this rook
-     * @param coordinate the coordinate of this rook
      */
-    public Rook(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public Rook(char color) {
+        super(Rook::generateReachableCoordsAt, color);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Rook extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Rook(Pawn pawn) {
-        super(pawn, REACHABLE_COORDINATES_MAP);
+        super(pawn, Rook::generateReachableCoordsAt);
     }
 
     public String toString() {

@@ -22,10 +22,9 @@ public class Knight extends Piece {
      * Creates a Knight with the given color and coordinate.
      *
      * @param color the color of this knight
-     * @param coordinate the coordinate of this knight
      */
-    public Knight(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public Knight(char color) {
+        super(Knight::generateReachableCoordsAt, color);
     }
 
     /**
@@ -35,7 +34,7 @@ public class Knight extends Piece {
      * @param pawn the pawn that is promoted.
      */
     public Knight(Pawn pawn) {
-        super(pawn, REACHABLE_COORDINATES_MAP);
+        super(pawn, Knight::generateReachableCoordsAt);
     }
 
     @Override

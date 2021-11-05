@@ -173,7 +173,7 @@ public class GameModel {
         if (move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
-            checkCastling();
+            checkCastling(board.getWhiteKingCoord(), board.getBlackKingCoord());
             checkEnPassant(move);
             turn = (turn == 'w') ? 'b' : 'w';
             didMove = true;
@@ -197,27 +197,27 @@ public class GameModel {
         }
     }
 
-    private void checkCastling() {
+    private void checkCastling(ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord) {
         FastMap state = new FastMap();
         state.merge(stateHistory.get(stateHistory.size() - 1));
         if (canKingSideCastle('w')
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook
-                && board.getWhiteKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 0)))) {
+                && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
         if (canKingSideCastle('b')
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook
-                && board.getBlackKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 7)))) {
+                && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('w')
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook
-                && board.getWhiteKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 0)))) {
+                && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('b')
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook
-                && board.getBlackKing().getCoordinate().equals(BoardModel.getChessCoordinate(4, 7)))) {
+                && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
         stateHistory.add(state);
@@ -251,12 +251,6 @@ public class GameModel {
 
     public List<Move> getLegalMoves() {
         return new MoveGenerator(this).generateMoves();
-    }
-
-    public Move cloneMove(Move move) {
-        return new Move(move.getEndingCoordinate(), board.getPieceOn(move.getStartingCoordinate()),
-                move.getInteractingPieceEnd(), board.getPieceOn(move.getInteractingPieceStart()),
-                move.getPromotedPiece());
     }
 
     public Move getLastMove() {

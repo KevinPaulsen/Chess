@@ -56,22 +56,26 @@ public class Move {
      * @param endingCoordinate the ending coordinate.
      * @param movingPiece the moving piece.
      */
-    public Move(ChessCoordinate endingCoordinate, Piece movingPiece) {
-        this(endingCoordinate, movingPiece, null, null, null);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece) {
+        this(startingCoordinate, endingCoordinate, movingPiece,
+                null, null, null);
     }
 
     /**
      * Creates a move that interacts with another piece. This could be a
      * standard capture, or a castling move.
      *
+     * @param startingCoordinate the coordinate the moving piece starts on.
      * @param endingCoordinate the coordinate the moving piece moves to.
      * @param movingPiece the piece that is moved.
+     * @param interactingPieceStart the coordinate the interacting piece starts on.
      * @param interactingPieceEnd the coordinate the interacting piece moves to.
      * @param interactingPiece the piece the moving piece interacts with.
      */
-    public Move(ChessCoordinate endingCoordinate, Piece movingPiece,
-                ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
-        this(endingCoordinate, movingPiece, interactingPieceEnd, interactingPiece, null);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
+        this(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd,
+                interactingPiece, null);
     }
 
     /**
@@ -81,8 +85,8 @@ public class Move {
      * @param movingPiece the piece that is moved.
      * @param promotedPiece the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate endingCoordinate, Piece movingPiece, Piece promotedPiece) {
-        this(endingCoordinate, movingPiece, null, null, promotedPiece);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece, Piece promotedPiece) {
+        this(startingCoordinate, endingCoordinate, movingPiece, null, null, null, promotedPiece);
     }
 
     /**
@@ -94,12 +98,20 @@ public class Move {
      * @param interactingPiece the piece the moving piece interacts with.
      * @param promotedPiece the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate endingCoordinate, Piece movingPiece,
-                ChessCoordinate interactingPieceEnd, Piece interactingPiece, Piece promotedPiece) {
-        this.startingCoordinate = movingPiece.getCoordinate();
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece,
+                Piece promotedPiece) {
+        if (interactingPieceStart == null && interactingPiece != null) {
+            throw new IllegalArgumentException("An interacting piece cannot start on null.");
+        } else if (startingCoordinate == null) {
+            throw new IllegalArgumentException("Starting coordinate cannot be null.");
+        } else if (endingCoordinate == null) {
+            throw new IllegalArgumentException("Ending coordinate cannot be null");
+        }
+        this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
-        this.interactingPieceStart = interactingPiece == null ? null : interactingPiece.getCoordinate();
+        this.interactingPieceStart = interactingPieceStart;
         this.interactingPieceEnd = interactingPieceEnd;
         this.interactingPiece = interactingPiece;
         this.promotedPiece = promotedPiece;
@@ -202,11 +214,18 @@ public class Move {
         if (this == o) return true;
         if (!(o instanceof Move)) return false;
         Move move = (Move) o;
-        return moveNumber == move.moveNumber && Objects.equals(startingCoordinate, move.startingCoordinate) && Objects.equals(endingCoordinate, move.endingCoordinate) && Objects.equals(movingPiece, move.movingPiece) && Objects.equals(interactingPieceStart, move.interactingPieceStart) && Objects.equals(interactingPieceEnd, move.interactingPieceEnd) && Objects.equals(interactingPiece, move.interactingPiece) && Objects.equals(promotedPiece, move.promotedPiece);
+        return moveNumber == move.moveNumber && Objects.equals(startingCoordinate, move.startingCoordinate)
+                && Objects.equals(endingCoordinate, move.endingCoordinate)
+                && Objects.equals(movingPiece, move.movingPiece)
+                && Objects.equals(interactingPieceStart, move.interactingPieceStart)
+                && Objects.equals(interactingPieceEnd, move.interactingPieceEnd)
+                && Objects.equals(interactingPiece, move.interactingPiece)
+                && Objects.equals(promotedPiece, move.promotedPiece);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd, interactingPiece, promotedPiece, moveNumber);
+        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
+                interactingPieceEnd, interactingPiece, promotedPiece, moveNumber);
     }
 }

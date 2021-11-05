@@ -92,7 +92,7 @@ public class ChessBoardFactory {
         Piece[] pieceArray = new Piece[64];
         for (int file = 0; file < 8; file++) {
             for (int rank = 0; rank < 8; rank++) {
-                pieceArray[rank * 8 + file] = createPiece(board[file][rank], BoardModel.getChessCoordinate(file, rank));
+                pieceArray[rank * 8 + file] = createPiece(board[file][rank]);
             }
         }
         return pieceArray;
@@ -104,44 +104,44 @@ public class ChessBoardFactory {
      * @param pieceInt the number representation of the pieces
      * @return the piece corresponding to the piece, if no piece exists, null is returned.
      */
-    private static Piece createPiece(int pieceInt, ChessCoordinate coordinate) {
+    private static Piece createPiece(int pieceInt) {
         Piece piece = null;
         switch (pieceInt) {
             case W_PAWN:
-                piece = new WhitePawn('w', coordinate);
+                piece = new WhitePawn('w');
                 break;
             case W_ROOK:
-                piece = new Rook('w', coordinate);
+                piece = new Rook('w');
                 break;
             case W_KNIGHT:
-                piece = new Knight('w', coordinate);
+                piece = new Knight('w');
                 break;
             case W_BISHOP:
-                piece = new Bishop('w', coordinate);
+                piece = new Bishop('w');
                 break;
             case W_KING:
-                piece = new King('w', coordinate);
+                piece = new King('w');
                 break;
             case W_QUEEN:
-                piece = new Queen('w', coordinate);
+                piece = new Queen('w');
                 break;
             case B_PAWN:
-                piece = new BlackPawn('b', coordinate);
+                piece = new BlackPawn('b');
                 break;
             case B_ROOK:
-                piece = new Rook('b', coordinate);
+                piece = new Rook('b');
                 break;
             case B_KNIGHT:
-                piece = new Knight('b', coordinate);
+                piece = new Knight('b');
                 break;
             case B_BISHOP:
-                piece = new Bishop('b', coordinate);
+                piece = new Bishop('b');
                 break;
             case B_QUEEN:
-                piece = new Queen('b', coordinate);
+                piece = new Queen('b');
                 break;
             case B_KING:
-                piece = new King('b', coordinate);
+                piece = new King('b');
         }
         return piece;
     }

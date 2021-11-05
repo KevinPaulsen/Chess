@@ -24,10 +24,9 @@ public class King extends Piece {
      * Creates a new king with the given color and coordinate.
      *
      * @param color the given color
-     * @param coordinate the given coordinate
      */
-    public King(char color, ChessCoordinate coordinate) {
-        super(REACHABLE_COORDINATES_MAP, color, coordinate);
+    public King(char color) {
+        super(King::generateReachableCoordsAt, color);
     }
 
     @Override
