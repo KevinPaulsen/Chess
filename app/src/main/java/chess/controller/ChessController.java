@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
-    private static final boolean AI_ON = false;
+    private static final boolean AI_ON = true;
 
     private final GameModel gameModel;
     private final ChessView view;

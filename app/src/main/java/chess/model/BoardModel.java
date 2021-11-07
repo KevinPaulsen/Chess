@@ -6,6 +6,7 @@ import chess.model.pieces.Piece;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -16,39 +17,12 @@ public class BoardModel {
     // The array that holds all the pieces. They are stored in the format [file][rank]
     private final Piece[] pieceArray;
 
-    private final Set<ChessCoordinate> whitePieces;
-    private final Set<ChessCoordinate> blackPieces;
-
-    private final Set<ChessCoordinate> whiteQueens;
-    private final Set<ChessCoordinate> blackQueens;
-    private final Set<ChessCoordinate> whiteRooks;
-    private final Set<ChessCoordinate> blackRooks;
-    private final Set<ChessCoordinate> whiteBishops;
-    private final Set<ChessCoordinate> blackBishops;
-    private final Set<ChessCoordinate> whiteKnights;
-    private final Set<ChessCoordinate> blackKnights;
-    private final Set<ChessCoordinate> whitePawns;
-    private final Set<ChessCoordinate> blackPawns;
-
     private ChessCoordinate whiteKingCoord;
     private ChessCoordinate blackKingCoord;
 
 
     public BoardModel(Piece[] pieceArray) {
         this.pieceArray = pieceArray;
-        this.whitePieces = new HashSet<>();
-        this.blackPieces = new HashSet<>();
-
-        this.whiteQueens = new HashSet<>();
-        this.blackQueens = new HashSet<>();
-        this.whiteRooks = new HashSet<>();
-        this.blackRooks = new HashSet<>();
-        this.whiteBishops = new HashSet<>();
-        this.blackBishops = new HashSet<>();
-        this.whiteKnights = new HashSet<>();
-        this.blackKnights = new HashSet<>();
-        this.whitePawns = new HashSet<>();
-        this.blackPawns = new HashSet<>();
 
         initPieces();
     }
@@ -154,17 +128,6 @@ public class BoardModel {
     private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
             pieceArray[coordinate.getOndDimIndex()] = piece;
-
-            addPieceToSet(coordinate);
-            if (piece.getColor() == 'w') {
-                if (!whitePieces.add(coordinate)) {
-                    throw new RuntimeException("This piece already exists on the board.");
-                }
-            } else {
-                if (!blackPieces.add(coordinate)) {
-                    throw new RuntimeException("This piece already exists on the board.");
-                }
-            }
         }
     }
 
@@ -179,113 +142,7 @@ public class BoardModel {
             throw new IllegalStateException("Piece Data is out of sync.");
         }
         if (piece != null) {
-            removePieceFromSet(coordinate);
             pieceArray[coordinate.getOndDimIndex()] = null;
-            if (piece.getColor() == 'w') {
-                if (!whitePieces.remove(coordinate)) {
-                    throw new IllegalStateException("Attempted to remove piece that was not held.");
-                }
-            } else {
-                if (!blackPieces.remove(coordinate)) {
-                    throw new IllegalStateException("Attempted to remove piece that was not held.");
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds the piece at the given coordinate from its respective set.
-     *
-     * @throws IllegalArgumentException if there is not a piece at the given coordinate
-     * @param coordinate the coordinate of the piece to add.
-     */
-    private void addPieceToSet(ChessCoordinate coordinate) {
-        Piece piece = getPieceOn(coordinate);
-        if (piece == null) {
-            throw new IllegalStateException("Piece data is out of sync.");
-        }
-        switch (piece) {
-            case WHITE_QUEEN:
-                whiteQueens.add(coordinate);
-                break;
-            case WHITE_ROOK:
-                whiteRooks.add(coordinate);
-                break;
-            case WHITE_BISHOP:
-                whiteBishops.add(coordinate);
-                break;
-            case WHITE_KNIGHT:
-                whiteKnights.add(coordinate);
-                break;
-            case WHITE_PAWN:
-                whitePawns.add(coordinate);
-                break;
-            case BLACK_QUEEN:
-                blackQueens.add(coordinate);
-                break;
-            case BLACK_ROOK:
-                blackRooks.add(coordinate);
-                break;
-            case BLACK_BISHOP:
-                blackBishops.add(coordinate);
-                break;
-            case BLACK_KNIGHT:
-                blackKnights.add(coordinate);
-                break;
-            case BLACK_PAWN:
-                blackPawns.add(coordinate);
-                break;
-        }
-    }
-
-    /**
-     * Removes the piece at the given coordinate from its respective set.
-     *
-     * @throws IllegalArgumentException if there is not a piece at the given coordinate
-     * @param coordinate the coordinate of the piece to remove.
-     */
-    private void removePieceFromSet(ChessCoordinate coordinate) {
-        Piece piece = getPieceOn(coordinate);
-        if (piece == null) {
-            throw new IllegalStateException("Piece data is out of sync.");
-        }
-        boolean didRemove;
-        switch (piece) {
-            case WHITE_QUEEN:
-                didRemove = whiteQueens.remove(coordinate);
-                break;
-            case WHITE_ROOK:
-                didRemove = whiteRooks.remove(coordinate);
-                break;
-            case WHITE_BISHOP:
-                didRemove = whiteBishops.remove(coordinate);
-                break;
-            case WHITE_KNIGHT:
-                didRemove = whiteKnights.remove(coordinate);
-                break;
-            case WHITE_PAWN:
-                didRemove = whitePawns.remove(coordinate);
-                break;
-            case BLACK_QUEEN:
-                didRemove = blackQueens.remove(coordinate);
-                break;
-            case BLACK_ROOK:
-                didRemove = blackRooks.remove(coordinate);
-                break;
-            case BLACK_BISHOP:
-                didRemove = blackBishops.remove(coordinate);
-                break;
-            case BLACK_KNIGHT:
-                didRemove = blackKnights.remove(coordinate);
-                break;
-            case BLACK_PAWN:
-                didRemove = blackPawns.remove(coordinate);
-                break;
-            default:
-                throw new IllegalStateException("Attempting to Remove King from Board");
-        }
-        if (!didRemove) {
-            throw new IllegalStateException("Piece was not in set when it should have been");
         }
     }
 
@@ -302,79 +159,14 @@ public class BoardModel {
             if (endCoord == null) {
                 removePiece(piece, startCoord);
             } else {
-                updateSetMovement(startCoord, endCoord);
+                if (piece == Piece.WHITE_KING) {
+                    whiteKingCoord = endCoord;
+                } else if (piece == Piece.BLACK_KING) {
+                    blackKingCoord = endCoord;
+                }
                 pieceArray[startCoord.getOndDimIndex()] = null;
                 pieceArray[endCoord.getOndDimIndex()] = piece;
             }
-        }
-    }
-
-    private void updateSetMovement(ChessCoordinate startCoord, ChessCoordinate endCoord) {
-        Piece piece = getPieceOn(startCoord);
-        if (piece == null) {
-            throw new IllegalStateException("Piece Data is out of sync.");
-        }
-
-        Set<ChessCoordinate> relevantSet;
-        Set<ChessCoordinate> relevantColorSet;
-        switch (piece) {
-            case WHITE_QUEEN:
-                relevantSet = whiteQueens;
-                relevantColorSet = whitePieces;
-                break;
-            case WHITE_ROOK:
-                relevantSet = whiteRooks;
-                relevantColorSet = whitePieces;
-                break;
-            case WHITE_BISHOP:
-                relevantSet = whiteBishops;
-                relevantColorSet = whitePieces;
-                break;
-            case WHITE_KNIGHT:
-                relevantSet = whiteKnights;
-                relevantColorSet = whitePieces;
-                break;
-            case WHITE_PAWN:
-                relevantSet = whitePawns;
-                relevantColorSet = whitePieces;
-                break;
-            case WHITE_KING:
-                whiteKingCoord = endCoord;
-                whitePieces.remove(startCoord);
-                whitePieces.add(endCoord);
-                return;
-            case BLACK_QUEEN:
-                relevantSet = blackQueens;
-                relevantColorSet = blackPieces;
-                break;
-            case BLACK_ROOK:
-                relevantSet = blackRooks;
-                relevantColorSet = blackPieces;
-                break;
-            case BLACK_BISHOP:
-                relevantSet = blackBishops;
-                relevantColorSet = blackPieces;
-                break;
-            case BLACK_KNIGHT:
-                relevantSet = blackKnights;
-                relevantColorSet = blackPieces;
-                break;
-            case BLACK_PAWN:
-                relevantSet = blackPawns;
-                relevantColorSet = blackPieces;
-                break;
-            case BLACK_KING:
-                blackKingCoord = endCoord;
-                blackPieces.remove(startCoord);
-                blackPieces.add(endCoord);
-                return;
-            default:
-                throw new IllegalStateException("Piece is not of expected type.");
-        }
-
-        if (!relevantSet.remove(startCoord) || !relevantSet.add(endCoord)
-                || !relevantColorSet.remove(startCoord) || !relevantColorSet.add(endCoord)) {
-            throw new IllegalStateException("Piece set data is out of sync");
         }
     }
 
@@ -386,35 +178,13 @@ public class BoardModel {
             Piece piece = pieceArray[pieceIdx];
             ChessCoordinate coordinate = getChessCoordinate(pieceIdx);
             if (piece != null) {
-                addPieceToSet(coordinate);
-
                 if (piece.getColor() == 'w') {
-                    if (!whitePieces.add(coordinate)) {
-                        throw new IllegalStateException("Adding piece that already exists on board.");
-                    }
                     if (piece == Piece.WHITE_KING) whiteKingCoord = coordinate;
                 } else {
-                    if (!blackPieces.add(coordinate)) {
-                        throw new IllegalStateException("Adding piece that already exists on board.");
-                    }
                     if (piece == Piece.BLACK_KING) blackKingCoord = coordinate;
                 }
             }
         }
-    }
-
-    /**
-     * @return the set of white pieces on this board.
-     */
-    public Set<ChessCoordinate> getWhitePieces() {
-        return whitePieces;
-    }
-
-    /**
-     * @return the set of black pieces on this board.
-     */
-    public Set<ChessCoordinate> getBlackPieces() {
-        return blackPieces;
     }
 
     /**
@@ -429,66 +199,6 @@ public class BoardModel {
      */
     public ChessCoordinate getBlackKingCoord() {
         return blackKingCoord;
-    }
-
-    /**
-     * @param color the color of the queen to get.
-     * @return the set of queens of the requested color on this board.
-     */
-    public Set<ChessCoordinate> getQueens(char color) {
-        if (color == 'w') {
-            return whiteQueens;
-        } else {
-            return blackQueens;
-        }
-    }
-
-    /**
-     * @param color the color of the rooks to get.
-     * @return the set of rooks of the requested color on this board.
-     */
-    public Set<ChessCoordinate> getRooks(char color) {
-        if (color == 'w') {
-            return whiteRooks;
-        } else {
-            return blackRooks;
-        }
-    }
-
-    /**
-     * @param color the color of the bishops to get.
-     * @return the set of bishops of the requested color on this board.
-     */
-    public Set<ChessCoordinate> getBishops(char color) {
-        if (color == 'w') {
-            return whiteBishops;
-        } else {
-            return blackBishops;
-        }
-    }
-
-    /**
-     * @param color the color of the Knights to get.
-     * @return the set of Knights of the requested color on this board.
-     */
-    public Set<ChessCoordinate> getKnights(char color) {
-        if (color == 'w') {
-            return whiteKnights;
-        } else {
-            return blackKnights;
-        }
-    }
-
-    /**
-     * @param color the color of the Pawns to get.
-     * @return the set of Pawns of the requested color on this board.
-     */
-    public Set<ChessCoordinate> getPawns(char color) {
-        if (color == 'w') {
-            return whitePawns;
-        } else {
-            return blackPawns;
-        }
     }
 
     @Override
@@ -515,6 +225,10 @@ public class BoardModel {
      */
     public Piece[] getPieceArray() {
         return pieceArray.clone();
+    }
+
+    public static Iterator<ChessCoordinate> getCoordinateIterator() {
+        return Arrays.stream(CHESS_COORDINATES).iterator();
     }
 
     /**

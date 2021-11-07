@@ -73,17 +73,6 @@ public class GameModel {
      */
     private ChessCoordinate enPassantTarget;
 
-    private final static int[][] TEST_BOARD_PAWNS = {
-            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
-            {EMPTY, EMPTY, EMPTY, EMPTY, W_KING, EMPTY, B_PAWN, EMPTY},
-            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KING},
-            {EMPTY, EMPTY, EMPTY, EMPTY, W_PAWN, EMPTY, B_PAWN, EMPTY},
-            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY},
-            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY},
-            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
-            {EMPTY, W_PAWN, EMPTY, EMPTY, B_QUEEN, EMPTY, EMPTY, EMPTY},
-    };
-
     /**
      * The default constructor that creates a normal game.
      */

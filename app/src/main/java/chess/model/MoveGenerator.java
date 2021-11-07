@@ -8,7 +8,9 @@ import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static chess.model.pieces.Piece.*;
 
@@ -26,9 +28,20 @@ public class MoveGenerator {
     private boolean inDoubleCheck;
     private boolean pinsExistInPosition;
 
+    private final Set<ChessCoordinate> whiteQueens;
+    private final Set<ChessCoordinate> blackQueens;
+    private final Set<ChessCoordinate> whiteRooks;
+    private final Set<ChessCoordinate> blackRooks;
+    private final Set<ChessCoordinate> whiteBishops;
+    private final Set<ChessCoordinate> blackBishops;
+    private final Set<ChessCoordinate> whiteKnights;
+    private final Set<ChessCoordinate> blackKnights;
+    private final Set<ChessCoordinate> whitePawns;
+    private final Set<ChessCoordinate> blackPawns;
+
     public MoveGenerator(GameModel game) {
         this.game = game;
-        this.moves = new ArrayList<>();
+        this.moves = new ArrayList<>(100);
         this.inCheck = false;
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
@@ -36,6 +49,17 @@ public class MoveGenerator {
         this.checkRayMap = new FastMap();
         this.pinRayMap = new FastMap();
         this.opponentAttackMap = new FastMap();
+
+        this.whiteQueens = new HashSet<>();
+        this.blackQueens = new HashSet<>();
+        this.whiteRooks = new HashSet<>();
+        this.blackRooks = new HashSet<>();
+        this.whiteBishops = new HashSet<>();
+        this.blackBishops = new HashSet<>();
+        this.whiteKnights = new HashSet<>();
+        this.blackKnights = new HashSet<>();
+        this.whitePawns = new HashSet<>();
+        this.blackPawns = new HashSet<>();
     }
 
     /**
@@ -71,6 +95,7 @@ public class MoveGenerator {
     }
 
     public List<Move> generateMoves() {
+        findPieces();
         calculateAttackData();
 
         generateKingMoves();
@@ -86,6 +111,50 @@ public class MoveGenerator {
         return moves;
     }
 
+    private void findPieces() {
+        BoardModel board = game.getBoard();
+        for (int file = 0; file < 8; file++) {
+            for (int rank = 0; rank < 8; rank++) {
+                ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);
+                Piece piece = board.getPieceOn(coordinate);
+                if (piece != null) {
+                    switch (piece) {
+                        case WHITE_QUEEN:
+                            whiteQueens.add(coordinate);
+                            break;
+                        case WHITE_ROOK:
+                            whiteRooks.add(coordinate);
+                            break;
+                        case WHITE_BISHOP:
+                            whiteBishops.add(coordinate);
+                            break;
+                        case WHITE_KNIGHT:
+                            whiteKnights.add(coordinate);
+                            break;
+                        case WHITE_PAWN:
+                            whitePawns.add(coordinate);
+                            break;
+                        case BLACK_QUEEN:
+                            blackQueens.add(coordinate);
+                            break;
+                        case BLACK_ROOK:
+                            blackRooks.add(coordinate);
+                            break;
+                        case BLACK_BISHOP:
+                            blackBishops.add(coordinate);
+                            break;
+                        case BLACK_KNIGHT:
+                            blackKnights.add(coordinate);
+                            break;
+                        case BLACK_PAWN:
+                            blackPawns.add(coordinate);
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
     private void calculateAttackData() {
         opponentAttackMap.merge(calculateSlidingAttackMap(game));
 
@@ -94,18 +163,24 @@ public class MoveGenerator {
         char attackingColor = game.getTurn() == 'w' ? 'b' : 'w';
         ChessCoordinate kingCoord = turn == 'w' ? board.getWhiteKingCoord() : board.getBlackKingCoord();
 
+        Set<ChessCoordinate> queens = attackingColor == 'w' ? whiteQueens : blackQueens;
+        Set<ChessCoordinate> rooks = attackingColor == 'w' ? whiteRooks : blackRooks;
+        Set<ChessCoordinate> bishops = attackingColor == 'w' ? whiteBishops : blackBishops;
+        Set<ChessCoordinate> knights = attackingColor == 'w' ? whiteKnights : blackKnights;
+        Set<ChessCoordinate> pawns = attackingColor == 'w' ? whitePawns : blackPawns;
+
         // Calculate the pin and check rays
-        if (board.getRooks(attackingColor).size() > 0 || board.getQueens(attackingColor).size() > 0) {
+        if (rooks.size() > 0 || queens.size() > 0) {
             calculatePinsAndCheckRays(board, WHITE_ROOK.getReachableCoordinateMapFrom(kingCoord),
                     false, turn);
         }
-        if (board.getBishops(attackingColor).size() > 0 || board.getQueens(attackingColor).size() > 0) {
+        if (bishops.size() > 0 || queens.size() > 0) {
             calculatePinsAndCheckRays(board, WHITE_BISHOP.getReachableCoordinateMapFrom(kingCoord),
                     true, turn);
         }
 
         // Calculate Knight Attacks
-        for (ChessCoordinate knightCoord : board.getKnights(attackingColor)) {
+        for (ChessCoordinate knightCoord : knights) {
             for (List<ChessCoordinate> ray : WHITE_KNIGHT.getReachableCoordinateMapFrom(knightCoord)) {
                 for (ChessCoordinate targetCoord : ray) {
                     opponentAttackMap.mergeMask(targetCoord.getBitMask());
@@ -119,7 +194,7 @@ public class MoveGenerator {
         }
 
         // Calculate Pawn Attacks
-        for (ChessCoordinate pawnCoord : board.getPawns(attackingColor)) {
+        for (ChessCoordinate pawnCoord : pawns) {
             Piece pawn = board.getPieceOn(pawnCoord);
             for (int rayIdx = 1; rayIdx <= 2; rayIdx++) {
                 for (ChessCoordinate targetCoord : pawn.getReachableCoordinateMapFrom(pawnCoord).get(rayIdx)) {
@@ -195,16 +270,20 @@ public class MoveGenerator {
         FastMap slidingAttackMap = new FastMap();
         char attackingColor = game.getTurn() == 'w' ? 'b' : 'w';
 
-        for (ChessCoordinate queenCoord : game.getBoard().getQueens(attackingColor)) {
+        Set<ChessCoordinate> queens = attackingColor == 'w' ? whiteQueens : blackQueens;
+        Set<ChessCoordinate> rooks = attackingColor == 'w' ? whiteRooks : blackRooks;
+        Set<ChessCoordinate> bishops = attackingColor == 'w' ? whiteBishops : blackBishops;
+
+        for (ChessCoordinate queenCoord : queens) {
             Piece queen = game.getBoard().getPieceOn(queenCoord);
             updateSlidingAttackPiece(game.getBoard(), queen, queenCoord, slidingAttackMap);
         }
 
-        for (ChessCoordinate rookCoordinate : game.getBoard().getRooks(attackingColor)) {
+        for (ChessCoordinate rookCoordinate : rooks) {
             Piece rook = game.getBoard().getPieceOn(rookCoordinate);
             updateSlidingAttackPiece(game.getBoard(), rook, rookCoordinate, slidingAttackMap);
         }
-        for (ChessCoordinate bishopCoordinate : game.getBoard().getBishops(attackingColor)) {
+        for (ChessCoordinate bishopCoordinate : bishops) {
             Piece bishop = game.getBoard().getPieceOn(bishopCoordinate);
             updateSlidingAttackPiece(game.getBoard(), bishop, bishopCoordinate, slidingAttackMap);
         }
@@ -295,15 +374,19 @@ public class MoveGenerator {
     }
 
     private void generateSlidingMoves() {
-        for (ChessCoordinate coordinate : game.getBoard().getQueens(game.getTurn())) {
+        Set<ChessCoordinate> queens = game.getTurn() == 'w' ? whiteQueens : blackQueens;
+        Set<ChessCoordinate> rooks = game.getTurn() == 'w' ? whiteRooks : blackRooks;
+        Set<ChessCoordinate> bishops = game.getTurn() == 'w' ? whiteBishops : blackBishops;
+
+        for (ChessCoordinate coordinate : queens) {
             Piece piece = game.getBoard().getPieceOn(coordinate);
             generateSlidingPieceMoves(piece, coordinate);
         }
-        for (ChessCoordinate coordinate : game.getBoard().getRooks(game.getTurn())) {
+        for (ChessCoordinate coordinate : rooks) {
             Piece piece = game.getBoard().getPieceOn(coordinate);
             generateSlidingPieceMoves(piece, coordinate);
         }
-        for (ChessCoordinate coordinate : game.getBoard().getBishops(game.getTurn())) {
+        for (ChessCoordinate coordinate : bishops) {
             Piece piece = game.getBoard().getPieceOn(coordinate);
             generateSlidingPieceMoves(piece, coordinate);
         }
@@ -338,8 +421,9 @@ public class MoveGenerator {
     }
 
     private void generateKnightMoves() {
+        Set<ChessCoordinate> knights = game.getTurn() == 'w' ? whiteKnights : blackKnights;
         BoardModel board = game.getBoard();
-        for (ChessCoordinate coordinate : board.getKnights(game.getTurn())) {
+        for (ChessCoordinate coordinate : knights) {
             if (isPinned(coordinate)) {
                 continue;
             }
@@ -359,11 +443,12 @@ public class MoveGenerator {
     }
 
     private void generatePawnMoves() {
+        Set<ChessCoordinate> pawns = game.getTurn() == 'w' ? whitePawns : blackPawns;
         BoardModel board = game.getBoard();
         ChessCoordinate friendlyKingCoord = game.getTurn() == 'w' ?
                 board.getWhiteKingCoord() : board.getBlackKingCoord();
 
-        for (ChessCoordinate coordinate : board.getPawns(game.getTurn())) {
+        for (ChessCoordinate coordinate : pawns) {
             Piece pawn = board.getPieceOn(coordinate);
             List<List<ChessCoordinate>> finalCoordinates = pawn.getReachableCoordinateMapFrom(coordinate);
             boolean isPinned = isPinned(coordinate);

@@ -75,12 +75,12 @@ public class ChessCoordinate {
         if (this == o) return true;
         if (!(o instanceof ChessCoordinate)) return false;
         ChessCoordinate that = (ChessCoordinate) o;
-        return charFile == that.charFile && charRank == that.charRank && file == that.file && rank == that.rank;
+        return ondDimIndex == that.ondDimIndex;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(file, rank);
+        return ondDimIndex;
     }
 }
 

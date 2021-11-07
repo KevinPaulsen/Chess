@@ -20,11 +20,21 @@ public class PieceValueEvaluator implements Evaluator {
         int whiteScore = 0;
         int blackScore = 0;
 
-        for (ChessCoordinate coordinate : game.getBoard().getWhitePieces()) {
-            whiteScore += getValue(game.getBoard().getPieceOn(coordinate));
-        }
-        for (ChessCoordinate coordinate : game.getBoard().getBlackPieces()) {
-            blackScore += getValue(game.getBoard().getPieceOn(coordinate));
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);
+                Piece piece = game.getBoard().getPieceOn(coordinate);
+
+                if (piece != null) {
+                    int value = getValue(piece);
+
+                    if (piece.getColor() == 'w') {
+                        whiteScore += value;
+                    } else {
+                        blackScore += value;
+                    }
+                }
+            }
         }
         return new Evaluation(whiteScore - blackScore, 0);
     }
@@ -32,7 +42,7 @@ public class PieceValueEvaluator implements Evaluator {
     @Override
     public List<Move> getSortedMoves(GameModel game) {
         List<Move> result = game.getLegalMoves();
-        result.sort(getMoveComparator(game.getBoard()));
+        //result.sort(getMoveComparator(game.getBoard()));
         return result;
     }
 
