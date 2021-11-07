@@ -13,19 +13,19 @@ import java.util.List;
  * color, and where it is on the board.
  */
 public enum Piece {
-    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w'),
-    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w'),
-    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w'),
-    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w'),
-    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w'),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w'),
+    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K"),
+    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q"),
+    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R"),
+    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B"),
+    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N"),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', ""),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b'),
-    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b'),
-    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b'),
-    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b'),
-    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b'),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b');
+    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k"),
+    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q"),
+    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r"),
+    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b"),
+    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n"),
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "");
 
     /**
      * The map of reachable coordinates
@@ -38,13 +38,19 @@ public enum Piece {
     private final char color;
 
     /**
+     * The string that this piece should be represented as.
+     */
+    private final String stringRep;
+
+    /**
      * Construct a new piece with the given reachableCoordinate map.
      *
      * @param mapMaker the mapMaker for this piece.
      */
-    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color) {
+    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, String stringRep) {
         this.reachableCoordinateMap = new ReachableCoordinatesMap(mapMaker);
         this.color = color;
+        this.stringRep = stringRep;
     }
 
     /**
@@ -59,6 +65,13 @@ public enum Piece {
      */
     public char getColor() {
         return color;
+    }
+
+    /**
+     * @return the string representation of this piece.
+     */
+    public String getStringRep() {
+        return stringRep;
     }
 
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {

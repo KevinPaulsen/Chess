@@ -197,7 +197,7 @@ public class Move {
                 }
             }
 
-            result.append(movingPiece.toString());
+            result.append(movingPiece.getStringRep());
             if (interactingPiece != null) {
                 result.append("x");
             }
@@ -206,7 +206,7 @@ public class Move {
 
         if (doesPromote()) {
             result.append("=");
-            result.append(promotedPiece.toString());
+            result.append(promotedPiece.getStringRep());
         }
 
         return result.toString();
