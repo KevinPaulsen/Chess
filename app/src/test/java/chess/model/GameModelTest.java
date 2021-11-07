@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static chess.model.ChessBoardFactory.*;
+import static chess.model.pieces.Piece.WHITE_KNIGHT;
 
 public class GameModelTest {
 
@@ -81,7 +82,7 @@ public class GameModelTest {
     @Test
     public void testStartingPositionDepth1() {
         GameModel game = new GameModel();
-        int numPositions = countNumPositions(game, 1);
+        int numPositions = countNumPositions1(game, 1);
         Assert.assertEquals("Wrong number of nodes found.", 20, numPositions);
     }
 
@@ -197,6 +198,10 @@ public class GameModelTest {
     public void testPawnBoardDepth5() {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_PAWNS), 'w',
                 false, false, false, false, null);
+        /*game.move(BoardModel.getChessCoordinate(2, 1), BoardModel.getChessCoordinate(2, 3));
+        game.move(BoardModel.getChessCoordinate(2, 7), BoardModel.getChessCoordinate(3, 7));
+        game.move(BoardModel.getChessCoordinate(2, 3), BoardModel.getChessCoordinate(2, 4));
+        game.move(BoardModel.getChessCoordinate(4, 6), BoardModel.getChessCoordinate(4, 4));// */
         int numPositions = countNumPositions(game, 5);
         Assert.assertEquals("Wrong number of nodes found.", 1_001_929, numPositions);
     }

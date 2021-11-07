@@ -1,12 +1,6 @@
 package chess.view;
 
-import chess.model.pieces.Bishop;
-import chess.model.pieces.King;
-import chess.model.pieces.Knight;
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
-import chess.model.pieces.Queen;
-import chess.model.pieces.Rook;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -47,21 +41,49 @@ public class ChessPieceView extends JLabel {
     private static ImageIcon getImage(Piece piece) {
         String path = "images/";
 
-        if (piece instanceof Pawn) {
-            path += (piece.getColor() == 'w') ? "WPawn.png" : "BPawn.png";
-        } else if (piece instanceof Rook) {
-            path += (piece.getColor() == 'w') ? "WRook.png" : "BRook.png";
-        } else if (piece instanceof Knight) {
-            path += (piece.getColor() == 'w') ? "WKnight.png" : "BKnight.png";
-        } else if (piece instanceof Bishop) {
-            path += (piece.getColor() == 'w') ? "WBishop.png" : "BBishop.png";
-        } else if (piece instanceof Queen) {
-            path += (piece.getColor() == 'w') ? "WQueen.png" : "BQueen.png";
-        } else if (piece instanceof King) {
-            path += (piece.getColor() == 'w') ? "WKing.png" : "BKing.png";
+        if (piece == null) {
+            return BLANK_IMAGE;
         }
 
-        return path.equals("images/") ? BLANK_IMAGE : new ImageIcon(path);
+        switch (piece) {
+            case WHITE_QUEEN:
+                path += "WQueen.png";
+                break;
+            case WHITE_ROOK:
+                path += "WRook.png";
+                break;
+            case WHITE_BISHOP:
+                path += "WBishop.png";
+                break;
+            case WHITE_KNIGHT:
+                path += "WKnight.png";
+                break;
+            case WHITE_PAWN:
+                path += "WPawn.png";
+                break;
+            case WHITE_KING:
+                path += "WKing.png";
+                break;
+            case BLACK_QUEEN:
+                path += "BQueen.png";
+                break;
+            case BLACK_ROOK:
+                path += "BRook.png";
+                break;
+            case BLACK_BISHOP:
+                path += "BBishop.png";
+                break;
+            case BLACK_KNIGHT:
+                path += "BKnight.png";
+                break;
+            case BLACK_PAWN:
+                path += "BPawn.png";
+                break;
+            case BLACK_KING:
+                path += "BKing.png";
+                break;
+        }
+        return new ImageIcon(path);
     }
 
     public void promoteTo(Piece promotedPiece) {

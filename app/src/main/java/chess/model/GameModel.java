@@ -2,14 +2,17 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
-import chess.model.pieces.Rook;
 import chess.util.FastMap;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static chess.model.ChessBoardFactory.*;
+import static chess.model.ChessBoardFactory.EMPTY;
+import static chess.model.pieces.Piece.BLACK_ROOK;
+import static chess.model.pieces.Piece.WHITE_ROOK;
 
 /**
  * This class represents the model for a standard chess game. This
@@ -70,21 +73,23 @@ public class GameModel {
      */
     private ChessCoordinate enPassantTarget;
 
+    private final static int[][] TEST_BOARD_PAWNS = {
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, W_KING, EMPTY, B_PAWN, EMPTY},
+            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, B_KING},
+            {EMPTY, EMPTY, EMPTY, EMPTY, W_PAWN, EMPTY, B_PAWN, EMPTY},
+            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY},
+            {EMPTY, W_PAWN, EMPTY, EMPTY, EMPTY, EMPTY, B_PAWN, EMPTY},
+            {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY},
+            {EMPTY, W_PAWN, EMPTY, EMPTY, B_QUEEN, EMPTY, EMPTY, EMPTY},
+    };
+
     /**
      * The default constructor that creates a normal game.
      */
     public GameModel() {
         this(ChessBoardFactory.createNormalBoard(), 'w', true,
                 true, true, true, null);
-    }
-
-    /**
-     * TODO: FIX THIS
-     */
-    @SuppressWarnings("all")
-    public GameModel(GameModel gameModel) {
-        this(null, 'w', false, false, false,
-                false, null);
     }
 
     /**
@@ -185,7 +190,7 @@ public class GameModel {
 
     private void checkEnPassant(Move lastMove) {
         if (lastMove != null) {
-            if (lastMove.getMovingPiece() instanceof Pawn
+            if ((lastMove.getMovingPiece() == Piece.WHITE_PAWN || lastMove.getMovingPiece() == Piece.BLACK_PAWN)
                     && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
                 int rank = (int) (0.6 * (lastMove.getStartingCoordinate().getRank() - 3.5) + 3.5);
                 enPassantTarget = BoardModel.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
@@ -201,22 +206,22 @@ public class GameModel {
         FastMap state = new FastMap();
         state.merge(stateHistory.get(stateHistory.size() - 1));
         if (canKingSideCastle('w')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) instanceof Rook
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) == WHITE_ROOK
                 && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
         if (canKingSideCastle('b')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) instanceof Rook
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) == BLACK_ROOK
                 && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('w')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) instanceof Rook
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) == WHITE_ROOK
                 && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle('b')
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) instanceof Rook
+                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) == BLACK_ROOK
                 && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }

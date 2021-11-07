@@ -2,13 +2,7 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.pieces.Bishop;
-import chess.model.pieces.King;
-import chess.model.pieces.Knight;
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
-import chess.model.pieces.Queen;
-import chess.model.pieces.Rook;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -210,16 +204,37 @@ public class BoardModel {
         if (piece == null) {
             throw new IllegalStateException("Piece data is out of sync.");
         }
-        if (piece instanceof Queen) {
-            (piece.getColor() == 'w' ? whiteQueens : blackQueens).add(coordinate);
-        } else if (piece instanceof Rook) {
-            (piece.getColor() == 'w' ? whiteRooks : blackRooks).add(coordinate);
-        } else if (piece instanceof Bishop) {
-            (piece.getColor() == 'w' ? whiteBishops : blackBishops).add(coordinate);
-        } else if (piece instanceof Knight) {
-            (piece.getColor() == 'w' ? whiteKnights : blackKnights).add(coordinate);
-        } else if (piece instanceof Pawn) {
-            (piece.getColor() == 'w' ? whitePawns : blackPawns).add(coordinate);
+        switch (piece) {
+            case WHITE_QUEEN:
+                whiteQueens.add(coordinate);
+                break;
+            case WHITE_ROOK:
+                whiteRooks.add(coordinate);
+                break;
+            case WHITE_BISHOP:
+                whiteBishops.add(coordinate);
+                break;
+            case WHITE_KNIGHT:
+                whiteKnights.add(coordinate);
+                break;
+            case WHITE_PAWN:
+                whitePawns.add(coordinate);
+                break;
+            case BLACK_QUEEN:
+                blackQueens.add(coordinate);
+                break;
+            case BLACK_ROOK:
+                blackRooks.add(coordinate);
+                break;
+            case BLACK_BISHOP:
+                blackBishops.add(coordinate);
+                break;
+            case BLACK_KNIGHT:
+                blackKnights.add(coordinate);
+                break;
+            case BLACK_PAWN:
+                blackPawns.add(coordinate);
+                break;
         }
     }
 
@@ -234,18 +249,43 @@ public class BoardModel {
         if (piece == null) {
             throw new IllegalStateException("Piece data is out of sync.");
         }
-        if (piece instanceof Queen) {
-            (piece.getColor() == 'w' ? whiteQueens : blackQueens).remove(coordinate);
-        } else if (piece instanceof Rook) {
-            (piece.getColor() == 'w' ? whiteRooks : blackRooks).remove(coordinate);
-        } else if (piece instanceof Bishop) {
-            (piece.getColor() == 'w' ? whiteBishops : blackBishops).remove(coordinate);
-        } else if (piece instanceof Knight) {
-            (piece.getColor() == 'w' ? whiteKnights : blackKnights).remove(coordinate);
-        } else if (piece instanceof Pawn) {
-            (piece.getColor() == 'w' ? whitePawns : blackPawns).remove(coordinate);
-        } else {
-            throw new IllegalStateException("Piece is not of correct type");
+        boolean didRemove;
+        switch (piece) {
+            case WHITE_QUEEN:
+                didRemove = whiteQueens.remove(coordinate);
+                break;
+            case WHITE_ROOK:
+                didRemove = whiteRooks.remove(coordinate);
+                break;
+            case WHITE_BISHOP:
+                didRemove = whiteBishops.remove(coordinate);
+                break;
+            case WHITE_KNIGHT:
+                didRemove = whiteKnights.remove(coordinate);
+                break;
+            case WHITE_PAWN:
+                didRemove = whitePawns.remove(coordinate);
+                break;
+            case BLACK_QUEEN:
+                didRemove = blackQueens.remove(coordinate);
+                break;
+            case BLACK_ROOK:
+                didRemove = blackRooks.remove(coordinate);
+                break;
+            case BLACK_BISHOP:
+                didRemove = blackBishops.remove(coordinate);
+                break;
+            case BLACK_KNIGHT:
+                didRemove = blackKnights.remove(coordinate);
+                break;
+            case BLACK_PAWN:
+                didRemove = blackPawns.remove(coordinate);
+                break;
+            default:
+                throw new IllegalStateException("Attempting to Remove King from Board");
+        }
+        if (!didRemove) {
+            throw new IllegalStateException("Piece was not in set when it should have been");
         }
     }
 
@@ -275,32 +315,67 @@ public class BoardModel {
             throw new IllegalStateException("Piece Data is out of sync.");
         }
 
-        Set<ChessCoordinate> relevantSet = null;
-        if (piece instanceof Queen) {
-            relevantSet = piece.getColor() == 'w' ? whiteQueens : blackQueens;
-        } else if (piece instanceof Rook) {
-            relevantSet = piece.getColor() == 'w' ? whiteRooks : blackRooks;
-        } else if (piece instanceof Bishop) {
-            relevantSet = piece.getColor() == 'w' ? whiteBishops : blackBishops;
-        } else if (piece instanceof Knight) {
-            relevantSet = piece.getColor() == 'w' ? whiteKnights : blackKnights;
-        } else if (piece instanceof Pawn) {
-            relevantSet = piece.getColor() == 'w' ? whitePawns : blackPawns;
-        } else if (piece instanceof King) {
-            if (piece.getColor() == 'w') {
+        Set<ChessCoordinate> relevantSet;
+        Set<ChessCoordinate> relevantColorSet;
+        switch (piece) {
+            case WHITE_QUEEN:
+                relevantSet = whiteQueens;
+                relevantColorSet = whitePieces;
+                break;
+            case WHITE_ROOK:
+                relevantSet = whiteRooks;
+                relevantColorSet = whitePieces;
+                break;
+            case WHITE_BISHOP:
+                relevantSet = whiteBishops;
+                relevantColorSet = whitePieces;
+                break;
+            case WHITE_KNIGHT:
+                relevantSet = whiteKnights;
+                relevantColorSet = whitePieces;
+                break;
+            case WHITE_PAWN:
+                relevantSet = whitePawns;
+                relevantColorSet = whitePieces;
+                break;
+            case WHITE_KING:
                 whiteKingCoord = endCoord;
-            } else {
+                whitePieces.remove(startCoord);
+                whitePieces.add(endCoord);
+                return;
+            case BLACK_QUEEN:
+                relevantSet = blackQueens;
+                relevantColorSet = blackPieces;
+                break;
+            case BLACK_ROOK:
+                relevantSet = blackRooks;
+                relevantColorSet = blackPieces;
+                break;
+            case BLACK_BISHOP:
+                relevantSet = blackBishops;
+                relevantColorSet = blackPieces;
+                break;
+            case BLACK_KNIGHT:
+                relevantSet = blackKnights;
+                relevantColorSet = blackPieces;
+                break;
+            case BLACK_PAWN:
+                relevantSet = blackPawns;
+                relevantColorSet = blackPieces;
+                break;
+            case BLACK_KING:
                 blackKingCoord = endCoord;
-            }
-            return;
+                blackPieces.remove(startCoord);
+                blackPieces.add(endCoord);
+                return;
+            default:
+                throw new IllegalStateException("Piece is not of expected type.");
         }
-        if (relevantSet == null) {
-            throw new IllegalStateException("Piece Data is out of sync.");
+
+        if (!relevantSet.remove(startCoord) || !relevantSet.add(endCoord)
+                || !relevantColorSet.remove(startCoord) || !relevantColorSet.add(endCoord)) {
+            throw new IllegalStateException("Piece set data is out of sync");
         }
-        relevantSet.remove(startCoord);
-        relevantSet.add(endCoord);
-        (piece.getColor() == 'w' ? whitePieces : blackPieces).remove(startCoord);
-        (piece.getColor() == 'w' ? whitePieces : blackPieces).add(endCoord);
     }
 
     /**
@@ -317,12 +392,12 @@ public class BoardModel {
                     if (!whitePieces.add(coordinate)) {
                         throw new IllegalStateException("Adding piece that already exists on board.");
                     }
-                    if (piece instanceof King) whiteKingCoord = coordinate;
+                    if (piece == Piece.WHITE_KING) whiteKingCoord = coordinate;
                 } else {
                     if (!blackPieces.add(coordinate)) {
                         throw new IllegalStateException("Adding piece that already exists on board.");
                     }
-                    if (piece instanceof King) blackKingCoord = coordinate;
+                    if (piece == Piece.BLACK_KING) blackKingCoord = coordinate;
                 }
             }
         }
@@ -450,10 +525,10 @@ public class BoardModel {
             if (piece == null) {
                 System.out.print("  ");
             } else {
-                if (piece instanceof Pawn) {
+                if (piece == Piece.WHITE_PAWN || piece == Piece.BLACK_PAWN) {
                     System.out.print("P ");
                 } else {
-                    System.out.print(piece.toString() + " ");
+                    System.out.print(piece + " ");
                 }
             }
         }

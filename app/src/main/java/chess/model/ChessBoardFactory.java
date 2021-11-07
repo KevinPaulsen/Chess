@@ -1,15 +1,8 @@
 package chess.model;
 
-import chess.ChessCoordinate;
-import chess.model.pieces.Bishop;
-import chess.model.pieces.BlackPawn;
-import chess.model.pieces.King;
-import chess.model.pieces.Knight;
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
-import chess.model.pieces.Queen;
-import chess.model.pieces.Rook;
-import chess.model.pieces.WhitePawn;
+
+import static chess.model.pieces.Piece.*;
 
 /**
  * This public class is capable of creating new and custom ChessBoards.
@@ -108,40 +101,40 @@ public class ChessBoardFactory {
         Piece piece = null;
         switch (pieceInt) {
             case W_PAWN:
-                piece = new WhitePawn('w');
+                piece = WHITE_PAWN;
                 break;
             case W_ROOK:
-                piece = new Rook('w');
+                piece = WHITE_ROOK;
                 break;
             case W_KNIGHT:
-                piece = new Knight('w');
+                piece = WHITE_KNIGHT;
                 break;
             case W_BISHOP:
-                piece = new Bishop('w');
+                piece = WHITE_BISHOP;
                 break;
             case W_KING:
-                piece = new King('w');
+                piece = WHITE_KING;
                 break;
             case W_QUEEN:
-                piece = new Queen('w');
+                piece = WHITE_QUEEN;
                 break;
             case B_PAWN:
-                piece = new BlackPawn('b');
+                piece = BLACK_PAWN;
                 break;
             case B_ROOK:
-                piece = new Rook('b');
+                piece = BLACK_ROOK;
                 break;
             case B_KNIGHT:
-                piece = new Knight('b');
+                piece = BLACK_KNIGHT;
                 break;
             case B_BISHOP:
-                piece = new Bishop('b');
+                piece = BLACK_BISHOP;
                 break;
             case B_QUEEN:
-                piece = new Queen('b');
+                piece = BLACK_QUEEN;
                 break;
             case B_KING:
-                piece = new King('b');
+                piece = BLACK_KING;
         }
         return piece;
     }

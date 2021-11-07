@@ -4,19 +4,14 @@ import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
 import chess.model.GameModel;
-import chess.model.pieces.Bishop;
-import chess.model.pieces.BlackPawn;
-import chess.model.pieces.Knight;
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
-import chess.model.pieces.Queen;
-import chess.model.pieces.Rook;
-import chess.model.pieces.WhitePawn;
 
 import java.util.Comparator;
 import java.util.List;
 
 import static chess.model.chessai.Constants.*;
+import static chess.model.pieces.Piece.BLACK_PAWN;
+import static chess.model.pieces.Piece.WHITE_PAWN;
 
 public class PieceValueEvaluator implements Evaluator {
 
@@ -56,7 +51,7 @@ public class PieceValueEvaluator implements Evaluator {
             score *= 1.5;
         }//*/
 
-        if (!(move.getMovingPiece() instanceof Pawn)
+        if (!(move.getMovingPiece() == WHITE_PAWN || move.getMovingPiece() == BLACK_PAWN)
                 && attackedByPawn(board, move.getEndingCoordinate(), move.getMovingPiece().getColor())) {
             score *= 0.5;
         }
@@ -66,13 +61,14 @@ public class PieceValueEvaluator implements Evaluator {
 
     private boolean attackedByPawn(BoardModel board, ChessCoordinate coordinate, char color) {
         List<List<ChessCoordinate>> finalPawnCoords = color == 'w' ?
-                WhitePawn.REACHABLE_COORDINATES_MAP[coordinate.getFile()][coordinate.getRank()] :
-                BlackPawn.REACHABLE_COORDINATES_MAP[coordinate.getFile()][coordinate.getRank()];
+                WHITE_PAWN.getReachableCoordinateMapFrom(coordinate) :
+                BLACK_PAWN.getReachableCoordinateMapFrom(coordinate);
 
         boolean attackedByPawn = false;
         for (int i = 1; i < 3; i++) {
             for (ChessCoordinate searchCoord : finalPawnCoords.get(i)) {
-                if (board.getPieceOn(searchCoord) instanceof Pawn) {
+                if (board.getPieceOn(searchCoord) == WHITE_PAWN
+                        || board.getPieceOn(searchCoord) == BLACK_PAWN) {
                     attackedByPawn = true;
                     break;
                 }
@@ -85,16 +81,27 @@ public class PieceValueEvaluator implements Evaluator {
     public static int getValue(Piece piece) {
         int score = 0;
 
-        if (piece instanceof Pawn) {
-            score = PAWN_SCORE;
-        } else if (piece instanceof Knight) {
-            score = KNIGHT_SCORE;
-        } else if (piece instanceof Bishop) {
-            score = BISHOP_SCORE;
-        } else if (piece instanceof Rook) {
-            score = ROOK_SCORE;
-        } else if (piece instanceof Queen) {
-            score = QUEEN_SCORE;
+        switch (piece) {
+            case WHITE_PAWN:
+            case BLACK_PAWN:
+                score = PAWN_SCORE;
+                break;
+            case WHITE_KNIGHT:
+            case BLACK_KNIGHT:
+                score = KNIGHT_SCORE;
+                break;
+            case WHITE_BISHOP:
+            case BLACK_BISHOP:
+                score = BISHOP_SCORE;
+                break;
+            case WHITE_ROOK:
+            case BLACK_ROOK:
+                score = ROOK_SCORE;
+                break;
+            case WHITE_QUEEN:
+            case BLACK_QUEEN:
+                score = QUEEN_SCORE;
+                break;
         }
 
         return score;

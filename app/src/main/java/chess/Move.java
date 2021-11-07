@@ -1,9 +1,10 @@
 package chess;
 
-import chess.model.pieces.Pawn;
 import chess.model.pieces.Piece;
 
 import java.util.Objects;
+
+import static chess.model.pieces.Piece.*;
 
 /**
  * This class contains all the information needed to make a move.
@@ -107,6 +108,8 @@ public class Move {
             throw new IllegalArgumentException("Starting coordinate cannot be null.");
         } else if (endingCoordinate == null) {
             throw new IllegalArgumentException("Ending coordinate cannot be null");
+        } else if (interactingPiece == WHITE_KING || interactingPiece == BLACK_KING) {
+            throw new IllegalArgumentException("Attempting to Capture a King.");
         }
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
@@ -188,7 +191,7 @@ public class Move {
             }
         } else {
             // Pawn
-            if (movingPiece instanceof Pawn) {
+            if (movingPiece == WHITE_PAWN || movingPiece == BLACK_PAWN) {
                 if (interactingPiece != null) {
                     result.append(startingCoordinate.getCharFile());
                 }
