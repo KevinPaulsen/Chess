@@ -9,7 +9,6 @@ import chess.model.pieces.Piece;
 import java.util.Comparator;
 import java.util.List;
 
-import static chess.model.chessai.Constants.*;
 import static chess.model.pieces.Piece.BLACK_PAWN;
 import static chess.model.pieces.Piece.WHITE_PAWN;
 
@@ -26,7 +25,7 @@ public class PieceValueEvaluator implements Evaluator {
                 Piece piece = game.getBoard().getPieceOn(coordinate);
 
                 if (piece != null) {
-                    int value = getValue(piece);
+                    int value = Evaluator.getValue(piece);
 
                     if (piece.getColor() == 'w') {
                         whiteScore += value;
@@ -41,9 +40,7 @@ public class PieceValueEvaluator implements Evaluator {
 
     @Override
     public List<Move> getSortedMoves(GameModel game) {
-        List<Move> result = game.getLegalMoves();
-        //result.sort(getMoveComparator(game.getBoard()));
-        return result;
+        return game.getLegalMoves();
     }
 
     private Comparator<Move> getMoveComparator(BoardModel board) {
@@ -55,8 +52,8 @@ public class PieceValueEvaluator implements Evaluator {
 
         if (move.getInteractingPiece() != null) {
             if (move.getInteractingPieceEnd() == null) {
-                score *= Math.abs(PieceValueEvaluator.getValue(move.getMovingPiece())
-                        - PieceValueEvaluator.getValue(move.getInteractingPiece())) / 100f + 1f;
+                score *= Math.abs(Evaluator.getValue(move.getMovingPiece())
+                        - Evaluator.getValue(move.getInteractingPiece())) / 100f + 1f;
             }
             score *= 1.5;
         }//*/
@@ -86,34 +83,5 @@ public class PieceValueEvaluator implements Evaluator {
         }
 
         return attackedByPawn;
-    }
-
-    public static int getValue(Piece piece) {
-        int score = 0;
-
-        switch (piece) {
-            case WHITE_PAWN:
-            case BLACK_PAWN:
-                score = PAWN_SCORE;
-                break;
-            case WHITE_KNIGHT:
-            case BLACK_KNIGHT:
-                score = KNIGHT_SCORE;
-                break;
-            case WHITE_BISHOP:
-            case BLACK_BISHOP:
-                score = BISHOP_SCORE;
-                break;
-            case WHITE_ROOK:
-            case BLACK_ROOK:
-                score = ROOK_SCORE;
-                break;
-            case WHITE_QUEEN:
-            case BLACK_QUEEN:
-                score = QUEEN_SCORE;
-                break;
-        }
-
-        return score;
     }
 }

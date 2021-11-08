@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
+import static chess.model.pieces.Piece.*;
+
 public class BoardModel {
 
     private static final ChessCoordinate[] CHESS_COORDINATES = createChessCoordinates();
@@ -23,6 +25,64 @@ public class BoardModel {
 
     public BoardModel(Piece[] pieceArray) {
         this.pieceArray = pieceArray;
+
+        initPieces();
+    }
+
+    public BoardModel(String FEN) {
+        this.pieceArray = new Piece[64];
+        int pieceIdx = 63;
+        for (char c : FEN.toCharArray()) {
+            if (c == '/') {
+                continue;
+            }
+
+            if (49 <= c && c <= 56) {
+                pieceIdx -= c - 48;
+                continue;
+            }
+
+            int translatedIdx = pieceIdx + (7 - 2 * (pieceIdx % 8));
+            switch (c) {
+                case 'K':
+                    pieceArray[translatedIdx] = WHITE_KING;
+                    break;
+                case 'Q':
+                    pieceArray[translatedIdx] = WHITE_QUEEN;
+                    break;
+                case 'R':
+                    pieceArray[translatedIdx] = WHITE_ROOK;
+                    break;
+                case 'B':
+                    pieceArray[translatedIdx] = WHITE_BISHOP;
+                    break;
+                case 'N':
+                    pieceArray[translatedIdx] = WHITE_KNIGHT;
+                    break;
+                case 'P':
+                    pieceArray[translatedIdx] = WHITE_PAWN;
+                    break;
+                case 'k':
+                    pieceArray[translatedIdx] = BLACK_KING;
+                    break;
+                case 'q':
+                    pieceArray[translatedIdx] = BLACK_QUEEN;
+                    break;
+                case 'r':
+                    pieceArray[translatedIdx] = BLACK_ROOK;
+                    break;
+                case 'b':
+                    pieceArray[translatedIdx] = BLACK_BISHOP;
+                    break;
+                case 'n':
+                    pieceArray[translatedIdx] = BLACK_KNIGHT;
+                    break;
+                case 'p':
+                    pieceArray[translatedIdx] = BLACK_PAWN;
+                    break;
+            }
+            pieceIdx--;
+        }
 
         initPieces();
     }
@@ -181,7 +241,7 @@ public class BoardModel {
             if (endCoord == null) {
                 removePiece(piece, startCoord);
             } else {
-                if (piece == Piece.WHITE_KING) {
+                if (piece == WHITE_KING) {
                     whiteKingCoord = endCoord;
                 } else if (piece == Piece.BLACK_KING) {
                     blackKingCoord = endCoord;
@@ -201,7 +261,7 @@ public class BoardModel {
             ChessCoordinate coordinate = getChessCoordinate(pieceIdx);
             if (piece != null) {
                 if (piece.getColor() == 'w') {
-                    if (piece == Piece.WHITE_KING) whiteKingCoord = coordinate;
+                    if (piece == WHITE_KING) whiteKingCoord = coordinate;
                 } else {
                     if (piece == Piece.BLACK_KING) blackKingCoord = coordinate;
                 }

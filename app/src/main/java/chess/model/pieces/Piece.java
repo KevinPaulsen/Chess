@@ -225,16 +225,16 @@ public enum Piece {
                 straightMoves.add(Directions.DOWN.next(straightMoves.get(0)));
             }
 
-            // Add the left diagonal
-            if (coordinate.getFile() > 0) {
-                result.add(List.of(Directions.DOWN_LEFT.next(coordinate)));
+            // Add the right diagonal
+            if (coordinate.getFile() < 7) {
+                result.add(List.of(Directions.DOWN_RIGHT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
 
-            // Add the right diagonal
-            if (coordinate.getFile() < 7) {
-                result.add(List.of(Directions.DOWN_RIGHT.next(coordinate)));
+            // Add the left diagonal
+            if (coordinate.getFile() > 0) {
+                result.add(List.of(Directions.DOWN_LEFT.next(coordinate)));
             } else {
                 result.add(List.of());
             }

@@ -105,6 +105,25 @@ public class GameModel {
         checkRep();
     }
 
+    public GameModel(String FEN) {
+        String[] fenSections = FEN.split(" ");
+        this.board = new BoardModel(fenSections[0]);
+        this.turn = fenSections[1].charAt(0);
+        this.enPassantTarget = !fenSections[3].equals("-") ? BoardModel.getChessCoordinate(fenSections[3].charAt(0),
+                Integer.parseInt(fenSections[3].substring(1)) + 1) : null;
+        this.moveHistory = new ArrayList<>(200);
+        this.stateHistory = new ArrayList<>(200);
+
+        boolean whiteKingCastle = fenSections[2].contains("K");
+        boolean whiteQueenCastle = fenSections[2].contains("Q");
+        boolean blackKingCastle = fenSections[2].contains("k");
+        boolean blackQueenCastle = fenSections[2].contains("q");
+
+        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
+
+        checkRep();
+    }
+
     private void addInitialState(boolean whiteKingCastle, boolean whiteQueenCastle,
                                  boolean blackKingCastle, boolean blackQueenCastle) {
         FastMap stateMap = new FastMap();

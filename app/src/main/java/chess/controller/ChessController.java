@@ -3,7 +3,7 @@ package chess.controller;
 import chess.ChessCoordinate;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
-import chess.model.chessai.PieceValueEvaluator;
+import chess.model.chessai.PositionEvaluator;
 import chess.model.pieces.Piece;
 import chess.view.ChessPieceView;
 import chess.view.ChessView;
@@ -41,7 +41,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         gameModel = new GameModel();
         //gameModel = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD));
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
-        chessAI = new ChessAI(new PieceValueEvaluator(), gameModel);
+        chessAI = new ChessAI(new PositionEvaluator(), gameModel);
         pressedKeyCodes = new HashSet<>();
     }
 
@@ -61,8 +61,13 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
 
-            if (AI_ON) {
-                futureAIMove = CompletableFuture.runAsync(() -> {
+            while (AI_ON) {
+                if (gameModel.move(chessAI.getBestMove())) {
+                    view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
+                    view.pack();
+                    view.update(view.getGraphics());
+                }// */
+                /*futureAIMove = CompletableFuture.runAsync(() -> {
                     if (gameModel.move(chessAI.getBestMove())) {
                         view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                         view.pack();

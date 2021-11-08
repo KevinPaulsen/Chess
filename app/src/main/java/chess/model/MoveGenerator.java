@@ -353,7 +353,7 @@ public class MoveGenerator {
                         ChessCoordinate searchCoord = friendlyKingCoord;
                         for (int numChecked = 0; numChecked < 3;
                              numChecked++, searchCoord = Directions.LEFT.next(searchCoord)) {
-                            if (board.getPieceOn(searchCoord) != null
+                            if (numChecked > 0 && board.getPieceOn(searchCoord) != null
                                     || opponentAttackMap.isMarked(searchCoord.getOndDimIndex())) {
                                 canCastle = false;
                                 break;
@@ -496,7 +496,7 @@ public class MoveGenerator {
                 ChessCoordinate targetCoord = left.next(coordinate);
                 targetPiece = board.getPieceOn(targetCoord);
                 if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())
-                        || checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
+                        || (targetCoord != null && checkRayMap.isMarked(targetCoord.getOndDimIndex()))) {
                     if (targetPiece != null && !areAligned(coordinate, friendlyKingCoord, targetCoord)
                             || !longRangeAttacker(coordinate, targetCoord)) {
                         moves.add(new Move(coordinate, captureCoord, pawn, targetCoord,

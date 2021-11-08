@@ -1,9 +1,13 @@
 package chess.model.chessai;
 
+import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.GameModel;
+import chess.model.pieces.Piece;
 
 import java.util.List;
+
+import static chess.model.chessai.Constants.*;
 
 public interface Evaluator {
 
@@ -25,4 +29,33 @@ public interface Evaluator {
      * @return the list of sorted legal moves.
      */
     List<Move> getSortedMoves(GameModel game);
+
+    static int getValue(Piece piece) {
+        int score = 0;
+
+        switch (piece) {
+            case WHITE_PAWN:
+            case BLACK_PAWN:
+                score = PAWN_SCORE;
+                break;
+            case WHITE_KNIGHT:
+            case BLACK_KNIGHT:
+                score = KNIGHT_SCORE;
+                break;
+            case WHITE_BISHOP:
+            case BLACK_BISHOP:
+                score = BISHOP_SCORE;
+                break;
+            case WHITE_ROOK:
+            case BLACK_ROOK:
+                score = ROOK_SCORE;
+                break;
+            case WHITE_QUEEN:
+            case BLACK_QUEEN:
+                score = QUEEN_SCORE;
+                break;
+        }
+
+        return score;
+    }
 }
