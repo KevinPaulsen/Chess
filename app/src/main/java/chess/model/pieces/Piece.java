@@ -18,14 +18,14 @@ public enum Piece {
     WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R"),
     WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B"),
     WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N"),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', ""),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P"),
 
     BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k"),
     BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q"),
     BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r"),
     BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b"),
     BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n"),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "");
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p");
 
     /**
      * The map of reachable coordinates
@@ -38,7 +38,7 @@ public enum Piece {
     private final char color;
 
     /**
-     * The string that this piece should be represented as.
+     * The string that this piece should be represented as in a FEN string.
      */
     private final String stringRep;
 

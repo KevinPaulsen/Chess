@@ -170,7 +170,6 @@ public class MoveGenerator {
 
         BoardModel board = game.getBoard();
         char turn = game.getTurn();
-        char attackingColor = game.getTurn() == 'w' ? 'b' : 'w';
         ChessCoordinate kingCoord = turn == 'w' ? board.getWhiteKingCoord() : board.getBlackKingCoord();
 
         // Calculate the pin and check rays
@@ -278,7 +277,7 @@ public class MoveGenerator {
             updateSlidingAttackPiece(game.getBoard(), queen, queenCoord, slidingAttackMap);
         }
 
-        for (ChessCoordinate rookCoordinate : attackingQueens) {
+        for (ChessCoordinate rookCoordinate : attackingRooks) {
             Piece rook = game.getBoard().getPieceOn(rookCoordinate);
             updateSlidingAttackPiece(game.getBoard(), rook, rookCoordinate, slidingAttackMap);
         }

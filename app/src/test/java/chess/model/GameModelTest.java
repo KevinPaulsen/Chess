@@ -8,6 +8,7 @@ import java.util.List;
 
 import static chess.model.ChessBoardFactory.*;
 import static chess.model.pieces.Piece.WHITE_KNIGHT;
+import static chess.model.pieces.Piece.WHITE_ROOK;
 
 public class GameModelTest {
 
@@ -82,7 +83,7 @@ public class GameModelTest {
     @Test
     public void testStartingPositionDepth1() {
         GameModel game = new GameModel();
-        int numPositions = countNumPositions1(game, 1);
+        int numPositions = countNumPositions(game, 1);
         Assert.assertEquals("Wrong number of nodes found.", 20, numPositions);
     }
 
@@ -150,8 +151,20 @@ public class GameModelTest {
     public void testComplexPositionDepth4() {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);
+
         int numPositions = countNumPositions(game, 4);
+
         Assert.assertEquals("Wrong number of nodes found.", 2_103_487, numPositions);
+    }
+
+    @Test
+    public void testComplexPositionDepth5() {
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
+                true, true, false, false, null);
+
+        int numPositions = countNumPositions(game, 5);
+
+        Assert.assertEquals("Wrong number of nodes found.", 89_941_194, numPositions);
     }
 
     @Test
@@ -217,9 +230,11 @@ public class GameModelTest {
     @SuppressWarnings("all")
     @Test
     public void privateTest() {
-        /*GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
+        GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_COMPLEX), 'w',
                 true, true, false, false, null);//
         //GameModel game = new GameModel();
+        countNumPositions(game, 5);
+        countNumPositions(game, 5);
 
         long start = System.currentTimeMillis();
         System.out.println("Positions: " + countNumPositions1(game, 5));

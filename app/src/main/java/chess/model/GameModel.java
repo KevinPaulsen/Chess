@@ -131,7 +131,7 @@ public class GameModel {
      * @param endCoordinate the ending coordinate of the moving Piece.
      * @return weather or not the move was successful.
      */
-    public boolean move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+    public boolean move(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate, Piece promoPiece) {
         boolean didMove = false;
 
         // Check that moves are both on screen.
@@ -140,9 +140,12 @@ public class GameModel {
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
                 for (Move move : new MoveGenerator(this).generateMoves()) {
-                    if (startCoordinate.equals(move.getStartingCoordinate()) && endCoordinate.equals(move.getEndingCoordinate())) {
-                        currentMove = move;
-                        break;
+                    if (startCoordinate.equals(move.getStartingCoordinate())
+                            && endCoordinate.equals(move.getEndingCoordinate())) {
+                        if (!move.doesPromote() || move.getPromotedPiece() == promoPiece) {
+                            currentMove = move;
+                            break;
+                        }
                     }
                 }
             }
@@ -274,5 +277,63 @@ public class GameModel {
                 throw new RuntimeException("Representation is incorrect.");
             }
         }
+    }
+
+    public String getFEN() {
+        StringBuilder builder = new StringBuilder();
+
+        // The Board Info
+        int numEmpty = 0;
+        for (int rank = 7; rank >= 0; rank--) {
+            for (int file = 0; file < 8; file++) {
+                ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);
+                Piece piece = board.getPieceOn(coordinate);
+
+                if (piece == null) {
+                    numEmpty++;
+                } else {
+                    builder.append(numEmpty == 0 ? "" : numEmpty);
+                    numEmpty = 0;
+                    builder.append(piece.getStringRep());
+                }
+            }
+            builder.append(numEmpty == 0 ? "" : numEmpty);
+            numEmpty = 0;
+            builder.append(rank == 0 ? "" : "/");
+        }
+
+        // The turn info
+        builder.append(" ");
+        builder.append(turn);
+
+        // The Castling Info
+        builder.append(" ");
+        if (canKingSideCastle('w') || canKingSideCastle('b')
+                || canQueenSideCastle('w') || canQueenSideCastle('w')) {
+            builder.append(canKingSideCastle('w') ? "K" : "");
+            builder.append(canKingSideCastle('b') ? "k" : "");
+            builder.append(canQueenSideCastle('w') ? "Q" : "");
+            builder.append(canQueenSideCastle('b') ? "q" : "");
+        } else {
+            builder.append("-");
+        }
+
+        // The EnPassant Info
+        builder.append(" ");
+        if (enPassantTarget == null) {
+            builder.append("-");
+        } else {
+            builder.append(enPassantTarget);
+        }
+
+        // TODO: Half-Move info
+        builder.append(" ");
+        builder.append(0);
+
+        // Fullmove Number
+        builder.append(" ");
+        builder.append(moveHistory.size() / 2 + 1);
+
+        return builder.toString();
     }
 }

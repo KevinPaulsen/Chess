@@ -4,6 +4,7 @@ import chess.ChessCoordinate;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PieceValueEvaluator;
+import chess.model.pieces.Piece;
 import chess.view.ChessPieceView;
 import chess.view.ChessView;
 
@@ -55,7 +56,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      * @param endCoordinate the ending coordinate
      */
     private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
-        if (gameModel.move(startCoordinate, endCoordinate)) {
+        if (gameModel.move(startCoordinate, endCoordinate, Piece.WHITE_QUEEN)) {
             view.updateScreen(gameModel.getLastMove());
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();

@@ -182,6 +182,10 @@ public class Move {
     public String toString() {
         StringBuilder result = new StringBuilder();
 
+        result.append(startingCoordinate);
+        result.append(endingCoordinate);
+        result.append("\t");
+
         if (interactingPiece != null && interactingPieceEnd != null) {
             // Castle
             if (endingCoordinate.getFile() == 6) {
@@ -195,9 +199,10 @@ public class Move {
                 if (interactingPiece != null) {
                     result.append(startingCoordinate.getCharFile());
                 }
+            } else {
+                result.append(movingPiece.getStringRep());
             }
 
-            result.append(movingPiece.getStringRep());
             if (interactingPiece != null) {
                 result.append("x");
             }

@@ -29,7 +29,8 @@ public class BoardModel {
 
     /**
      * Gets the chess coordinate at the given file and rank. If the requested
-     * coordinate does not exist, null is returned.
+     * coordinate does not exist, null is returned. This should be the exact
+     * index (8th rank is actually 7 index).
      *
      * @param file the file of the chess coordinate.
      * @param rank the rank of the chess coordinate.
@@ -39,8 +40,29 @@ public class BoardModel {
         return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[rank * 8 + file] : null;
     }
 
+    /**
+     * Gets the chess coordinate at the given the one dimensional number. If
+     * the requested coordinate does not exist, null is returned.
+     *
+     * @param oneDimIndex the one dimensional index
+     * @return the ChessCoordinate associated with this index.
+     */
     public static ChessCoordinate getChessCoordinate(int oneDimIndex) {
         return ChessCoordinate.isInBounds(oneDimIndex) ? CHESS_COORDINATES[oneDimIndex] : null;
+    }
+
+    /**
+     * Gets the chess coordinate at the given the charFile and rank. If
+     * the requested coordinate does not exist, null is returned.
+     *
+     * @param file the char file associated with this coordinate.
+     * @param rank the rank of this coordinate.
+     * @return the ChessCoordinate associated with this file and rank.
+     */
+    public static ChessCoordinate getChessCoordinate(char file, int rank) {
+        int fileIdx = (Character.toLowerCase(file) - 97);
+        int rankIdx = rank - 1;
+        return ChessCoordinate.isInBounds(fileIdx, rankIdx) ? CHESS_COORDINATES[rankIdx * 8 + fileIdx] : null;
     }
 
     /**
