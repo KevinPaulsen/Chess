@@ -5,10 +5,7 @@ import chess.Move;
 import chess.model.pieces.Piece;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.Set;
 
 import static chess.model.pieces.Piece.*;
 
@@ -295,9 +292,7 @@ public class BoardModel {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(whiteKingCoord, blackKingCoord);
-        result = 31 * result + Arrays.hashCode(pieceArray);
-        return result;
+        return Arrays.hashCode(pieceArray);
     }
 
     /**
@@ -307,10 +302,6 @@ public class BoardModel {
      */
     public Piece[] getPieceArray() {
         return pieceArray.clone();
-    }
-
-    public static Iterator<ChessCoordinate> getCoordinateIterator() {
-        return Arrays.stream(CHESS_COORDINATES).iterator();
     }
 
     /**

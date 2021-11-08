@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static chess.model.ChessBoardFactory.*;
-import static chess.model.ChessBoardFactory.EMPTY;
 import static chess.model.pieces.Piece.BLACK_ROOK;
 import static chess.model.pieces.Piece.WHITE_ROOK;
 
@@ -77,8 +75,7 @@ public class GameModel {
      * The default constructor that creates a normal game.
      */
     public GameModel() {
-        this(ChessBoardFactory.createNormalBoard(), 'w', true,
-                true, true, true, null);
+        this("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 
     /**
@@ -287,7 +284,8 @@ public class GameModel {
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, moveHistory, turn);
+        FastMap currentCastlingState = stateHistory.get(stateHistory.size() - 1);
+        return Objects.hash(board, turn, currentCastlingState);
     }
 
     private void checkRep() {
