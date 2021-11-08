@@ -5,7 +5,7 @@ import chess.model.GameModel;
 
 public class ChessAI {
 
-    private static final int DEPTH = 5;
+    private static final int DEPTH = 6;
 
     private final Evaluator evaluator;
 

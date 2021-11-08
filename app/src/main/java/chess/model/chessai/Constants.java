@@ -8,6 +8,9 @@ public class Constants {
     public static final int ROOK_SCORE = 500;
     public static final int QUEEN_SCORE = 900;
 
+    public static final int CAPTURED_PIECE_VALUE_MULTIPLIER = 10;
+    public static final int CAPTURE_BIAS = 50;
+
     private static final int TERRIBLE = -50;
     private static final int VERY_BAD = -40;
     private static final int PRET_BAD = -30;

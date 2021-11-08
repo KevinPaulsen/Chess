@@ -4,6 +4,7 @@ import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.BoardModel;
 import chess.model.GameModel;
+import chess.model.MoveGenerator;
 import chess.model.pieces.Piece;
 
 import java.util.List;
@@ -11,6 +12,12 @@ import java.util.List;
 import static chess.model.chessai.Constants.*;
 
 public class PositionEvaluator implements Evaluator {
+
+    private final MoveGenerator moveGenerator;
+
+    public PositionEvaluator(GameModel game) {
+        this.moveGenerator = new MoveGenerator(game);
+    }
 
     /**
      * Evaluates the given game and returns an evaluation of this position. The
@@ -92,6 +99,52 @@ public class PositionEvaluator implements Evaluator {
      */
     @Override
     public List<Move> getSortedMoves(GameModel game) {
-        return game.getLegalMoves();
+        List<Move> legalMoves = moveGenerator.generateMoves();
+        legalMoves.sort(this::moveComparator);
+        return legalMoves;
+    }
+
+    private int moveComparator(Move move1, Move move2) {
+        return evaluateMove(move2) - evaluateMove(move1);
+    }
+
+    private int evaluateMove(Move move) {
+        int score = 0;
+
+        // If the move captures weight moves that capture with lower value pieces higher
+        if (move.getInteractingPiece() != null && move.getInteractingPieceEnd() == null) {
+            score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece())
+                    - Evaluator.getValue(move.getMovingPiece()));
+        }
+
+        if (move.doesPromote()) {
+            switch (move.getPromotedPiece()) {
+                case WHITE_QUEEN:
+                case BLACK_QUEEN:
+                    score += QUEEN_SCORE;
+                    break;
+                case WHITE_ROOK:
+                case BLACK_ROOK:
+                    score += ROOK_SCORE;
+                    break;
+                case WHITE_BISHOP:
+                case BLACK_BISHOP:
+                    score += BISHOP_SCORE;
+                    break;
+                case WHITE_KNIGHT:
+                case BLACK_KNIGHT:
+                    score += KNIGHT_SCORE;
+                    break;
+            }
+        } else {
+            if (moveGenerator.getOpponentAttackMap().isMarked(move.getEndingCoordinate().getOndDimIndex())) {
+                score -= 100;
+            }
+        }
+
+        score += readTable(move.getMovingPiece(), move.getEndingCoordinate())
+                - readTable(move.getMovingPiece(), move.getStartingCoordinate());
+
+        return score;
     }
 }

@@ -20,7 +20,7 @@ import static chess.model.pieces.Piece.*;
 public class MoveGenerator {
 
     private final GameModel game;
-    private final List<Move> moves;
+    private List<Move> moves;
     private final FastMap checkRayMap;
     private final FastMap pinRayMap;
     private final FastMap opponentAttackMap;
@@ -62,6 +62,28 @@ public class MoveGenerator {
         this.attackingPawns = new HashSet<>();
     }
 
+    private void resetState() {
+        this.moves = new ArrayList<>(100);
+        this.inCheck = false;
+        this.inDoubleCheck = false;
+        this.pinsExistInPosition = false;
+
+        this.checkRayMap.clear();
+        this.pinRayMap.clear();
+        this.opponentAttackMap.clear();
+
+        this.friendlyQueens.clear();
+        this.attackingQueens.clear();
+        this.friendlyRooks.clear();
+        this.attackingRooks.clear();
+        this.friendlyBishops.clear();
+        this.attackingBishops.clear();
+        this.friendlyKnights.clear();
+        this.attackingKnights.clear();
+        this.friendlyPawns.clear();
+        this.attackingPawns.clear();
+    }
+
     /**
      * Updates the given sliding piece's attack map. Adds all the squares this piece
      * can move to to the given map. This will go though the firendly king, and
@@ -95,6 +117,7 @@ public class MoveGenerator {
     }
 
     public List<Move> generateMoves() {
+        resetState();
         findPieces();
         calculateAttackData();
 
@@ -566,5 +589,9 @@ public class MoveGenerator {
 
     private boolean isPinned(ChessCoordinate coordinate) {
         return pinsExistInPosition && pinRayMap.isMarked(coordinate.getOndDimIndex());
+    }
+
+    public FastMap getOpponentAttackMap() {
+        return opponentAttackMap;
     }
 }

@@ -41,7 +41,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         gameModel = new GameModel();
         //gameModel = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD));
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
-        chessAI = new ChessAI(new PositionEvaluator(), gameModel);
+        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel);
         pressedKeyCodes = new HashSet<>();
     }
 
