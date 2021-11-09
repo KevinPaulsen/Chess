@@ -6,6 +6,7 @@ import chess.model.pieces.Direction;
 import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -382,6 +383,7 @@ public class MoveGenerator {
                                 break;
                             }
                         }
+                        canCastle = canCastle && board.getPieceOn(searchCoord) == null;
                         if (canCastle) {
                             ChessCoordinate rookStart = BoardModel.getChessCoordinate(0, targetCoord.getRank());
                             Piece piece = board.getPieceOn(rookStart);

@@ -6,7 +6,9 @@ import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static chess.model.pieces.Piece.BLACK_ROOK;
@@ -18,6 +20,31 @@ import static chess.model.pieces.Piece.WHITE_ROOK;
  * the chess game.
  */
 public class GameModel {
+
+    /**
+     * Char that shows that it is whites move.
+     */
+    private static final char WHITE = 'w';
+
+    /**
+     * Char that shows that it is blacks move.
+     */
+    private static final char BLACK = 'b';
+
+    /**
+     * State that we are still in the middle of a game.
+     */
+    private static final char IN_PROGRESS = 'p';
+
+    /**
+     * State that the game is over. And the player to move has lost.
+     */
+    private static final char LOSER = 'l';
+
+    /**
+     * State that the game is over, but ended in a draw.
+     */
+    private static final char DRAW = 'd';
 
     /**
      * The bit mask that represents that white can king-side castle.
@@ -61,9 +88,31 @@ public class GameModel {
     private final List<FastMap> stateHistory;
 
     /**
+     * The map that tracks the number of times each position has occurred.
+     * This maps from hashCode -> number of times this hashCode has appeared.
+     */
+    private final Map<Integer, Integer> positionTracker;
+
+    /**
+     * The list of legal moves in this position.
+     */
+    private List<Move> legalMoves;
+
+    /**
+     * The move generator for this game.
+     */
+    private final MoveGenerator moveGenerator;
+
+    /**
      * The tracker for which players turn it is to move.
      */
     private char turn;
+
+    /**
+     * The tracker for the current state of the game. This will be
+     * IN_PROGRESS, LOSER, or DRAW.
+     */
+    private char gameState;
 
     /**
      * The current target for an En Passant capture. This is null
@@ -96,8 +145,14 @@ public class GameModel {
         this.enPassantTarget = enPassantTarget;
         this.moveHistory = new ArrayList<>(200);
         this.stateHistory = new ArrayList<>(200);
+        this.positionTracker = new HashMap<>();
+        this.gameState = IN_PROGRESS;
+        this.moveGenerator = new MoveGenerator(this);
 
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
+
+        this.legalMoves = this.moveGenerator.generateMoves();
+        positionTracker.put(hashCode(), 1);
 
         checkRep();
     }
@@ -110,6 +165,9 @@ public class GameModel {
                 Integer.parseInt(fenSections[3].substring(1)) + 1) : null;
         this.moveHistory = new ArrayList<>(200);
         this.stateHistory = new ArrayList<>(200);
+        this.positionTracker = new HashMap<>();
+        this.gameState = IN_PROGRESS;
+        this.moveGenerator = new MoveGenerator(this);
 
         boolean whiteKingCastle = fenSections[2].contains("K");
         boolean whiteQueenCastle = fenSections[2].contains("Q");
@@ -117,6 +175,10 @@ public class GameModel {
         boolean blackQueenCastle = fenSections[2].contains("q");
 
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
+
+        this.legalMoves = this.moveGenerator.generateMoves();
+
+        positionTracker.put(hashCode(), 1);
 
         checkRep();
     }
@@ -129,6 +191,11 @@ public class GameModel {
         stateMap.mergeMask(blackKingCastle ? BLACK_KING_SIDE_CASTLE_MASK : 0);
         stateMap.mergeMask(blackQueenCastle ? BLACK_QUEEN_SIDE_CASTLE_MASK : 0);
         stateHistory.add(stateMap);
+        initZobristHash();
+    }
+
+    private void initZobristHash() {
+
     }
 
     /**
@@ -183,17 +250,37 @@ public class GameModel {
         checkRep();
         boolean didMove = false;
 
-        if (move != null && move.getMovingPiece().getColor() == turn) {
+        if (gameState == IN_PROGRESS && move != null && move.getMovingPiece().getColor() == turn) {
             board.move(move);
             moveHistory.add(move);
             checkCastling(board.getWhiteKingCoord(), board.getBlackKingCoord());
             checkEnPassant(move);
-            turn = (turn == 'w') ? 'b' : 'w';
+            turn = (turn == WHITE) ? BLACK : WHITE;
+
+            positionTracker.merge(hashCode(), 1, Integer::sum);
+
             didMove = true;
         }
 
         checkRep();
         return didMove;
+    }
+
+    private void checkGameOver() {
+        if (positionTracker.containsKey(this) && positionTracker.get(this) >= 3) {
+            gameState = DRAW;
+        } else {
+            if (legalMoves.size() == 0) {
+                ChessCoordinate kingToMove = turn == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
+                if (moveGenerator.getOpponentAttackMap().isMarked(kingToMove.getOndDimIndex())) {
+                    gameState = LOSER;
+                } else {
+                    gameState = DRAW;
+                }
+            } else {
+                gameState = IN_PROGRESS;
+            }
+        }
     }
 
     private void checkEnPassant(Move lastMove) {
@@ -213,22 +300,22 @@ public class GameModel {
     private void checkCastling(ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord) {
         FastMap state = new FastMap();
         state.merge(stateHistory.get(stateHistory.size() - 1));
-        if (canKingSideCastle('w')
+        if (canKingSideCastle(WHITE)
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) == WHITE_ROOK
                 && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
-        if (canKingSideCastle('b')
+        if (canKingSideCastle(BLACK)
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) == BLACK_ROOK
                 && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
-        if (canQueenSideCastle('w')
+        if (canQueenSideCastle(WHITE)
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) == WHITE_ROOK
                 && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
-        if (canQueenSideCastle('b')
+        if (canQueenSideCastle(BLACK)
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) == BLACK_ROOK
                 && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
@@ -239,23 +326,31 @@ public class GameModel {
     public void undoMove(Move move) {
         checkRep();
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
+            int hash = hashCode();
+            positionTracker.merge(hash, -1, Integer::sum);
+            if (positionTracker.get(hash) == 0) {
+                positionTracker.remove(hash);
+            }
+
             board.undoMove(move);
             checkEnPassant(moveHistory.size() >= 2 ? moveHistory.get(moveHistory.size() - 2) : null);
             stateHistory.remove(stateHistory.size() - 1);
             moveHistory.remove(moveHistory.size() - 1);
-            turn = (turn == 'w') ? 'b' : 'w';
+            turn = (turn == WHITE) ? BLACK : WHITE;
+
+            gameState = IN_PROGRESS;
         }
         checkRep();
     }
 
     public boolean canKingSideCastle(char color) {
         FastMap currentState = stateHistory.get(stateHistory.size() - 1);
-        return color == 'w' ? currentState.isMarked(0) : currentState.isMarked(2);
+        return color == WHITE ? currentState.isMarked(0) : currentState.isMarked(2);
     }
 
     public boolean canQueenSideCastle(char color) {
         FastMap currentState = stateHistory.get(stateHistory.size() - 1);
-        return color == 'w' ? currentState.isMarked(1) : currentState.isMarked(3);
+        return color == WHITE ? currentState.isMarked(1) : currentState.isMarked(2);
     }
 
     public ChessCoordinate getEnPassantTarget() {
@@ -263,7 +358,9 @@ public class GameModel {
     }
 
     public List<Move> getLegalMoves() {
-        return new MoveGenerator(this).generateMoves();
+        legalMoves = moveGenerator.generateMoves();
+        checkGameOver();
+        return legalMoves;
     }
 
     public Move getLastMove() {
@@ -276,16 +373,13 @@ public class GameModel {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GameModel)) return false;
-        GameModel gameModel = (GameModel) o;
-        return turn == gameModel.turn && board.equals(gameModel.board) && moveHistory.equals(gameModel.moveHistory);
+        return this == o;
     }
 
     @Override
     public int hashCode() {
         FastMap currentCastlingState = stateHistory.get(stateHistory.size() - 1);
-        return Objects.hash(board, turn, currentCastlingState);
+        return Objects.hash(board, turn, enPassantTarget, currentCastlingState);
     }
 
     private void checkRep() {
@@ -325,12 +419,12 @@ public class GameModel {
 
         // The Castling Info
         builder.append(" ");
-        if (canKingSideCastle('w') || canKingSideCastle('b')
-                || canQueenSideCastle('w') || canQueenSideCastle('w')) {
-            builder.append(canKingSideCastle('w') ? "K" : "");
-            builder.append(canKingSideCastle('b') ? "k" : "");
-            builder.append(canQueenSideCastle('w') ? "Q" : "");
-            builder.append(canQueenSideCastle('b') ? "q" : "");
+        if (canKingSideCastle(WHITE) || canKingSideCastle(BLACK)
+                || canQueenSideCastle(WHITE) || canQueenSideCastle(WHITE)) {
+            builder.append(canKingSideCastle(WHITE) ? "K" : "");
+            builder.append(canKingSideCastle(BLACK) ? "k" : "");
+            builder.append(canQueenSideCastle(WHITE) ? "Q" : "");
+            builder.append(canQueenSideCastle(BLACK) ? "q" : "");
         } else {
             builder.append("-");
         }

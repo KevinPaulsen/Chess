@@ -1,14 +1,13 @@
 package chess.model;
 
 import chess.Move;
+import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
 
 import static chess.model.ChessBoardFactory.*;
-import static chess.model.pieces.Piece.WHITE_KNIGHT;
-import static chess.model.pieces.Piece.WHITE_ROOK;
 
 public class GameModelTest {
 
@@ -48,13 +47,13 @@ public class GameModelTest {
         for (Move move : List.copyOf(game.getLegalMoves())) {
             if (game.move(move)) {
                 int num = countNumPositions(game, depth - 1);
-                System.out.println(move.toString() + ": " + num);
+                System.out.printf("%s%s\t%6s: %7d\n", move.getStartingCoordinate(), move.getEndingCoordinate(), move, num);
                 sum += num;
                 game.undoMove(move);
             }
         }
 
-        System.out.println();
+        System.out.println(game.getFEN());
         return sum;
 
     }
@@ -211,10 +210,6 @@ public class GameModelTest {
     public void testPawnBoardDepth5() {
         GameModel game = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD_PAWNS), 'w',
                 false, false, false, false, null);
-        /*game.move(BoardModel.getChessCoordinate(2, 1), BoardModel.getChessCoordinate(2, 3));
-        game.move(BoardModel.getChessCoordinate(2, 7), BoardModel.getChessCoordinate(3, 7));
-        game.move(BoardModel.getChessCoordinate(2, 3), BoardModel.getChessCoordinate(2, 4));
-        game.move(BoardModel.getChessCoordinate(4, 6), BoardModel.getChessCoordinate(4, 4));// */
         int numPositions = countNumPositions(game, 5);
         Assert.assertEquals("Wrong number of nodes found.", 1_001_929, numPositions);
     }

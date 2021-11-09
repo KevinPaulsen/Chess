@@ -80,7 +80,7 @@ public class ChessCoordinate {
 
     @Override
     public int hashCode() {
-        return ondDimIndex;
+        return Integer.hashCode(ondDimIndex);
     }
 }
 
