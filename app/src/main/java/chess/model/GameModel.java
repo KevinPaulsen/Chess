@@ -24,27 +24,27 @@ public class GameModel {
     /**
      * Char that shows that it is whites move.
      */
-    private static final char WHITE = 'w';
+    public static final char WHITE = 'w';
 
     /**
      * Char that shows that it is blacks move.
      */
-    private static final char BLACK = 'b';
+    public static final char BLACK = 'b';
 
     /**
      * State that we are still in the middle of a game.
      */
-    private static final char IN_PROGRESS = 'p';
+    public static final char IN_PROGRESS = 'p';
 
     /**
      * State that the game is over. And the player to move has lost.
      */
-    private static final char LOSER = 'l';
+    public static final char LOSER = 'l';
 
     /**
      * State that the game is over, but ended in a draw.
      */
-    private static final char DRAW = 'd';
+    public static final char DRAW = 'd';
 
     /**
      * The bit mask that represents that white can king-side castle.
@@ -191,11 +191,6 @@ public class GameModel {
         stateMap.mergeMask(blackKingCastle ? BLACK_KING_SIDE_CASTLE_MASK : 0);
         stateMap.mergeMask(blackQueenCastle ? BLACK_QUEEN_SIDE_CASTLE_MASK : 0);
         stateHistory.add(stateMap);
-        initZobristHash();
-    }
-
-    private void initZobristHash() {
-
     }
 
     /**
@@ -267,7 +262,8 @@ public class GameModel {
     }
 
     private void checkGameOver() {
-        if (positionTracker.containsKey(this) && positionTracker.get(this) >= 3) {
+        int hash = hashCode();
+        if (positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
             gameState = DRAW;
         } else {
             if (legalMoves.size() == 0) {
@@ -369,6 +365,10 @@ public class GameModel {
 
     public char getTurn() {
         return turn;
+    }
+
+    public char getGameState() {
+        return gameState;
     }
 
     @Override

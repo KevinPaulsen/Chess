@@ -61,7 +61,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
 
-            while (AI_ON) {
+            while (gameModel.getGameState() == GameModel.IN_PROGRESS) {
                 if (gameModel.move(chessAI.getBestMove())) {
                     view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                     view.pack();

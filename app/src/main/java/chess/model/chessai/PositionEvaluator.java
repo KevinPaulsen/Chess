@@ -31,6 +31,17 @@ public class PositionEvaluator implements Evaluator {
         int whiteScore = 0;
         int blackScore = 0;
 
+        game.getLegalMoves();
+        if (game.getGameState() == GameModel.LOSER) {
+            if (game.getTurn() == GameModel.WHITE) {
+                return new Evaluation(null, Integer.MIN_VALUE, GameModel.WHITE, 0);
+            } else {
+                return new Evaluation(null, Integer.MAX_VALUE, GameModel.BLACK, 0);
+            }
+        } else if (game.getGameState() == GameModel.DRAW) {
+            return new Evaluation(0, 0);
+        }
+
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);

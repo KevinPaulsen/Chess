@@ -6,6 +6,7 @@ import chess.model.pieces.Piece;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Random;
 
 import static chess.model.pieces.Piece.*;
 
@@ -21,18 +22,29 @@ public class BoardModel {
 
     private int zobristHash;
 
-    private static final int[][] ZOBRIST_HASH_TABLE = makeHashTable();
+    private static final long[][] ZOBRIST_HASH_TABLE = makeHashTable();
 
-    private static int[][] makeHashTable() {
-        int[][] result = new int[64][12];
+    private static long[][] makeHashTable() {
+        long[][] result = new long[64][13];
+        Random random = new Random(0);
 
         for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
-            for (int pieceIdx = 0; pieceIdx < 12; pieceIdx++) {
-                result[coordIdx][pieceIdx] = Objects.hash(coordIdx, Piece.getPieceFrom(pieceIdx));
+            for (int pieceIdx = 0; pieceIdx < 13; pieceIdx++) {
+                result[coordIdx][pieceIdx] = generateHash(random);
             }
         }
 
         return result;
+    }
+
+    private static long generateHash(Random random) {
+        long hash = 0;
+        for (int bit = 0; bit < 64; bit++) {
+            if (random.nextBoolean()) {
+                hash |= 1L << bit;
+            }
+        }
+        return hash;
     }
 
     public BoardModel(Piece[] pieceArray) {
@@ -222,6 +234,7 @@ public class BoardModel {
     private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
             pieceArray[coordinate.getOndDimIndex()] = piece;
+            zobristHash ^= ZOBRIST_HASH_TABLE[coordinate.getOndDimIndex()][12];
             zobristHash ^= ZOBRIST_HASH_TABLE[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
         }
     }
@@ -239,6 +252,7 @@ public class BoardModel {
         if (piece != null) {
             pieceArray[coordinate.getOndDimIndex()] = null;
             zobristHash ^= ZOBRIST_HASH_TABLE[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
+            zobristHash ^= ZOBRIST_HASH_TABLE[coordinate.getOndDimIndex()][12];
         }
     }
 
@@ -261,8 +275,10 @@ public class BoardModel {
                     blackKingCoord = endCoord;
                 }
                 pieceArray[startCoord.getOndDimIndex()] = null;
-                pieceArray[endCoord.getOndDimIndex()] = piece;
                 zobristHash ^= ZOBRIST_HASH_TABLE[startCoord.getOndDimIndex()][piece.getUniqueIdx()];
+                zobristHash ^= ZOBRIST_HASH_TABLE[startCoord.getOndDimIndex()][12];
+                pieceArray[endCoord.getOndDimIndex()] = piece;
+                zobristHash ^= ZOBRIST_HASH_TABLE[endCoord.getOndDimIndex()][12];
                 zobristHash ^= ZOBRIST_HASH_TABLE[endCoord.getOndDimIndex()][piece.getUniqueIdx()];
             }
         }
@@ -307,6 +323,8 @@ public class BoardModel {
             Piece piece = pieceArray[coordIdx];
             if (piece != null) {
                 hash ^= BoardModel.ZOBRIST_HASH_TABLE[coordIdx][piece.getUniqueIdx()];
+            } else {
+                hash ^= BoardModel.ZOBRIST_HASH_TABLE[coordIdx][12];
             }
         }
 

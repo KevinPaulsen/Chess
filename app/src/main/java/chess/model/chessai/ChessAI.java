@@ -2,10 +2,11 @@ package chess.model.chessai;
 
 import chess.Move;
 import chess.model.GameModel;
+import org.checkerframework.checker.units.qual.A;
 
 public class ChessAI {
 
-    private static final int DEPTH = 6;
+    private static final int DEPTH = 5;
 
     private final Evaluator evaluator;
 
@@ -21,15 +22,18 @@ public class ChessAI {
         boolean maximizingPlayer = game.getTurn() == 'w';
 
         Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        AlphaBeta alphaBeta = new AlphaBeta();
         for (Move move : evaluator.getSortedMoves(game)) {
             game.move(move);
-            Evaluation moveEval = miniMax(game, new AlphaBeta(), DEPTH - 1);
+            Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), DEPTH - 1);
             game.undoMove(move);
 
             if (maximizingPlayer) {
-                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval.getEvaluation(), DEPTH));
+                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval, DEPTH));
+                alphaBeta.alphaMax(bestEval.getEvaluation());
             } else {
-                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval.getEvaluation(), DEPTH));
+                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval, DEPTH));
+                alphaBeta.betaMin(bestEval.getEvaluation());
             }
         }
 
@@ -50,10 +54,10 @@ public class ChessAI {
             game.undoMove(move);
 
             if (maximizingPlayer) {
-                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval.getEvaluation(), depth));
+                bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval, depth));
                 alphaBeta.alphaMax(bestEval.getEvaluation());
             } else {
-                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval.getEvaluation(), depth));
+                bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval, depth));
                 alphaBeta.betaMin(bestEval.getEvaluation());
             }
 
