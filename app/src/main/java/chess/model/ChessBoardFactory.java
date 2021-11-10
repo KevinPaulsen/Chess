@@ -26,23 +26,6 @@ public class ChessBoardFactory {
     public static final int B_KING = 11;
 
     /**
-     * Creates a new ChessBoard with a given integer array. The board is
-     * created by files. The position at [0][0] corresponds to A1, and the
-     * position at [0][7] corresponds to A8 etc..
-     *
-     * @throws IllegalArgumentException if 'board' is not 8x8.
-     * @param board any non-null integer array that is 8x8.
-     * @return a ChessBoard from the given 'board'
-     */
-    public static BoardModel createChessBoard(int[][] board) {
-        if (board.length != 8 || board[0].length != 8) {
-            throw new IllegalArgumentException("Board must be 8x8.");
-        }
-
-        return new BoardModel(createSquareArray(board));
-    }
-
-    /**
      * creates a square array from the given integer array.
      *
      * @param board any non-null integer array that is 8x8.

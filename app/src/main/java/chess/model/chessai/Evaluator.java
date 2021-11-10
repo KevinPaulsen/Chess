@@ -26,9 +26,10 @@ public interface Evaluator {
      * likely.
      *
      * @param game The game to get moves from.
+     * @param hashMove A previous found best move, null if none exists.
      * @return the list of sorted legal moves.
      */
-    List<Move> getSortedMoves(GameModel game);
+    List<Move> getSortedMoves(GameModel game, Move hashMove);
 
     static int getValue(Piece piece) {
         int score = 0;

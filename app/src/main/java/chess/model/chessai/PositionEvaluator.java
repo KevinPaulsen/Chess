@@ -32,13 +32,13 @@ public class PositionEvaluator implements Evaluator {
         int blackScore = 0;
 
         game.getLegalMoves();
-        if (game.getGameState() == GameModel.LOSER) {
+        if (game.getGameOverStatus() == GameModel.LOSER) {
             if (game.getTurn() == GameModel.WHITE) {
                 return new Evaluation(null, Integer.MIN_VALUE, GameModel.WHITE, 0);
             } else {
                 return new Evaluation(null, Integer.MAX_VALUE, GameModel.BLACK, 0);
             }
-        } else if (game.getGameState() == GameModel.DRAW) {
+        } else if (game.getGameOverStatus() == GameModel.DRAW) {
             return new Evaluation(0, 0);
         }
 
@@ -106,12 +106,21 @@ public class PositionEvaluator implements Evaluator {
      * likely.
      *
      * @param game The game to get moves from.
+     * @param hashMove A previous found best move, null if none exists.
      * @return the list of sorted legal moves.
      */
     @Override
-    public List<Move> getSortedMoves(GameModel game) {
+    public List<Move> getSortedMoves(GameModel game, Move hashMove) {
         List<Move> legalMoves = moveGenerator.generateMoves();
         legalMoves.sort(this::moveComparator);
+        if (hashMove != null) {
+            if (legalMoves.contains(hashMove)) {
+                legalMoves.remove(hashMove);
+                legalMoves.add(0, hashMove);
+            } else {
+                System.out.println("Hash Collision?");
+            }
+        }
         return legalMoves;
     }
 

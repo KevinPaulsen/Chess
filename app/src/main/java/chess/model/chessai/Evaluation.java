@@ -1,7 +1,9 @@
 package chess.model.chessai;
 
 import chess.Move;
-import chess.model.GameModel;
+
+import static chess.model.GameModel.BLACK;
+import static chess.model.GameModel.WHITE;
 
 public class Evaluation {
 
@@ -31,45 +33,54 @@ public class Evaluation {
     }
 
     public static Evaluation min(Evaluation evaluation1, Evaluation evaluation2) {
-        if (evaluation1.loser == GameModel.WHITE) {
-            if (evaluation2.loser == GameModel.WHITE) {
-                if (evaluation1.depth < evaluation2.depth) {
-                    return evaluation1;
-                } else {
-                    return evaluation2;
-                }
+        if (evaluation1 == BEST_EVALUATION) {
+            return evaluation2;
+        } else if (evaluation2 == BEST_EVALUATION) {
+            return evaluation1;
+        } else if (evaluation1.loser == WHITE) {
+            if (evaluation2.loser == WHITE) {
+                return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
             } else {
                 return evaluation1;
             }
-        } else if (evaluation2.loser == GameModel.WHITE) {
+        } else if (evaluation1.loser == BLACK) {
+            if (evaluation2.loser == BLACK) {
+                return evaluation1.depth < evaluation2.depth ? evaluation2 : evaluation1;
+            } else {
+                return evaluation2;
+            }
+        } else if (evaluation2.loser == WHITE) {
             return evaluation2;
-        }
-
-        if (evaluation1.evaluation <= evaluation2.evaluation) {
+        } else if (evaluation2.loser == BLACK) {
             return evaluation1;
         } else {
-            return evaluation2;
+            return evaluation1.evaluation <= evaluation2.evaluation ? evaluation1 : evaluation2;
         }
     }
 
     public static Evaluation max(Evaluation evaluation1, Evaluation evaluation2) {
-        if (evaluation1.loser == GameModel.BLACK) {
-            if (evaluation2.loser == GameModel.BLACK) {
-                if (evaluation1.depth < evaluation2.depth) {
-                    return evaluation1;
-                } else {
-                    return evaluation2;
-                }
-            } else {
-                return evaluation1;
-            }
-        } else if (evaluation2.loser == GameModel.BLACK) {
+        if (evaluation1 == WORST_EVALUATION) {
             return evaluation2;
-        }
-        if (evaluation1.evaluation >= evaluation2.evaluation) {
+        } else if (evaluation2 == WORST_EVALUATION) {
             return evaluation1;
-        } else {
+        } else if (evaluation1.loser == WHITE) {
+            if (evaluation2.loser == WHITE) {
+                return evaluation1.depth < evaluation2.loser ? evaluation2 : evaluation1;
+            } else {
+                return evaluation2;
+            }
+        } else if (evaluation1.loser == BLACK) {
+            if (evaluation2.loser == BLACK) {
+                return evaluation1.depth < evaluation2.loser ? evaluation1 : evaluation2;
+            } else {
+                return evaluation2;
+            }
+        } else if (evaluation2.loser == WHITE) {
+            return evaluation1;
+        } else if (evaluation2.loser == BLACK) {
             return evaluation2;
+        } else {
+            return evaluation1.evaluation >= evaluation2.evaluation ? evaluation1 : evaluation2;
         }
     }
 

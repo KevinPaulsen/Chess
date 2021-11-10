@@ -55,12 +55,20 @@ public class FastMap {
      *
      * @param mask the mask which contains the bit to flip.
      */
+    public void clearMask(long mask) {
+        map &= ~mask;
+    }
+
     public void flip(long mask) {
-        map = map & ~mask;
+        map ^= mask;
     }
 
     public boolean isMarked(int squareNum) {
         return ((map >> squareNum) & 1) == 1;
+    }
+
+    public long getMap() {
+        return map;
     }
 
     public void clear() {

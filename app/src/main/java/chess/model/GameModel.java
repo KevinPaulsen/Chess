@@ -66,10 +66,13 @@ public class GameModel {
      */
     private static final long BLACK_QUEEN_SIDE_CASTLE_MASK = 8L;
 
-    /**
-     * Toggle for if check rep should be called.
-     */
-    private static final boolean DEBUG_MODE = false;
+    private static final long WHITE_TO_MOVE_MASK = 16L;
+
+    private static final long LOSER_MASK = 32L;
+
+    private static final long DRAW_MASK = 64L;
+
+    private static final long EN_PASSANT_MASK = 0b111111L << 7;
 
     /**
      * The model for the bard of the chess game.
@@ -84,6 +87,11 @@ public class GameModel {
     /**
      * The list of each state the board was in before each move. This List
      * should be 1 larger than moveHistory.
+     *
+     * The first 4 bits are casting info, 1 means can castle, 0 means cannot.
+     * The next bit is turn, 1 for white, 0 for black.
+     * Bits 6-7 are game over bits. 00 is in progress, 01 loser, 10 draw.
+     * bits 8-13 are the enPassant coordinate.
      */
     private final List<FastMap> stateHistory;
 
@@ -91,34 +99,16 @@ public class GameModel {
      * The map that tracks the number of times each position has occurred.
      * This maps from hashCode -> number of times this hashCode has appeared.
      */
-    private final Map<Integer, Integer> positionTracker;
+    private final Map<Long, Integer> positionTracker;
 
-    /**
-     * The list of legal moves in this position.
-     */
-    private List<Move> legalMoves;
+    private final List<List<Move>> previousLegalMoves;
 
     /**
      * The move generator for this game.
      */
     private final MoveGenerator moveGenerator;
 
-    /**
-     * The tracker for which players turn it is to move.
-     */
-    private char turn;
-
-    /**
-     * The tracker for the current state of the game. This will be
-     * IN_PROGRESS, LOSER, or DRAW.
-     */
-    private char gameState;
-
-    /**
-     * The current target for an En Passant capture. This is null
-     * if no En Passant is possible.
-     */
-    private ChessCoordinate enPassantTarget;
+    private final Zobrist zobrist;
 
     /**
      * The default constructor that creates a normal game.
@@ -127,69 +117,47 @@ public class GameModel {
         this("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 
-    /**
-     * Creates a Game model with all the needed information.
-     *
-     * @param board the board this game model follows.
-     * @param turn the current turn.
-     * @param whiteKingCastle weather white can castle King-side.
-     * @param whiteQueenCastle weather white can castle Queen-side.
-     * @param blackKingCastle weather black can castle King-side.
-     * @param blackQueenCastle weather black can castle Queen-side.
-     * @param enPassantTarget the target coordinate for En Passant.
-     */
-    public GameModel(BoardModel board, char turn, boolean whiteKingCastle, boolean whiteQueenCastle,
-                     boolean blackKingCastle, boolean blackQueenCastle, ChessCoordinate enPassantTarget) {
-        this.board = board;
-        this.turn = turn;
-        this.enPassantTarget = enPassantTarget;
-        this.moveHistory = new ArrayList<>(200);
-        this.stateHistory = new ArrayList<>(200);
-        this.positionTracker = new HashMap<>();
-        this.gameState = IN_PROGRESS;
-        this.moveGenerator = new MoveGenerator(this);
-
-        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
-
-        this.legalMoves = this.moveGenerator.generateMoves();
-        positionTracker.put(hashCode(), 1);
-
-        checkRep();
-    }
-
     public GameModel(String FEN) {
         String[] fenSections = FEN.split(" ");
-        this.board = new BoardModel(fenSections[0]);
-        this.turn = fenSections[1].charAt(0);
-        this.enPassantTarget = !fenSections[3].equals("-") ? BoardModel.getChessCoordinate(fenSections[3].charAt(0),
-                Integer.parseInt(fenSections[3].substring(1)) + 1) : null;
+
+        this.zobrist = new Zobrist();
+        this.board = new BoardModel(fenSections[0], this.zobrist);
         this.moveHistory = new ArrayList<>(200);
         this.stateHistory = new ArrayList<>(200);
         this.positionTracker = new HashMap<>();
-        this.gameState = IN_PROGRESS;
         this.moveGenerator = new MoveGenerator(this);
+        this.previousLegalMoves = new ArrayList<>();
 
+        ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ? BoardModel
+                .getChessCoordinate(fenSections[3].charAt(0), Integer.parseInt(fenSections[3].substring(1)))
+                : null;
+        char turn = fenSections[1].charAt(0);
         boolean whiteKingCastle = fenSections[2].contains("K");
         boolean whiteQueenCastle = fenSections[2].contains("Q");
         boolean blackKingCastle = fenSections[2].contains("k");
         boolean blackQueenCastle = fenSections[2].contains("q");
 
-        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle);
+        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn, enPassantTarget);
+        zobrist.slowZobrist(this);
 
-        this.legalMoves = this.moveGenerator.generateMoves();
+        previousLegalMoves.add(this.moveGenerator.generateMoves());
 
-        positionTracker.put(hashCode(), 1);
-
-        checkRep();
+        positionTracker.put(zobrist.getHashValue(), 1);
     }
 
     private void addInitialState(boolean whiteKingCastle, boolean whiteQueenCastle,
-                                 boolean blackKingCastle, boolean blackQueenCastle) {
+                                 boolean blackKingCastle, boolean blackQueenCastle, char turn,
+                                 ChessCoordinate enPassantTarget) {
         FastMap stateMap = new FastMap();
         stateMap.mergeMask(whiteKingCastle ? WHITE_KING_SIDE_CASTLE_MASK : 0);
         stateMap.mergeMask(whiteQueenCastle ? WHITE_QUEEN_SIDE_CASTLE_MASK : 0);
         stateMap.mergeMask(blackKingCastle ? BLACK_KING_SIDE_CASTLE_MASK : 0);
         stateMap.mergeMask(blackQueenCastle ? BLACK_QUEEN_SIDE_CASTLE_MASK : 0);
+        stateMap.mergeMask(turn == WHITE ? WHITE_TO_MOVE_MASK : 0);
+        if (enPassantTarget != null) {
+            stateMap.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
+        }
+
         stateHistory.add(stateMap);
     }
 
@@ -229,8 +197,6 @@ public class GameModel {
             }
             didMove = move(currentMove);
         }
-
-        checkRep();
         return didMove;
     }
 
@@ -242,60 +208,73 @@ public class GameModel {
      * @return true if the move is successful, false otherwise.
      */
     public boolean move(Move move) {
-        checkRep();
         boolean didMove = false;
 
-        if (gameState == IN_PROGRESS && move != null && move.getMovingPiece().getColor() == turn) {
+        if (getGameOverStatus() == IN_PROGRESS && move != null && move.getMovingPiece().getColor() == getTurn()) {
             board.move(move);
             moveHistory.add(move);
-            checkCastling(board.getWhiteKingCoord(), board.getBlackKingCoord());
-            checkEnPassant(move);
-            turn = (turn == WHITE) ? BLACK : WHITE;
+            makeState(board.getWhiteKingCoord(), board.getBlackKingCoord(), move);
 
-            positionTracker.merge(hashCode(), 1, Integer::sum);
+            positionTracker.merge(zobrist.getHashValue(), 1, Integer::sum);
 
             didMove = true;
         }
 
-        checkRep();
         return didMove;
     }
 
+    private void makeState(ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord, Move lastMove) {
+        FastMap currentState = new FastMap();
+        currentState.merge(getGameState());
+
+        checkCastling(currentState, whiteKingCoord, blackKingCoord);
+        checkEnPassant(currentState, lastMove);
+        currentState.flip(WHITE_TO_MOVE_MASK);
+
+        zobrist.updateGameData(this, currentState);
+
+        stateHistory.add(currentState);
+        checkGameOver();
+    }
+
     private void checkGameOver() {
-        int hash = hashCode();
+        long hash = zobrist.getHashValue();
+        List<Move> legalMoves = moveGenerator.generateMoves();
+        FastMap gameState = getGameState();
         if (positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
-            gameState = DRAW;
+            gameState.mergeMask(DRAW_MASK);
         } else {
             if (legalMoves.size() == 0) {
-                ChessCoordinate kingToMove = turn == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
+                ChessCoordinate kingToMove = getTurn() == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
                 if (moveGenerator.getOpponentAttackMap().isMarked(kingToMove.getOndDimIndex())) {
-                    gameState = LOSER;
+                    gameState.mergeMask(LOSER_MASK);
                 } else {
-                    gameState = DRAW;
+                    gameState.mergeMask(DRAW_MASK);
                 }
-            } else {
-                gameState = IN_PROGRESS;
             }
+        }
+        previousLegalMoves.add(legalMoves);
+    }
+
+    private void checkEnPassant(FastMap state, Move lastMove) {
+        ChessCoordinate enPassantTarget = null;
+        if (lastMove != null
+                && (lastMove.getMovingPiece() == Piece.WHITE_PAWN
+                || lastMove.getMovingPiece() == Piece.BLACK_PAWN)
+                && Math.abs(lastMove.getStartingCoordinate().getRank()
+                - lastMove.getEndingCoordinate().getRank()) == 2) {
+
+            int rank = (int) (0.6 * (lastMove.getStartingCoordinate().getRank() - 3.5) + 3.5);
+            enPassantTarget = BoardModel.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
+        }
+
+        state.clearMask(EN_PASSANT_MASK);
+        if (enPassantTarget != null) {
+            state.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
         }
     }
 
-    private void checkEnPassant(Move lastMove) {
-        if (lastMove != null) {
-            if ((lastMove.getMovingPiece() == Piece.WHITE_PAWN || lastMove.getMovingPiece() == Piece.BLACK_PAWN)
-                    && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
-                int rank = (int) (0.6 * (lastMove.getStartingCoordinate().getRank() - 3.5) + 3.5);
-                enPassantTarget = BoardModel.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
-            } else {
-                enPassantTarget = null;
-            }
-        } else {
-            enPassantTarget = null;
-        }
-    }
-
-    private void checkCastling(ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord) {
-        FastMap state = new FastMap();
-        state.merge(stateHistory.get(stateHistory.size() - 1));
+    private void checkCastling(FastMap state, ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord) {
         if (canKingSideCastle(WHITE)
                 && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) == WHITE_ROOK
                 && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
@@ -316,47 +295,43 @@ public class GameModel {
                 && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
-        stateHistory.add(state);
     }
 
     public void undoMove(Move move) {
-        checkRep();
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
-            int hash = hashCode();
+            long hash = zobrist.getHashValue();
             positionTracker.merge(hash, -1, Integer::sum);
             if (positionTracker.get(hash) == 0) {
                 positionTracker.remove(hash);
             }
 
             board.undoMove(move);
-            checkEnPassant(moveHistory.size() >= 2 ? moveHistory.get(moveHistory.size() - 2) : null);
-            stateHistory.remove(stateHistory.size() - 1);
             moveHistory.remove(moveHistory.size() - 1);
-            turn = (turn == WHITE) ? BLACK : WHITE;
 
-            gameState = IN_PROGRESS;
+            zobrist.updateGameData(this, stateHistory.remove(stateHistory.size() - 1));
+            previousLegalMoves.remove(previousLegalMoves.size() - 1);
         }
-        checkRep();
     }
 
     public boolean canKingSideCastle(char color) {
-        FastMap currentState = stateHistory.get(stateHistory.size() - 1);
+        FastMap currentState = getGameState();
         return color == WHITE ? currentState.isMarked(0) : currentState.isMarked(2);
     }
 
     public boolean canQueenSideCastle(char color) {
-        FastMap currentState = stateHistory.get(stateHistory.size() - 1);
+        FastMap currentState = getGameState();
         return color == WHITE ? currentState.isMarked(1) : currentState.isMarked(2);
     }
 
     public ChessCoordinate getEnPassantTarget() {
-        return enPassantTarget;
+        long stateRep = getGameState().getMap();
+        stateRep = stateRep >> 7;
+
+        return BoardModel.getChessCoordinate((int) stateRep);
     }
 
     public List<Move> getLegalMoves() {
-        legalMoves = moveGenerator.generateMoves();
-        checkGameOver();
-        return legalMoves;
+        return previousLegalMoves.get(previousLegalMoves.size() - 1);
     }
 
     public Move getLastMove() {
@@ -364,11 +339,22 @@ public class GameModel {
     }
 
     public char getTurn() {
-        return turn;
+        FastMap currentState = getGameState();
+        return currentState.isMarked(4) ? WHITE : BLACK;
     }
 
-    public char getGameState() {
-        return gameState;
+    public FastMap getGameState() {
+        return stateHistory.get(stateHistory.size() - 1);
+    }
+
+    public char getGameOverStatus() {
+        FastMap currentState = getGameState();
+        if (currentState.isMarked(5)) {
+            return LOSER;
+        } else if (currentState.isMarked(6)) {
+            return DRAW;
+        }
+        return IN_PROGRESS;
     }
 
     @Override
@@ -378,16 +364,8 @@ public class GameModel {
 
     @Override
     public int hashCode() {
-        FastMap currentCastlingState = stateHistory.get(stateHistory.size() - 1);
-        return Objects.hash(board, turn, enPassantTarget, currentCastlingState);
-    }
-
-    private void checkRep() {
-        if (DEBUG_MODE) {
-            if (board == null || moveHistory == null) {
-                throw new RuntimeException("Representation is incorrect.");
-            }
-        }
+        FastMap currentState = getGameState();
+        return Objects.hash(board, currentState);
     }
 
     public String getFEN() {
@@ -415,7 +393,7 @@ public class GameModel {
 
         // The turn info
         builder.append(" ");
-        builder.append(turn);
+        builder.append(getTurn());
 
         // The Castling Info
         builder.append(" ");
@@ -431,10 +409,10 @@ public class GameModel {
 
         // The EnPassant Info
         builder.append(" ");
-        if (enPassantTarget == null) {
+        if (getEnPassantTarget() == null) {
             builder.append("-");
         } else {
-            builder.append(enPassantTarget);
+            builder.append(getEnPassantTarget());
         }
 
         // TODO: Half-Move info
@@ -446,5 +424,9 @@ public class GameModel {
         builder.append(moveHistory.size() / 2 + 1);
 
         return builder.toString();
+    }
+
+    public long getZobristHash() {
+        return zobrist.getHashValue();
     }
 }

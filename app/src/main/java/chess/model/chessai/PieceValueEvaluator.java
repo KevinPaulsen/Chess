@@ -39,7 +39,7 @@ public class PieceValueEvaluator implements Evaluator {
     }
 
     @Override
-    public List<Move> getSortedMoves(GameModel game) {
+    public List<Move> getSortedMoves(GameModel game, Move hashMove) {
         return game.getLegalMoves();
     }
 

@@ -218,7 +218,7 @@ public class Move {
         if (this == o) return true;
         if (!(o instanceof Move)) return false;
         Move move = (Move) o;
-        return moveNumber == move.moveNumber && Objects.equals(startingCoordinate, move.startingCoordinate)
+        return Objects.equals(startingCoordinate, move.startingCoordinate)
                 && Objects.equals(endingCoordinate, move.endingCoordinate)
                 && Objects.equals(movingPiece, move.movingPiece)
                 && Objects.equals(interactingPieceStart, move.interactingPieceStart)
