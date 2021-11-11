@@ -17,7 +17,8 @@ public class ChessAI {
     /**
      * The depth to search to
      */
-    private static final int DEPTH = 6;
+    private static final int MIN_DEPTH = 1;
+    private static final long TIME_CUTOFF = 1_000;
 
     /**
      * This table stores a position hash, and maps it to the found
@@ -59,21 +60,40 @@ public class ChessAI {
         boolean maximizingPlayer = game.getTurn() == GameModel.WHITE;
 
         long hash = game.getZobristHash();
-        Evaluation hashEval = transpositionTable.get(hash);
-        if (hashEval != null && hashEval.getDepth() >= DEPTH) {
-            return hashEval.getMove();
-        }
+        long startTime = System.currentTimeMillis();
+        long endTime;
+        int depth = 1;
 
-        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-        AlphaBeta alphaBeta = new AlphaBeta();
-        for (Move move : evaluator.getSortedMoves(game, hashEval == null ? null : hashEval.getMove())) {
-            bestEval = getEvaluation(maximizingPlayer, bestEval, alphaBeta, move, DEPTH);
-        }
+        Evaluation bestEvalToLatestDepth;
 
-        transpositionTable.put(hash, bestEval);
+        do {
+            Evaluation hashEval = transpositionTable.get(hash);
+            if (hashEval != null && hashEval.getDepth() >= depth) {
+                bestEvalToLatestDepth = hashEval;
+                depth++;
+                endTime = System.currentTimeMillis();
 
-        System.out.println(bestEval.getEvaluation());
-        return bestEval.getMove();
+                if (hashEval.getLoser() == Evaluation.NO_LOSER) {
+                    continue;
+                } else {
+                    break;
+                }
+            } // */
+
+            AlphaBeta alphaBeta = new AlphaBeta();
+            Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+            for (Move move : evaluator.getSortedMoves(game, hashEval == null ? null : hashEval.getMove())) {
+                bestEval = getEvaluation(maximizingPlayer, bestEval, alphaBeta, move, depth);
+            }
+
+            transpositionTable.put(hash, bestEval);
+            depth++;
+            endTime = System.currentTimeMillis();
+            bestEvalToLatestDepth = bestEval;
+        } while (endTime - startTime < TIME_CUTOFF || depth <= MIN_DEPTH);
+
+        System.out.println(bestEvalToLatestDepth);
+        return bestEvalToLatestDepth.getMove();
     }
 
     /**
@@ -89,7 +109,7 @@ public class ChessAI {
 
         long hash = game.getZobristHash();
         Evaluation hashEval = transpositionTable.get(hash);
-        if (hashEval != null && hashEval.getDepth() >= DEPTH) {
+        if (hashEval != null && hashEval.getDepth() >= depth) {
             return hashEval;
         }
 

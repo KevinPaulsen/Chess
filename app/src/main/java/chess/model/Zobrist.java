@@ -4,7 +4,6 @@ import chess.ChessCoordinate;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
-import java.util.Objects;
 import java.util.Random;
 
 public class Zobrist {
@@ -14,6 +13,8 @@ public class Zobrist {
     private final long[] castlingHashTable;
     private final long sideToMove;
 
+    private int addedEnPassantTarget = 0;
+    private int addedCastlingData = 0;
     private long hashValue = 0;
 
     public Zobrist() {
@@ -35,8 +36,10 @@ public class Zobrist {
         }
 
         ChessCoordinate enPassant = game.getEnPassantTarget();
-        hashValue ^= enPassantCoordTable[enPassant == null ? 0 : enPassant.getFile()];
-        hashValue ^= castlingHashTable[(int) (game.getGameState().getMap() & 0b1111L)];
+        addedEnPassantTarget = enPassant == null ? 0 : enPassant.getFile();
+        hashValue ^= enPassantCoordTable[addedEnPassantTarget];
+        addedCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
+        hashValue ^= castlingHashTable[addedCastlingData];
         hashValue ^= game.getTurn() == GameModel.WHITE ? sideToMove : 0;
     }
 
@@ -94,20 +97,22 @@ public class Zobrist {
         return hashValue;
     }
 
-    public void updateGameData(GameModel game, FastMap newState) {
-        int previousCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
+    public void updateGameData(FastMap newState) {
         int currentCastlingData = (int) (newState.getMap() & 0b1111L);
-        if (previousCastlingData != currentCastlingData) {
-            hashValue ^= castlingHashTable[previousCastlingData];
-            hashValue ^= castlingHashTable[currentCastlingData];
+
+        if (addedCastlingData != currentCastlingData) {
+            hashValue ^= castlingHashTable[addedCastlingData];
+            addedCastlingData = currentCastlingData;
+            hashValue ^= castlingHashTable[addedCastlingData];
         }
 
-        if (game.getEnPassantTarget() != null) {
-            hashValue ^= enPassantCoordTable[game.getEnPassantTarget().getFile()];
-        }
         int currentEnPassantTarget = (int) newState.getMap() >> 7;
-        if (currentEnPassantTarget != 0) {
-            hashValue ^= enPassantCoordTable[BoardModel.getChessCoordinate(currentEnPassantTarget).getFile()];
+        currentEnPassantTarget = currentEnPassantTarget == 0 ? 0 : 1 + currentEnPassantTarget % 8;
+
+        if (addedEnPassantTarget != currentEnPassantTarget) {
+            hashValue ^= enPassantCoordTable[addedEnPassantTarget];
+            addedEnPassantTarget = currentEnPassantTarget;
+            hashValue ^= enPassantCoordTable[addedEnPassantTarget];
         }
 
         hashValue ^= sideToMove;

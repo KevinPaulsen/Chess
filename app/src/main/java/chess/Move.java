@@ -2,6 +2,7 @@ package chess;
 
 import chess.model.pieces.Piece;
 
+import java.util.Locale;
 import java.util.Objects;
 
 import static chess.model.pieces.Piece.*;
@@ -196,7 +197,7 @@ public class Move {
                     result.append(startingCoordinate.getCharFile());
                 }
             } else {
-                result.append(movingPiece.getStringRep());
+                result.append(movingPiece.getStringRep().toUpperCase());
             }
 
             if (interactingPiece != null) {
@@ -207,7 +208,7 @@ public class Move {
 
         if (doesPromote()) {
             result.append("=");
-            result.append(promotedPiece.getStringRep());
+            result.append(promotedPiece.getStringRep().toUpperCase());
         }
 
         return result.toString();

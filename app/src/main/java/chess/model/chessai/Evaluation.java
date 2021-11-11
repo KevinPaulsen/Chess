@@ -10,14 +10,14 @@ public class Evaluation {
     public static final Evaluation WORST_EVALUATION = new Evaluation(Integer.MIN_VALUE, -1);
     public static final Evaluation BEST_EVALUATION = new Evaluation(Integer.MAX_VALUE, -1);
 
-    private static final char NO_LOSER = 'n';
+    public static final char NO_LOSER = 'n';
 
     private final Move move;
-    private final double evaluation;
+    private final int evaluation;
     private final char loser;
     private final int depth;
 
-    public Evaluation(double evaluation, int depth) {
+    public Evaluation(int evaluation, int depth) {
         this(null, evaluation, NO_LOSER, depth);
     }
 
@@ -25,7 +25,7 @@ public class Evaluation {
         this(move, evaluation.evaluation, evaluation.loser, depth);
     }
 
-    public Evaluation(Move move, double evaluation, char loser, int depth) {
+    public Evaluation(Move move, int evaluation, char loser, int depth) {
         this.move = move;
         this.evaluation = evaluation;
         this.depth = depth;
@@ -94,5 +94,18 @@ public class Evaluation {
 
     public int getDepth() {
         return depth;
+    }
+
+    public char getLoser() {
+        return loser;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                String.format("%-6s ", move.toString()) +
+                String.format("%4d ", evaluation) +
+                String.format("%2d", depth) +
+                "}";
     }
 }

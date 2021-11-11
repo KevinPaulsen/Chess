@@ -231,7 +231,7 @@ public class GameModel {
         checkEnPassant(currentState, lastMove);
         currentState.flip(WHITE_TO_MOVE_MASK);
 
-        zobrist.updateGameData(this, currentState);
+        zobrist.updateGameData(currentState);
 
         stateHistory.add(currentState);
         checkGameOver();
@@ -308,7 +308,8 @@ public class GameModel {
             board.undoMove(move);
             moveHistory.remove(moveHistory.size() - 1);
 
-            zobrist.updateGameData(this, stateHistory.remove(stateHistory.size() - 1));
+            stateHistory.remove(stateHistory.size() - 1);
+            zobrist.updateGameData(stateHistory.get(stateHistory.size() - 1));
             previousLegalMoves.remove(previousLegalMoves.size() - 1);
         }
     }
@@ -327,7 +328,7 @@ public class GameModel {
         long stateRep = getGameState().getMap();
         stateRep = stateRep >> 7;
 
-        return BoardModel.getChessCoordinate((int) stateRep);
+        return stateRep == 0 ? null : BoardModel.getChessCoordinate((int) stateRep);
     }
 
     public List<Move> getLegalMoves() {

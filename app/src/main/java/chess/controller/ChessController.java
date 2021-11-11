@@ -39,7 +39,6 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
     private ChessController() {
         gameModel = new GameModel();
-        //gameModel = new GameModel(ChessBoardFactory.createChessBoard(TEST_BOARD));
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel);
         pressedKeyCodes = new HashSet<>();
@@ -61,16 +60,13 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
             view.pack();
 
-            while (AI_ON && gameModel.getGameOverStatus() == GameModel.IN_PROGRESS) {
-                if (gameModel.move(chessAI.getBestMove())) {
+            if (AI_ON && gameModel.getGameOverStatus() == GameModel.IN_PROGRESS) {
+                /*if (gameModel.move(chessAI.getBestMove())) {
                     view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                     view.pack();
                     view.update(view.getGraphics());
                 }// */
-                if (gameModel.getGameOverStatus() != GameModel.IN_PROGRESS) {
-                    System.out.println("GAME OVER");
-                }
-                /*futureAIMove = CompletableFuture.runAsync(() -> {
+                futureAIMove = CompletableFuture.runAsync(() -> {
                     if (gameModel.move(chessAI.getBestMove())) {
                         view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                         view.pack();
@@ -79,6 +75,9 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
                     ex.printStackTrace();
                     return null;
                 });//*/
+                if (gameModel.getGameOverStatus() != GameModel.IN_PROGRESS) {
+                    System.out.println("GAME OVER");
+                }
             }
         }
         view.pack();
