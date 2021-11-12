@@ -111,11 +111,10 @@ public class PositionEvaluator implements Evaluator {
      */
     @Override
     public List<Move> getSortedMoves(GameModel game, Move hashMove) {
-        List<Move> legalMoves = moveGenerator.generateMoves();
+        List<Move> legalMoves = game.getLegalMoves();
         legalMoves.sort(this::moveComparator);
         if (hashMove != null) {
-            if (legalMoves.contains(hashMove)) {
-                legalMoves.remove(hashMove);
+            if (legalMoves.remove(hashMove)) {
                 legalMoves.add(0, hashMove);
             } else {
                 System.out.println("Hash Collision?");

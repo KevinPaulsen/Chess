@@ -2,6 +2,9 @@ package chess.model.chessai;
 
 import chess.Move;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
 
@@ -12,24 +15,36 @@ public class Evaluation {
 
     public static final char NO_LOSER = 'n';
 
-    private final Move move;
+    private final List<Move> moves;
     private final int evaluation;
     private final char loser;
     private final int depth;
 
     public Evaluation(int evaluation, int depth) {
-        this(null, evaluation, NO_LOSER, depth);
+        this(null, null, evaluation, NO_LOSER, depth);
     }
 
-    public Evaluation(Move move, Evaluation evaluation, int depth) {
-        this(move, evaluation.evaluation, evaluation.loser, depth);
+    public Evaluation(Move move, Evaluation evaluation) {
+        this(move, evaluation.moves, evaluation.evaluation, evaluation.loser, evaluation.depth + 1);
     }
 
     public Evaluation(Move move, int evaluation, char loser, int depth) {
-        this.move = move;
+        this(move, null, evaluation, loser, depth);
+    }
+
+    public Evaluation(Move currentMove, List<Move> moves, int evaluation, char loser, int depth) {
+        this.moves = moves == null ? new ArrayList<>() : new ArrayList<>(moves);
         this.evaluation = evaluation;
-        this.depth = depth;
         this.loser = loser;
+        this.depth = depth;
+
+        if (currentMove != null) {
+            this.moves.add(0, currentMove);
+        }
+
+        if (this.moves.size() < depth) {
+            throw new IllegalStateException("What is up?");
+        }
     }
 
     public static Evaluation min(Evaluation evaluation1, Evaluation evaluation2) {
@@ -85,7 +100,7 @@ public class Evaluation {
     }
 
     public Move getMove() {
-        return move;
+        return moves.size() > 0 ? moves.get(0) : null;
     }
 
     public double getEvaluation() {
@@ -102,10 +117,14 @@ public class Evaluation {
 
     @Override
     public String toString() {
-        return "{" +
-                String.format("%-6s ", move.toString()) +
-                String.format("%4d ", evaluation) +
-                String.format("%2d", depth) +
-                "}";
+        StringBuilder builder = new StringBuilder();
+        builder.append("Moves: ");
+        for (Move move : moves) {
+            builder.append(String.format("%s, ", move.toString()));
+        }
+        builder.append("\n");
+        builder.append(String.format("Evaluation: %d ", evaluation));
+        builder.append(String.format("Depth: %d", depth));
+        return builder.toString();
     }
 }

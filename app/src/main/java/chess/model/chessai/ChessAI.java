@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static chess.model.GameModel.IN_PROGRESS;
+
 /**
  * This class represents the computer player in a chess algorithm.
  * This class takes an evaluator, and uses the mini-max algorithm to
@@ -18,7 +20,7 @@ public class ChessAI {
      * The depth to search to
      */
     private static final int MIN_DEPTH = 1;
-    private static final long TIME_CUTOFF = 1_000;
+    private static final long TIME_CUTOFF = 500;
 
     /**
      * This table stores a position hash, and maps it to the found
@@ -37,6 +39,7 @@ public class ChessAI {
      */
     private final GameModel game;
 
+    private long startTime = 0;
 
     /**
      * Simple constructor that makes a new ChessAI with the given
@@ -60,11 +63,11 @@ public class ChessAI {
         boolean maximizingPlayer = game.getTurn() == GameModel.WHITE;
 
         long hash = game.getZobristHash();
-        long startTime = System.currentTimeMillis();
-        long endTime;
+        startTime = System.currentTimeMillis();
+        long endTime = startTime;
         int depth = 1;
 
-        Evaluation bestEvalToLatestDepth;
+        Evaluation bestEvalToLatestDepth = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
 
         do {
             Evaluation hashEval = transpositionTable.get(hash);
@@ -84,8 +87,14 @@ public class ChessAI {
             Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
             for (Move move : evaluator.getSortedMoves(game, hashEval == null ? null : hashEval.getMove())) {
                 bestEval = getEvaluation(maximizingPlayer, bestEval, alphaBeta, move, depth);
+                endTime = System.currentTimeMillis();
+                if (endTime - startTime > TIME_CUTOFF) break;
             }
+            if (endTime - startTime > TIME_CUTOFF) break;
 
+            if (bestEval == Evaluation.BEST_EVALUATION || bestEval == Evaluation.WORST_EVALUATION) {
+                break;
+            }
             transpositionTable.put(hash, bestEval);
             depth++;
             endTime = System.currentTimeMillis();
@@ -113,7 +122,7 @@ public class ChessAI {
             return hashEval;
         }
 
-        if (depth == 0) {
+        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
             return evaluator.evaluate(game);
         }
         boolean maximizingPlayer = game.getTurn() == 'w';
@@ -131,7 +140,10 @@ public class ChessAI {
             }
         }
 
-        transpositionTable.put(hash, bestEval);
+        if (bestEval != Evaluation.BEST_EVALUATION && bestEval != Evaluation.WORST_EVALUATION) {
+            transpositionTable.put(hash, bestEval);
+        }
+
         return bestEval;
     }
 
@@ -159,10 +171,10 @@ public class ChessAI {
 
         // Update the best move so far, and update the AlphaBeta objects.
         if (maximizingPlayer) {
-            bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval, depth));
+            bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval));
             alphaBeta.alphaMax(bestEval.getEvaluation());
         } else {
-            bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval, depth));
+            bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval));
             alphaBeta.betaMin(bestEval.getEvaluation());
         }
         return bestEval;
