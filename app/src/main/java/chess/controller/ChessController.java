@@ -1,6 +1,7 @@
 package chess.controller;
 
 import chess.ChessCoordinate;
+import chess.Move;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
@@ -67,9 +68,10 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
                     view.update(view.getGraphics());
                 }// */
                 futureAIMove = CompletableFuture.runAsync(() -> {
-                    if (gameModel.move(chessAI.getBestMove())) {
+                    if (gameModel.move(chessAI.getBestMove(gameModel))) {
                         view.slowUpdate(gameModel.getBoard().getPieceArray(), this, this, gameModel.getTurn());
                         view.pack();
+                        view.update(view.getGraphics());
                     }
                 }).exceptionally(ex -> {
                     ex.printStackTrace();

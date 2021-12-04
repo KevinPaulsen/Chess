@@ -4,6 +4,7 @@ import chess.ChessCoordinate;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class Zobrist {
@@ -16,6 +17,17 @@ public class Zobrist {
     private int addedEnPassantTarget = 0;
     private int addedCastlingData = 0;
     private long hashValue = 0;
+
+    public Zobrist(Zobrist zobrist) {
+        zobristHashTable = zobrist.zobristHashTable;
+        enPassantCoordTable = zobrist.enPassantCoordTable;
+        castlingHashTable = zobrist.castlingHashTable;
+        sideToMove = zobrist.sideToMove;
+
+        addedEnPassantTarget = zobrist.addedEnPassantTarget;
+        addedCastlingData = zobrist.addedCastlingData;
+        hashValue = zobrist.hashValue;
+    }
 
     public Zobrist() {
         Random random = new Random(0);

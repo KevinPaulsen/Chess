@@ -13,19 +13,21 @@ import java.util.List;
  * color, and where it is on the board.
  */
 public enum Piece {
-    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 0),
-    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 1),
-    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 2),
-    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 3),
-    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 4),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 5),
+    EMPTY(null, 'w', "", 0),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 6),
-    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 7),
-    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 8),
-    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 9),
-    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 10),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 11);
+    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1),
+    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 2),
+    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 3),
+    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 4),
+    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 5),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
+
+    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7),
+    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 8),
+    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 9),
+    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 10),
+    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 11),
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
 
     /**
      * The map of reachable coordinates

@@ -21,6 +21,14 @@ public class BoardModel {
 
     private final Zobrist zobrist;
 
+    public BoardModel(BoardModel boardModel, Zobrist zobrist) {
+        this.pieceArray = Arrays.stream(boardModel.pieceArray)
+                .toArray(Piece[]::new);
+        whiteKingCoord = boardModel.whiteKingCoord;
+        blackKingCoord = boardModel.blackKingCoord;
+        this.zobrist = zobrist;
+    }
+
     public BoardModel(String FEN, Zobrist zobrist) {
         this.pieceArray = new Piece[64];
         this.zobrist = zobrist;

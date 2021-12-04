@@ -186,9 +186,9 @@ public class Move {
         if (interactingPiece != null && interactingPieceEnd != null) {
             // Castle
             if (endingCoordinate.getFile() == 6) {
-                result.append("0-0");
+                result.append("O-O");
             } else {
-                result.append("0-0-0");
+                result.append("O-O-O");
             }
         } else {
             // Pawn

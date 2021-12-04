@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static chess.model.pieces.Piece.BLACK_ROOK;
-import static chess.model.pieces.Piece.WHITE_ROOK;
+import static chess.model.pieces.Piece.*;
 
 /**
  * This class represents the model for a standard chess game. This
@@ -95,6 +94,8 @@ public class GameModel {
      */
     private final List<FastMap> stateHistory;
 
+    private FastMap currentState;
+
     /**
      * The map that tracks the number of times each position has occurred.
      * This maps from hashCode -> number of times this hashCode has appeared.
@@ -115,6 +116,23 @@ public class GameModel {
      */
     public GameModel() {
         this("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+
+    public GameModel(GameModel gameModel) {
+        this.zobrist = new Zobrist(gameModel.zobrist);
+        this.board = new BoardModel(gameModel.board, zobrist);
+        this.moveHistory = new ArrayList<>(gameModel.moveHistory);
+        // TODO: CHECK IF THIS CAUSES DEEP COPY?
+        this.stateHistory = new ArrayList<>();
+        for(FastMap fastMap : gameModel.stateHistory)
+            stateHistory.add(new FastMap(fastMap.getMap()));
+        this.currentState = stateHistory.get(stateHistory.size() - 1);
+        this.positionTracker = new HashMap<>(gameModel.positionTracker);
+        this.moveGenerator = new MoveGenerator(this);
+        this.previousLegalMoves = new ArrayList<>();
+        for (List<Move> moves : gameModel.previousLegalMoves) {
+            previousLegalMoves.add(new ArrayList<>(moves));
+        }
     }
 
     public GameModel(String FEN) {
@@ -138,6 +156,7 @@ public class GameModel {
         boolean blackQueenCastle = fenSections[2].contains("q");
 
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn, enPassantTarget);
+        this.currentState = stateHistory.get(stateHistory.size() - 1);
         zobrist.slowZobrist(this);
 
         previousLegalMoves.add(this.moveGenerator.generateMoves());
@@ -158,7 +177,8 @@ public class GameModel {
             stateMap.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
         }
 
-        stateHistory.add(stateMap);
+        this.currentState = stateMap;
+        stateHistory.add(currentState);
     }
 
     /**
@@ -233,6 +253,7 @@ public class GameModel {
 
         zobrist.updateGameData(currentState);
 
+        this.currentState = currentState;
         stateHistory.add(currentState);
         checkGameOver();
     }
@@ -309,7 +330,8 @@ public class GameModel {
             moveHistory.remove(moveHistory.size() - 1);
 
             stateHistory.remove(stateHistory.size() - 1);
-            zobrist.updateGameData(stateHistory.get(stateHistory.size() - 1));
+            currentState = stateHistory.get(stateHistory.size() - 1);
+            zobrist.updateGameData(currentState);
             previousLegalMoves.remove(previousLegalMoves.size() - 1);
         }
     }
@@ -345,7 +367,7 @@ public class GameModel {
     }
 
     public FastMap getGameState() {
-        return stateHistory.get(stateHistory.size() - 1);
+        return currentState;
     }
 
     public char getGameOverStatus() {
@@ -429,5 +451,23 @@ public class GameModel {
 
     public long getZobristHash() {
         return zobrist.getHashValue();
+    }
+
+    public byte[] getRep() {
+        byte[] result = new byte[64 * 13 + 4 + 1 + 1];
+
+        for (int pieceIdx = 0; pieceIdx < 64; pieceIdx++) {
+            Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(pieceIdx));
+            int uid = piece == null ? EMPTY.getUniqueIdx() : piece.getUniqueIdx();
+            result[pieceIdx * 13 + uid] = 1;
+        }
+        result[64] = (byte) (canKingSideCastle(WHITE) ? 1 : 0);
+        result[65] = (byte) (canQueenSideCastle(WHITE) ? 1 : 0);
+        result[66] = (byte) (canKingSideCastle(BLACK) ? 1 : 0);
+        result[67] = (byte) (canQueenSideCastle(BLACK) ? 1 : 0);
+        result[68] = (byte) (getEnPassantTarget() == null ? 0 : getEnPassantTarget().getOndDimIndex());
+        result[69] = (byte) (getTurn() == WHITE ? 1 : 0);
+
+        return result;
     }
 }
