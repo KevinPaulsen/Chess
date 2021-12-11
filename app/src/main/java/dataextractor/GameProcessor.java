@@ -1,37 +1,46 @@
 package dataextractor;
 
+import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.GameModel;
+import chess.model.pieces.Piece;
+import chess.util.BigFastMap;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class GameProcessor {
 
     private static final GameModel GAME_MODEL = new GameModel();
+    private static final int MIN_MOVE = 3;
+    private static final int MAX_MOVE = 60;
 
     public static void processGame(String moves,
-                                   Map<Long, String> posToFEN,
-                                   Map<Long, int[]> posToWins) {
+                                   Map<BigFastMap, int[]> posToWins) {
         GameModel game = new GameModel(GAME_MODEL);
         String[] moveStrings = moves.split("\t");
         String winString = moveStrings[moveStrings.length - 1];
-        int winner = winString.length() == 1 ? Integer.parseInt(winString) : -1;
-        for (String stringMove : moveStrings) {
-            if (stringMove.length() == 1) {
-                break;
-            }
-            Move move = getMove(game, stringMove);
-            game.move(move);
-            if (posToFEN.containsKey(game.getZobristHash())) {
-                if (winner != -1) {
-                    posToWins.get(game.getZobristHash())[winner]++;
+
+        if (!winString.equals("1/1/2")) {
+            int winner = winString.length() == 1 ? Integer.parseInt(winString) : -1;
+            int moveNum = 0;
+            for (String stringMove : moveStrings) {
+                if (stringMove.length() == 1) {
+                    break;
                 }
-            } else {
-                posToFEN.put(game.getZobristHash(), Arrays.toString(game.getRep()));
-                int[] winData = winner == 0 ? new int[]{1, 0} : winner == 1 ? new int[]{0, 1} : new int[]{0, 0};
-                posToWins.put(game.getZobristHash(), winData);
+                Move move = getMove(game, stringMove);
+                if (game.move(move)) moveNum++;
+                if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
+                    BigFastMap key = game.getRep();
+                    if (posToWins.containsKey(key)) {
+                        if (winner != -1) {
+                            posToWins.get(key)[winner]++;
+                        }
+                    } else {
+                        int[] winData = winner == 0 ? new int[]{1, 0} : winner == 1 ? new int[]{0, 1} : new int[]{0, 0};
+                        posToWins.put(key, winData);
+                    }
+                }
             }
         }
     }
@@ -43,35 +52,39 @@ public class GameProcessor {
         char[] charRep = isCastleMove ? new char[0] : makeCharRep(stringMove);
 
         for (Move move : legalMoves) {
-            String guessMoveString = move.toString();
-
+            ChessCoordinate endCoord = move.getEndingCoordinate();
+            Piece movingPiece = move.getMovingPiece();
             if (isCastleMove) {
-                if (guessMoveString.equals(stringMove)) {
+                if (move.doesCastle()
+                        && ((endCoord.getFile() == 6 && stringMove.length() < 5)
+                        || (endCoord.getFile() == 2 && stringMove.length() >= 5))) {
                     return move;
                 } else {
                     continue;
                 }
-            } else if (charRep[0] == 0 && guessMoveString.equals(stringMove)) {
-                return move;
             }
+            boolean isPawnMove = movingPiece == Piece.WHITE_PAWN || movingPiece == Piece.BLACK_PAWN;
 
-            if (charRep[0] == move.getMovingPiece().getStringRep().toUpperCase().charAt(0)) {
-                if (charRep[3] != move.getEndingCoordinate().getCharFile()
-                        || charRep[4] - 48 != move.getEndingCoordinate().getCharRank()) {
-                    // TODO: Check that char rank is correct
+            if (isPawnMove || charRep[0] == movingPiece.getStringRep().toUpperCase().charAt(0)) {
+                if (charRep[3] != endCoord.getCharFile()
+                        || charRep[4] - 48 != endCoord.getCharRank()) {
                     continue;
                 }
 
                 if (charRep[1] != 0) {
+                    ChessCoordinate startingCoordinate = move.getStartingCoordinate();
                     if (charRep[1] >= 97) {
-                        if (charRep[1] != move.getStartingCoordinate().getCharFile()) {
+                        if (charRep[1] != startingCoordinate.getCharFile()) {
                             continue;
                         }
                     } else {
-                        if (charRep[1] - 48 != move.getStartingCoordinate().getCharRank()) {
+                        if (charRep[1] - 48 != startingCoordinate.getCharRank()) {
                             continue;
                         }
                     }
+                } else if (charRep[5] == '=' && move.getPromotedPiece().getStringRep().toUpperCase().charAt(0)
+                        != charRep[6]) {
+                    continue;
                 }
 
                 return move;
@@ -83,8 +96,9 @@ public class GameProcessor {
     private static char[] makeCharRep(String stringMove) {
         char[] charRep = new char[7];
 
-        int endIdx = stringMove.length() - (stringMove.contains("+") ? 2 : 1);
-        if (stringMove.contains("=")) {
+        char possibleCheckChar = stringMove.charAt(stringMove.length() - 1);
+        int endIdx = stringMove.length() - (possibleCheckChar == '+' || possibleCheckChar == '#' ? 2 : 1);
+        if (stringMove.charAt(endIdx - 1) == '=') {
             charRep[5] = '=';
             charRep[6] = stringMove.charAt(endIdx--);
             endIdx--;
@@ -100,7 +114,7 @@ public class GameProcessor {
                 endIdx--;
                 currentChar = stringMove.charAt(endIdx);
             }
-            if (currentChar >= 97) {
+            if (currentChar >= 97 || currentChar < 57) {
                 charRep[1] = currentChar;
                 endIdx--;
             }

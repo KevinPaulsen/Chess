@@ -1,22 +1,24 @@
 package dataextractor;
 
+import chess.util.BigFastMap;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 
 public class GameDataExtractor {
 
     private static final String FLATTENED_FILENAME = "data/flattened_data.txt";
-    private static final String PROCESSED_FILENAME = "data/processed_data.txt";
+    private static final String PROCESSED_FILENAME = "data/wins_to_big_rep.txt";
+    private static final int MIN_GAMES = 15;
+    private static final int TOTAL_GAMES = 3_817_909;
+    private static final int PRUNE_NUM = 250_000;
 
     private final PGNReader reader;
 
@@ -72,37 +74,40 @@ public class GameDataExtractor {
         closeWriter(writer);
     }
 
+    private static void pruneMap(Map<BigFastMap, int[]> posToWins, int timesPruned) {
+        int factor = TOTAL_GAMES / (PRUNE_NUM * timesPruned);
+        posToWins.entrySet().removeIf(bigFastMapEntry -> Arrays.stream(bigFastMapEntry.getValue()).sum() * factor < MIN_GAMES);
+    }
+
     private static void processData() {
-        Map<Long, String> posToFEN = new HashMap<>();
-        Map<Long, int[]> posToWins = new HashMap<>();
+        Map<BigFastMap, int[]> posToWins = new HashMap<>();
 
         FlattenedFileReader fileReader = new FlattenedFileReader(FLATTENED_FILENAME);
         int numPlayed = 0;
-        while (fileReader.hasNext() && numPlayed < 300_000) {
-            GameProcessor.processGame(fileReader.next(), posToFEN, posToWins);
+        while (fileReader.hasNext()) {
+            GameProcessor.processGame(fileReader.next(), posToWins);
             numPlayed++;
-            if (numPlayed % 1000 == 0) {
+            if (numPlayed % 10_000 == 0) {
                 System.out.printf("Successfully processed %d games\n", numPlayed);
+                if (numPlayed % PRUNE_NUM == 0) {
+                    System.out.println("Pruning...");
+                    int startSize = posToWins.size();
+                    pruneMap(posToWins, numPlayed / PRUNE_NUM);
+                    System.out.printf("Successfully pruned %d entries.\n", startSize - posToWins.size());
+                }
             }
         }
 
         System.out.println("Now beginning File writing...");
 
-        Writer writer = getFileWriter(PROCESSED_FILENAME);
-        List<String> printStrings = new ArrayList<>(1_834_333);
-        for (Map.Entry<Long, String> entry : posToFEN.entrySet()) {
-            int sum = Arrays.stream(posToWins.get(entry.getKey())).sum();
-            printStrings.add(sum + "\t" + Arrays.toString(posToWins.get(entry.getKey())) + "\t" + entry.getValue() + "\n");
-        }
-        System.out.println("Sorting...");
-        printStrings.sort(((o1, o2) -> {
-            int int1 = Integer.parseInt(o1.split("\t")[0]);
-            int int2 = Integer.parseInt(o2.split("\t")[0]);
-            return Integer.compare(int2, int1);
-        }));
         System.out.println("Writing...");
-        for (String printString : printStrings) {
-            writeTo(writer, printString);
+        Writer writer = getFileWriter(PROCESSED_FILENAME);
+        for (Map.Entry<BigFastMap, int[]> entry : posToWins.entrySet()) {
+            if (Arrays.stream(entry.getValue()).sum() >= MIN_GAMES) {
+                writeTo(writer, Arrays.toString(entry.getValue()) + "\t");
+                writeTo(writer, entry.getKey().toShortString());
+                writeTo(writer, "\n");
+            }
         }
         closeWriter(writer);
     }

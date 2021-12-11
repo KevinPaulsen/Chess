@@ -3,6 +3,7 @@ package chess.model;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.pieces.Piece;
+import chess.util.BigFastMap;
 import chess.util.FastMap;
 
 import java.util.ArrayList;
@@ -337,13 +338,11 @@ public class GameModel {
     }
 
     public boolean canKingSideCastle(char color) {
-        FastMap currentState = getGameState();
         return color == WHITE ? currentState.isMarked(0) : currentState.isMarked(2);
     }
 
     public boolean canQueenSideCastle(char color) {
-        FastMap currentState = getGameState();
-        return color == WHITE ? currentState.isMarked(1) : currentState.isMarked(2);
+        return color == WHITE ? currentState.isMarked(1) : currentState.isMarked(3);
     }
 
     public ChessCoordinate getEnPassantTarget() {
@@ -453,20 +452,28 @@ public class GameModel {
         return zobrist.getHashValue();
     }
 
-    public byte[] getRep() {
-        byte[] result = new byte[64 * 13 + 4 + 1 + 1];
+    public BigFastMap getRep() {
+        BigFastMap result = new BigFastMap(0, 840);
 
+        int bitIdx = 0;
         for (int pieceIdx = 0; pieceIdx < 64; pieceIdx++) {
             Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(pieceIdx));
             int uid = piece == null ? EMPTY.getUniqueIdx() : piece.getUniqueIdx();
-            result[pieceIdx * 13 + uid] = 1;
+            result.flipBit(bitIdx + uid);
+            bitIdx += 13;
         }
-        result[64] = (byte) (canKingSideCastle(WHITE) ? 1 : 0);
-        result[65] = (byte) (canQueenSideCastle(WHITE) ? 1 : 0);
-        result[66] = (byte) (canKingSideCastle(BLACK) ? 1 : 0);
-        result[67] = (byte) (canQueenSideCastle(BLACK) ? 1 : 0);
-        result[68] = (byte) (getEnPassantTarget() == null ? 0 : getEnPassantTarget().getOndDimIndex());
-        result[69] = (byte) (getTurn() == WHITE ? 1 : 0);
+        if (canKingSideCastle(WHITE)) result.flipBit(bitIdx);
+        bitIdx++;
+        if (canQueenSideCastle(WHITE)) result.flipBit(bitIdx);
+        bitIdx++;
+        if (canKingSideCastle(BLACK)) result.flipBit(bitIdx);
+        bitIdx++;
+        if (canQueenSideCastle(BLACK)) result.flipBit(bitIdx);
+        bitIdx++;
+
+        if (getEnPassantTarget() != null) result.flipBit(bitIdx + getEnPassantTarget().getOndDimIndex());
+        bitIdx += 64;
+        if (getTurn() == WHITE) result.flipBit(bitIdx);
 
         return result;
     }

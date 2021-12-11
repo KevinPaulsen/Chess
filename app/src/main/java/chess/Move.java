@@ -130,6 +130,10 @@ public class Move {
         return promotedPiece != null;
     }
 
+    public boolean doesCastle() {
+        return interactingPiece != null && interactingPieceEnd != null;
+    }
+
     /**
      * @return the starting coordinate of the moving piece
      */
@@ -183,7 +187,7 @@ public class Move {
     public String toString() {
         StringBuilder result = new StringBuilder();
 
-        if (interactingPiece != null && interactingPieceEnd != null) {
+        if (doesCastle()) {
             // Castle
             if (endingCoordinate.getFile() == 6) {
                 result.append("O-O");

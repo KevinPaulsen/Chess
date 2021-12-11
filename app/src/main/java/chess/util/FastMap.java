@@ -76,6 +76,11 @@ public class FastMap {
     }
 
     @Override
+    public String toString() {
+        return Long.toBinaryString(map);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FastMap)) return false;
