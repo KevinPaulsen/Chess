@@ -63,36 +63,15 @@ public class PositionEvaluator implements Evaluator {
     }
 
     private double readTable(Piece piece, ChessCoordinate coordinate) {
-        int[] table;
-
-        switch (piece) {
-            case WHITE_PAWN:
-            case BLACK_PAWN:
-                table = PAWN_VALUE_MAP;
-                break;
-            case WHITE_KNIGHT:
-            case BLACK_KNIGHT:
-                table = KNIGHT_VALUE_MAP;
-                break;
-            case WHITE_BISHOP:
-            case BLACK_BISHOP:
-                table = BISHOP_VALUE_MAP;
-                break;
-            case WHITE_ROOK:
-            case BLACK_ROOK:
-                table = ROOK_VALUE_MAP;
-                break;
-            case WHITE_QUEEN:
-            case BLACK_QUEEN:
-                table = QUEEN_VALUE_MAP;
-                break;
-            case WHITE_KING:
-            case BLACK_KING:
-                table = KING_VALUE_MAP;
-                break;
-            default:
-                throw new IllegalStateException("Piece is not of expected type");
-        }
+        int[] table = switch (piece) {
+            case WHITE_PAWN, BLACK_PAWN -> PAWN_VALUE_MAP;
+            case WHITE_KNIGHT, BLACK_KNIGHT -> KNIGHT_VALUE_MAP;
+            case WHITE_BISHOP, BLACK_BISHOP -> BISHOP_VALUE_MAP;
+            case WHITE_ROOK, BLACK_ROOK -> ROOK_VALUE_MAP;
+            case WHITE_QUEEN, BLACK_QUEEN -> QUEEN_VALUE_MAP;
+            case WHITE_KING, BLACK_KING -> KING_VALUE_MAP;
+            default -> throw new IllegalStateException("Piece is not of expected type");
+        };
 
         int index = piece.getColor() == 'w' ? coordinate.getOndDimIndex() :
                 (8 * (7 - coordinate.getRank()) + coordinate.getFile());
@@ -138,22 +117,10 @@ public class PositionEvaluator implements Evaluator {
 
         if (move.doesPromote()) {
             switch (move.getPromotedPiece()) {
-                case WHITE_QUEEN:
-                case BLACK_QUEEN:
-                    score += QUEEN_SCORE;
-                    break;
-                case WHITE_ROOK:
-                case BLACK_ROOK:
-                    score += ROOK_SCORE;
-                    break;
-                case WHITE_BISHOP:
-                case BLACK_BISHOP:
-                    score += BISHOP_SCORE;
-                    break;
-                case WHITE_KNIGHT:
-                case BLACK_KNIGHT:
-                    score += KNIGHT_SCORE;
-                    break;
+                case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
+                case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
+                case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
+                case WHITE_KNIGHT, BLACK_KNIGHT -> score += KNIGHT_SCORE;
             }
         } else {
             if (moveGenerator.getOpponentAttackMap().isMarked(move.getEndingCoordinate().getOndDimIndex())) {

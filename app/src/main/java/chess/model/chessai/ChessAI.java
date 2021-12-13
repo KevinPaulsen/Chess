@@ -25,7 +25,7 @@ public class ChessAI {
      * The depth to search to
      */
     private static final int MIN_DEPTH = 1;
-    private static final long TIME_CUTOFF = 500;
+    private static final long TIME_CUTOFF = 5_00;
 
     /**
      * This table stores a position hash, and maps it to the found
@@ -42,7 +42,7 @@ public class ChessAI {
     /**
      * The game this AI is playing in.
      */
-    private GameModel game;
+    private final GameModel game;
 
     /**
      * Simple constructor that makes a new ChessAI with the given
@@ -62,11 +62,11 @@ public class ChessAI {
      *
      * @return the best move to DEPTH, according to the evaluator.
      */
-    public Move getBestMove(GameModel game1) {
-        this.game = new GameModel(game1);
-        boolean maximizingPlayer = game.getTurn() == GameModel.WHITE;
+    public Move getBestMove() {
+        GameModel currentGame = new GameModel(this.game);
+        boolean maximizingPlayer = currentGame.getTurn() == GameModel.WHITE;
 
-        long hash = game.getZobristHash();
+        long hash = currentGame.getZobristWithTimesMoved();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
         int depth = 1;
@@ -91,8 +91,8 @@ public class ChessAI {
             CompletableFuture<Evaluation> futureEvaluation = CompletableFuture.supplyAsync(() -> {
                 AlphaBeta alphaBeta = new AlphaBeta();
                 Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
-                for (Move move : evaluator.getSortedMoves(game, hashEval == null ? null : hashEval.getMove())) {
-                    bestEval = getEvaluation(maximizingPlayer, bestEval, alphaBeta, move, hash, finalDepth);
+                for (Move move : evaluator.getSortedMoves(currentGame, hashEval == null ? null : hashEval.getMove())) {
+                    bestEval = getEvaluation(currentGame, maximizingPlayer, bestEval, alphaBeta, move, hash, finalDepth);
                 }
                 return bestEval;
             });
@@ -105,10 +105,13 @@ public class ChessAI {
                 e.printStackTrace();
                 continue;
             } catch (TimeoutException e) {
-                System.out.println("Time OUT");
+                futureEvaluation.cancel(true);
                 break;
             }
 
+            if (bestEval.getMove().getMovingPiece().getColor() != game.getTurn()) {
+                System.out.println("Something is wrong");
+            }
             transpositionTable.put(hash, bestEval);
             depth++;
             endTime = System.currentTimeMillis();
@@ -128,23 +131,26 @@ public class ChessAI {
      * @param depth the depth to search to, each depth is 1 ply.
      * @return the Evaluation of the current position assuming optimal play.
      */
-    private Evaluation miniMax(AlphaBeta alphaBeta, int depth) {
+    private Evaluation miniMax(GameModel game, AlphaBeta alphaBeta, int depth) {
+        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
+            return evaluator.evaluate(game);
+        }
 
-        long hash = game.getZobristHash();
+        long hash = game.getZobristWithTimesMoved();
         Evaluation hashEval = transpositionTable.get(hash);
+        if (hashEval != null && hashEval.getMove().getMovingPiece().getColor() != game.getTurn()) {
+            throw new IllegalStateException();
+        }
         if (hashEval != null && hashEval.getDepth() >= depth) {
             return hashEval;
         }
 
-        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
-            return evaluator.evaluate(game);
-        }
         boolean maximizingPlayer = game.getTurn() == 'w';
 
         Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
         List<Move> sortedMoves = evaluator.getSortedMoves(game, hashEval == null ? null : hashEval.getMove());
         for (Move move : sortedMoves) {
-            bestEval = getEvaluation(maximizingPlayer, bestEval, alphaBeta, move, hash, depth);
+            bestEval = getEvaluation(game, maximizingPlayer, bestEval, alphaBeta, move, hash, depth);
             if (!sortedMoves.contains(bestEval.getMove())) {
                 throw new IllegalStateException("what is wrong?");
             }
@@ -168,13 +174,13 @@ public class ChessAI {
      * @param depth the depth to search to.
      * @return the Evaluation of the given move.
      */
-    private Evaluation getEvaluation(boolean maximizingPlayer, Evaluation bestEval, AlphaBeta alphaBeta,
+    private Evaluation getEvaluation(GameModel game, boolean maximizingPlayer, Evaluation bestEval, AlphaBeta alphaBeta,
                                      Move move, long hash, int depth) {
         // Make the given move.
         game.move(move);
 
         // Evaluate the position
-        Evaluation moveEval = miniMax(new AlphaBeta(alphaBeta), depth - 1);
+        Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
 
         // Undo the move
         game.undoMove(move);
@@ -189,9 +195,12 @@ public class ChessAI {
         }
 
         if (bestEval != Evaluation.BEST_EVALUATION && bestEval != Evaluation.WORST_EVALUATION) {
-            Evaluation eval = transpositionTable.get(hash);
-            if (eval != null && moveEval.getDepth() >= eval.getDepth()) {
-                transpositionTable.put(hash, moveEval);
+            Evaluation cached_move = transpositionTable.get(hash);
+            if (cached_move != null && bestEval.getDepth() > cached_move.getDepth()) {
+                if (bestEval.getMove().getMovingPiece().getColor() != game.getTurn()) {
+                    System.out.println("Something is wrong");
+                }
+                transpositionTable.put(hash, bestEval);
             }
         }
 

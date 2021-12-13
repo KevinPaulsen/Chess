@@ -4,37 +4,34 @@ import chess.ChessCoordinate;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class Zobrist {
 
-    private final long[][] zobristHashTable;
-    private final long[] enPassantCoordTable;
-    private final long[] castlingHashTable;
-    private final long sideToMove;
+    private static final Random RANDOM = new Random(0);
 
-    private int addedEnPassantTarget = 0;
-    private int addedCastlingData = 0;
-    private long hashValue = 0;
+    private static final long[][] zobristHashTable = makeHashTable();
+    private static final long[] enPassantCoordTable = makeTable(9);
+    private static final long[] castlingHashTable = makeTable(16);
+    private static final long[] numTimesReachedTable = makeTable(4);
+    private static final long sideToMove = generateHash();
+
+    private int addedEnPassantTarget;
+    private int addedCastlingData;
+    private long hashValue;
 
     public Zobrist(Zobrist zobrist) {
-        zobristHashTable = zobrist.zobristHashTable;
-        enPassantCoordTable = zobrist.enPassantCoordTable;
-        castlingHashTable = zobrist.castlingHashTable;
-        sideToMove = zobrist.sideToMove;
-
-        addedEnPassantTarget = zobrist.addedEnPassantTarget;
-        addedCastlingData = zobrist.addedCastlingData;
-        hashValue = zobrist.hashValue;
+        this(zobrist.addedEnPassantTarget, zobrist.addedCastlingData, zobrist.hashValue);
     }
 
     public Zobrist() {
-        Random random = new Random(0);
-        this.zobristHashTable = makeHashTable(random);
-        this.enPassantCoordTable = enPassantCoordTable(random);
-        this.castlingHashTable = makeCastlingTable(random);
-        this.sideToMove = generateHash(random);
+        this(0, 0, 0);
+    }
+
+    public Zobrist(int addedEnPassantTarget, int addedCastlingData, long hashValue) {
+        this.addedEnPassantTarget = addedEnPassantTarget;
+        this.addedCastlingData = addedCastlingData;
+        this.hashValue = hashValue;
     }
 
     public void slowZobrist(GameModel game) {
@@ -63,52 +60,6 @@ public class Zobrist {
         hashValue ^= zobristHashTable[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
     }
 
-    private static long[][] makeHashTable(Random random) {
-        long[][] result = new long[64][13];
-
-        for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
-            for (int pieceIdx = 0; pieceIdx < 13; pieceIdx++) {
-                result[coordIdx][pieceIdx] = generateHash(random);
-            }
-        }
-
-        return result;
-    }
-
-    private static long[] enPassantCoordTable(Random random) {
-        long[] result = new long[9];
-
-        for (int coordIdx = 0; coordIdx < 9; coordIdx++) {
-            result[coordIdx] = generateHash(random);
-        }
-
-        return result;
-    }
-
-    private static long[] makeCastlingTable(Random random) {
-        long[] result = new long[16];
-
-        for (int coordIdx = 0; coordIdx < 16; coordIdx++) {
-            result[coordIdx] = generateHash(random);
-        }
-
-        return result;
-    }
-
-    private static long generateHash(Random random) {
-        long hash = 0;
-        for (int bit = 0; bit < 64; bit++) {
-            if (random.nextBoolean()) {
-                hash |= 1L << bit;
-            }
-        }
-        return hash;
-    }
-
-    public long getHashValue() {
-        return hashValue;
-    }
-
     public void updateGameData(FastMap newState) {
         int currentCastlingData = (int) (newState.getMap() & 0b1111L);
 
@@ -126,7 +77,50 @@ public class Zobrist {
             addedEnPassantTarget = currentEnPassantTarget;
             hashValue ^= enPassantCoordTable[addedEnPassantTarget];
         }
+    }
 
-        hashValue ^= sideToMove;
+    public long getHashValue() {
+        return hashValue;
+    }
+
+    public long getHashValueWithTimesMoved(int numTimesReached) {
+        if (3 < numTimesReached || numTimesReached < 0) {
+            throw new IllegalStateException("Times moved must be between 0 and 3 (inclusive). " +
+                    "Passed in: " + numTimesReached);
+        }
+
+        return hashValue ^ numTimesReachedTable[numTimesReached];
+    }
+
+    private static long[][] makeHashTable() {
+        long[][] result = new long[64][13];
+
+        for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
+            for (int pieceIdx = 0; pieceIdx < 13; pieceIdx++) {
+                result[coordIdx][pieceIdx] = generateHash();
+            }
+        }
+
+        return result;
+    }
+
+    private static long[] makeTable(int size) {
+        long[] result = new long[size];
+
+        for (int coordIdx = 0; coordIdx < size; coordIdx++) {
+            result[coordIdx] = generateHash();
+        }
+
+        return result;
+    }
+
+    private static long generateHash() {
+        long hash = 0;
+        for (int bit = 0; bit < 64; bit++) {
+            if (RANDOM.nextBoolean()) {
+                hash |= 1L << bit;
+            }
+        }
+        return hash;
     }
 }

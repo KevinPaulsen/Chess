@@ -5,6 +5,7 @@ import chess.Move;
 import chess.model.pieces.Piece;
 import chess.util.BigFastMap;
 import chess.util.FastMap;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,7 +124,6 @@ public class GameModel {
         this.zobrist = new Zobrist(gameModel.zobrist);
         this.board = new BoardModel(gameModel.board, zobrist);
         this.moveHistory = new ArrayList<>(gameModel.moveHistory);
-        // TODO: CHECK IF THIS CAUSES DEEP COPY?
         this.stateHistory = new ArrayList<>();
         for(FastMap fastMap : gameModel.stateHistory)
             stateHistory.add(new FastMap(fastMap.getMap()));
@@ -235,7 +235,6 @@ public class GameModel {
             board.move(move);
             moveHistory.add(move);
             makeState(board.getWhiteKingCoord(), board.getBlackKingCoord(), move);
-
             positionTracker.merge(zobrist.getHashValue(), 1, Integer::sum);
 
             didMove = true;
@@ -450,6 +449,14 @@ public class GameModel {
 
     public long getZobristHash() {
         return zobrist.getHashValue();
+    }
+
+    public long getZobristWithTimesMoved() {
+        return zobrist.getHashValueWithTimesMoved(getNumTimesReached());
+    }
+
+    private int getNumTimesReached() {
+        return positionTracker.get(getZobristHash());
     }
 
     public BigFastMap getRep() {
