@@ -175,6 +175,17 @@ public class GameModelTest {
         Assert.assertEquals("Wrong number of nodes found.", 25_685_493, numPositions);
     }
 
+    @Test
+    public void testHashDiffersByMove() {
+        GameModel testGame1 = new GameModel("r6k/5prp/3R4/4B3/8/8/7P/7K w q - 2 2");
+        GameModel testGame2 = new GameModel("r6k/5prp/3R4/4B3/8/8/7P/7K b q - 3 2");
+
+        Assert.assertNotEquals("Same position but different moves evaluated to same hash.",
+                testGame1.getZobristHash(), testGame2.getZobristHash());
+        Assert.assertNotEquals("Same position but different moves evaluated to same hash.",
+                testGame1.getZobristWithTimesMoved(), testGame2.getZobristWithTimesMoved());
+    }
+
     /*@SuppressWarnings("all")
     @Test
     public void privateTest() {

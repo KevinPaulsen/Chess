@@ -6,6 +6,8 @@ import chess.util.FastMap;
 
 import java.util.Random;
 
+import static chess.model.GameModel.WHITE;
+
 public class Zobrist {
 
     private static final Random RANDOM = new Random(0);
@@ -14,23 +16,25 @@ public class Zobrist {
     private static final long[] enPassantCoordTable = makeTable(9);
     private static final long[] castlingHashTable = makeTable(16);
     private static final long[] numTimesReachedTable = makeTable(4);
-    private static final long sideToMove = generateHash();
+    private static final long[] sideToMove = makeTable(2);
 
     private int addedEnPassantTarget;
     private int addedCastlingData;
+    private int addedSideToMove;
     private long hashValue;
 
     public Zobrist(Zobrist zobrist) {
-        this(zobrist.addedEnPassantTarget, zobrist.addedCastlingData, zobrist.hashValue);
+        this(zobrist.addedEnPassantTarget, zobrist.addedCastlingData, zobrist.addedSideToMove, zobrist.hashValue);
     }
 
     public Zobrist() {
-        this(0, 0, 0);
+        this(0, 0, 0, 0);
     }
 
-    public Zobrist(int addedEnPassantTarget, int addedCastlingData, long hashValue) {
+    public Zobrist(int addedEnPassantTarget, int addedCastlingData, int addedSideToMove, long hashValue) {
         this.addedEnPassantTarget = addedEnPassantTarget;
         this.addedCastlingData = addedCastlingData;
+        this.addedSideToMove = addedSideToMove;
         this.hashValue = hashValue;
     }
 
@@ -49,7 +53,8 @@ public class Zobrist {
         hashValue ^= enPassantCoordTable[addedEnPassantTarget];
         addedCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
         hashValue ^= castlingHashTable[addedCastlingData];
-        hashValue ^= game.getTurn() == GameModel.WHITE ? sideToMove : 0;
+        addedSideToMove = game.getTurn() == WHITE ? 0 : 1;
+        hashValue ^= sideToMove[addedSideToMove];
     }
 
     public void addPiece(Piece piece, ChessCoordinate coordinate) {
@@ -76,6 +81,14 @@ public class Zobrist {
             hashValue ^= enPassantCoordTable[addedEnPassantTarget];
             addedEnPassantTarget = currentEnPassantTarget;
             hashValue ^= enPassantCoordTable[addedEnPassantTarget];
+        }
+
+        int currentSideToMove = newState.isMarked(4) ? 0 : 1;
+
+        if (addedSideToMove != currentSideToMove) {
+            hashValue ^= sideToMove[addedSideToMove];
+            addedSideToMove = currentSideToMove;
+            hashValue ^= sideToMove[addedSideToMove];
         }
     }
 

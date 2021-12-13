@@ -115,6 +115,7 @@ public class ChessAI {
             bestEvalToLatestDepth = bestEval;
         } while (useIterativeDeepening && (endTime - startTime < TIME_CUTOFF || currentDepth <= MIN_DEPTH));
 
+        System.out.println(bestEvalToLatestDepth.toString());
         return bestEvalToLatestDepth.getMove();
     }
 
@@ -150,6 +151,20 @@ public class ChessAI {
             }
         }
 
+        if (bestEval != Evaluation.BEST_EVALUATION && bestEval != Evaluation.WORST_EVALUATION) {
+            Evaluation cached_move = transpositionTable.get(hash);
+            if (cached_move == null || bestEval.getDepth() > cached_move.getDepth()) {
+                if (bestEval.getMove().getMovingPiece().getColor() != game.getTurn()) {
+                    System.out.println("Move is not allowed to be here");
+                }
+                if ((hash == -6465909673666080328L && bestEval.getMove().toString().equals("f6"))
+                        || (hash == -522303699861701304L && bestEval.getMove().toString().equals("Kg8"))) {
+                    System.out.println("Found one.");
+                }
+                transpositionTable.put(hash, bestEval);
+            }
+        }
+
         return bestEval;
     }
 
@@ -182,13 +197,6 @@ public class ChessAI {
         } else {
             bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval));
             alphaBeta.betaMin(bestEval.getEvaluation());
-        }
-
-        if (bestEval != Evaluation.BEST_EVALUATION && bestEval != Evaluation.WORST_EVALUATION) {
-            Evaluation cached_move = transpositionTable.get(hash);
-            if (cached_move != null && bestEval.getDepth() > cached_move.getDepth()) {
-                transpositionTable.put(hash, bestEval);
-            }
         }
 
         return bestEval;

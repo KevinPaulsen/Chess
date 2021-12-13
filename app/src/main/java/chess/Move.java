@@ -76,7 +76,7 @@ public class Move {
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece, interactingPiece == null ? null : interactingPieceStart,
+        this(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
                 interactingPieceEnd, interactingPiece, null);
     }
 
@@ -115,7 +115,7 @@ public class Move {
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
-        this.interactingPieceStart = interactingPieceStart;
+        this.interactingPieceStart = interactingPiece == null ? null : interactingPieceStart;
         this.interactingPieceEnd = interactingPieceEnd;
         this.interactingPiece = interactingPiece;
         this.promotedPiece = promotedPiece;

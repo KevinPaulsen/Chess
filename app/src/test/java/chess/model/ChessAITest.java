@@ -90,4 +90,26 @@ public class ChessAITest {
             testGame.move(actualMove);
         }
     }
+
+    @Test
+    public void testFindForcedDrawIn4() {
+        GameModel testGame = new GameModel("7b/2q1p1PR/3r1pp1/6k1/3p4/3p1KPp/2n3pP/2r2bB1 w - - 1 1");
+        ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
+
+        List<Move> expectedMoves = new ArrayList<>();
+        expectedMoves.add(new Move(H7, H5, WHITE_ROOK));
+        expectedMoves.add(new Move(G6, H5, BLACK_PAWN, H5, null, WHITE_ROOK));
+        expectedMoves.add(new Move(G7, G8, WHITE_PAWN, WHITE_QUEEN));
+        expectedMoves.add(new Move(G5, F5, BLACK_KING));
+        expectedMoves.add(new Move(G8, G4, WHITE_QUEEN));
+        expectedMoves.add(new Move(H5, G4, BLACK_PAWN, G4, null, WHITE_QUEEN));
+        expectedMoves.add(new Move(F3, F2, WHITE_KING));
+
+        int startDepth = 8;
+        for (Move expectedMove : expectedMoves) {
+            Move actualMove = testAI.getBestMove(false, startDepth--);
+            Assert.assertEquals("Forced draw in 3 was not found.", expectedMove, actualMove);
+            testGame.move(actualMove);
+        }
+    }
 }
