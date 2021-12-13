@@ -115,7 +115,6 @@ public class ChessAI {
             bestEvalToLatestDepth = bestEval;
         } while (useIterativeDeepening && (endTime - startTime < TIME_CUTOFF || currentDepth <= MIN_DEPTH));
 
-        System.out.println(bestEvalToLatestDepth);
         return bestEvalToLatestDepth.getMove();
     }
 

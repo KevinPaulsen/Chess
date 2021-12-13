@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
 
 /**
@@ -147,7 +148,7 @@ public class GameModel {
         this.moveGenerator = new MoveGenerator(this);
         this.previousLegalMoves = new ArrayList<>();
 
-        ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ? BoardModel
+        ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ? ChessCoordinate
                 .getChessCoordinate(fenSections[3].charAt(0), Integer.parseInt(fenSections[3].substring(1)))
                 : null;
         char turn = fenSections[1].charAt(0);
@@ -286,7 +287,7 @@ public class GameModel {
                 - lastMove.getEndingCoordinate().getRank()) == 2) {
 
             int rank = (int) (0.6 * (lastMove.getStartingCoordinate().getRank() - 3.5) + 3.5);
-            enPassantTarget = BoardModel.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
+            enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
         }
 
         state.clearMask(EN_PASSANT_MASK);
@@ -297,23 +298,19 @@ public class GameModel {
 
     private void checkCastling(FastMap state, ChessCoordinate whiteKingCoord, ChessCoordinate blackKingCoord) {
         if (canKingSideCastle(WHITE)
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 0)) == WHITE_ROOK
-                && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
+                && !(board.getPieceOn(H1) == WHITE_ROOK && whiteKingCoord.equals(E1))) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
-        if (canKingSideCastle(BLACK)
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(7, 7)) == BLACK_ROOK
-                && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
-            state.flip(BLACK_KING_SIDE_CASTLE_MASK);
-        }
         if (canQueenSideCastle(WHITE)
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 0)) == WHITE_ROOK
-                && whiteKingCoord.equals(BoardModel.getChessCoordinate(4, 0)))) {
+                && !(board.getPieceOn(A1) == WHITE_ROOK && whiteKingCoord.equals(E1))) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
+        if (canKingSideCastle(BLACK)
+                && !(board.getPieceOn(H8) == BLACK_ROOK && blackKingCoord.equals(E8))) {
+            state.flip(BLACK_KING_SIDE_CASTLE_MASK);
+        }
         if (canQueenSideCastle(BLACK)
-                && !(board.getPieceOn(BoardModel.getChessCoordinate(0, 7)) == BLACK_ROOK
-                && blackKingCoord.equals(BoardModel.getChessCoordinate(4, 7)))) {
+                && !(board.getPieceOn(A8) == BLACK_ROOK && blackKingCoord.equals(E8))) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
     }
@@ -348,7 +345,7 @@ public class GameModel {
         long stateRep = getGameState().getMap();
         stateRep = stateRep >> 7;
 
-        return stateRep == 0 ? null : BoardModel.getChessCoordinate((int) stateRep);
+        return stateRep == 0 ? null : ChessCoordinate.getChessCoordinate((int) stateRep);
     }
 
     public List<Move> getLegalMoves() {
@@ -396,7 +393,7 @@ public class GameModel {
         int numEmpty = 0;
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
-                ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);
+                ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(file, rank);
                 Piece piece = board.getPieceOn(coordinate);
 
                 if (piece == null) {
@@ -464,7 +461,7 @@ public class GameModel {
 
         int bitIdx = 0;
         for (int pieceIdx = 0; pieceIdx < 64; pieceIdx++) {
-            Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(pieceIdx));
+            Piece piece = board.getPieceOn(ChessCoordinate.getChessCoordinate(pieceIdx));
             int uid = piece == null ? EMPTY.getUniqueIdx() : piece.getUniqueIdx();
             result.flipBit(bitIdx + uid);
             bitIdx += 13;

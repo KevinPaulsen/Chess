@@ -41,7 +41,7 @@ public class Direction {
             int file = coordinate.getFile() + run;
             int rank = coordinate.getRank() + rise;
             if (ChessCoordinate.isInBounds(file, rank)) {
-                next = BoardModel.getChessCoordinate(file, rank);
+                next = ChessCoordinate.getChessCoordinate(file, rank);
             }
         }
         return next;

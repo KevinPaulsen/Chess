@@ -73,7 +73,7 @@ public class ChessView extends JFrame {
         int squareHeight = boardView.getHeight() / 8;
         int xCoordinate = (getXOnWindow(component) + mouseX) / (squareWidth);
         int yCoordinate = 7 - (getYOnWindow(component) + mouseY) / squareHeight;
-        return BoardModel.getChessCoordinate(xCoordinate, yCoordinate);
+        return ChessCoordinate.getChessCoordinate(xCoordinate, yCoordinate);
     }
 
     private static int getYOnWindow(Component component) {

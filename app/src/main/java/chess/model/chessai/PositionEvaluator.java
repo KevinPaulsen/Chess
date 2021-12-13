@@ -44,7 +44,7 @@ public class PositionEvaluator implements Evaluator {
 
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
-                ChessCoordinate coordinate = BoardModel.getChessCoordinate(file, rank);
+                ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(file, rank);
                 Piece piece = game.getBoard().getPieceOn(coordinate);
 
                 if (piece != null) {

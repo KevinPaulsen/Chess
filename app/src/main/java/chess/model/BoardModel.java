@@ -11,8 +11,6 @@ import static chess.model.pieces.Piece.*;
 
 public class BoardModel {
 
-    private static final ChessCoordinate[] CHESS_COORDINATES = createChessCoordinates();
-
     // The array that holds all the pieces. They are stored in the format [file][rank]
     private final Piece[] pieceArray;
 
@@ -44,101 +42,25 @@ public class BoardModel {
             }
 
             int translatedIdx = pieceIdx + (7 - 2 * (pieceIdx % 8));
-            switch (c) {
-                case 'K':
-                    pieceArray[translatedIdx] = WHITE_KING;
-                    break;
-                case 'Q':
-                    pieceArray[translatedIdx] = WHITE_QUEEN;
-                    break;
-                case 'R':
-                    pieceArray[translatedIdx] = WHITE_ROOK;
-                    break;
-                case 'B':
-                    pieceArray[translatedIdx] = WHITE_BISHOP;
-                    break;
-                case 'N':
-                    pieceArray[translatedIdx] = WHITE_KNIGHT;
-                    break;
-                case 'P':
-                    pieceArray[translatedIdx] = WHITE_PAWN;
-                    break;
-                case 'k':
-                    pieceArray[translatedIdx] = BLACK_KING;
-                    break;
-                case 'q':
-                    pieceArray[translatedIdx] = BLACK_QUEEN;
-                    break;
-                case 'r':
-                    pieceArray[translatedIdx] = BLACK_ROOK;
-                    break;
-                case 'b':
-                    pieceArray[translatedIdx] = BLACK_BISHOP;
-                    break;
-                case 'n':
-                    pieceArray[translatedIdx] = BLACK_KNIGHT;
-                    break;
-                case 'p':
-                    pieceArray[translatedIdx] = BLACK_PAWN;
-                    break;
-            }
+            pieceArray[translatedIdx] = switch (c) {
+                case 'K' -> WHITE_KING;
+                case 'Q' -> WHITE_QUEEN;
+                case 'R' -> WHITE_ROOK;
+                case 'B' -> WHITE_BISHOP;
+                case 'N' -> WHITE_KNIGHT;
+                case 'P' -> WHITE_PAWN;
+                case 'k' -> BLACK_KING;
+                case 'q' -> BLACK_QUEEN;
+                case 'r' -> BLACK_ROOK;
+                case 'b' -> BLACK_BISHOP;
+                case 'n' -> BLACK_KNIGHT;
+                case 'p' -> BLACK_PAWN;
+                default -> throw new IllegalStateException("Unexpected value: " + c);
+            };
             pieceIdx--;
         }
 
         initPieces();
-    }
-
-    /**
-     * Gets the chess coordinate at the given file and rank. If the requested
-     * coordinate does not exist, null is returned. This should be the exact
-     * index (8th rank is actually 7 index).
-     *
-     * @param file the file of the chess coordinate.
-     * @param rank the rank of the chess coordinate.
-     * @return the coordinate with the requested file and rank.
-     */
-    public static ChessCoordinate getChessCoordinate(int file, int rank) {
-        return ChessCoordinate.isInBounds(file, rank) ? CHESS_COORDINATES[rank * 8 + file] : null;
-    }
-
-    /**
-     * Gets the chess coordinate at the given the one dimensional number. If
-     * the requested coordinate does not exist, null is returned.
-     *
-     * @param oneDimIndex the one dimensional index
-     * @return the ChessCoordinate associated with this index.
-     */
-    public static ChessCoordinate getChessCoordinate(int oneDimIndex) {
-        return ChessCoordinate.isInBounds(oneDimIndex) ? CHESS_COORDINATES[oneDimIndex] : null;
-    }
-
-    /**
-     * Gets the chess coordinate at the given the charFile and rank. If
-     * the requested coordinate does not exist, null is returned.
-     *
-     * @param file the char file associated with this coordinate.
-     * @param rank the rank of this coordinate.
-     * @return the ChessCoordinate associated with this file and rank.
-     */
-    public static ChessCoordinate getChessCoordinate(char file, int rank) {
-        int fileIdx = (Character.toLowerCase(file) - 97);
-        int rankIdx = rank - 1;
-        return ChessCoordinate.isInBounds(fileIdx, rankIdx) ? CHESS_COORDINATES[rankIdx * 8 + fileIdx] : null;
-    }
-
-    /**
-     * Create a 2D map of the chess coordinates.
-     *
-     * @return the 2D array of chess coordinates.
-     */
-    private static ChessCoordinate[] createChessCoordinates() {
-        ChessCoordinate[] chessCoordinates = new ChessCoordinate[64];
-        for (int file = 0; file < 8; file++) {
-            for (int rank = 0; rank < 8; rank++) {
-                chessCoordinates[rank * 8 + file] = new ChessCoordinate(file, rank);
-            }
-        }
-        return chessCoordinates;
     }
 
     /**
@@ -263,7 +185,7 @@ public class BoardModel {
     private void initPieces() {
         for (int pieceIdx = 0; pieceIdx < pieceArray.length; pieceIdx++) {
             Piece piece = pieceArray[pieceIdx];
-            ChessCoordinate coordinate = getChessCoordinate(pieceIdx);
+            ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(pieceIdx);
             if (piece != null) {
                 if (piece.getColor() == 'w') {
                     if (piece == WHITE_KING) whiteKingCoord = coordinate;

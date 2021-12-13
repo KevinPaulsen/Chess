@@ -61,37 +61,6 @@ public enum Piece {
         this.uniqueIdx = uniqueIdx;
     }
 
-    public static Piece getPieceFrom(int uniqueIdx) {
-        switch (uniqueIdx) {
-            case 0:
-                return WHITE_KING;
-            case 1:
-                return WHITE_QUEEN;
-            case 2:
-                return WHITE_ROOK;
-            case 3:
-                return WHITE_BISHOP;
-            case 4:
-                return WHITE_KNIGHT;
-            case 5:
-                return WHITE_PAWN;
-            case 6:
-                return BLACK_KING;
-            case 7:
-                return BLACK_QUEEN;
-            case 8:
-                return BLACK_ROOK;
-            case 9:
-                return BLACK_BISHOP;
-            case 10:
-                return BLACK_KNIGHT;
-            case 11:
-                return BLACK_PAWN;
-            default:
-                return null;
-        }
-    }
-
     /**
      * @return the reachableCoordinateMap of this piece.
      */
@@ -141,7 +110,6 @@ public enum Piece {
      * @param coordinate the coordinate the king is at.
      * @return list of lists of ChessCoordinates that represent the squares the king can move.
      */
-    @SuppressWarnings("ConstantConditions")
     private static List<List<ChessCoordinate>> generateKingReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
@@ -152,8 +120,8 @@ public enum Piece {
 
         // If on castling square
         if (coordinate.getFile() == 4 && coordinate.getRank() % 7 == 0) {
-            result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank())));
-            result.add(List.of(BoardModel.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank())));
+            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank())));
+            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank())));
         } else {
             result.add(List.of());
             result.add(List.of());

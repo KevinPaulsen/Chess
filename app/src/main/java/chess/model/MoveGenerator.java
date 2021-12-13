@@ -6,13 +6,11 @@ import chess.model.pieces.Direction;
 import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
 
 /**
@@ -142,7 +140,7 @@ public class MoveGenerator {
         BoardModel board = game.getBoard();
         char turn = game.getTurn();
         for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
-            ChessCoordinate coordinate = BoardModel.getChessCoordinate(coordIdx);
+            ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(coordIdx);
             Piece piece = board.getPieceOn(coordinate);
             if (piece != null) {
                 List<ChessCoordinate> pieces = switch (piece) {
@@ -355,10 +353,7 @@ public class MoveGenerator {
                             }
                         }
                         if (canCastle) {
-                            ChessCoordinate rookStart = BoardModel.getChessCoordinate(7, targetCoord.getRank());
-                            Piece piece = board.getPieceOn(rookStart);
-                            ChessCoordinate endInteracting = BoardModel.getChessCoordinate(5, targetCoord.getRank());
-                            moves.add(new Move(movingKingCoord, targetCoord, movingKing, rookStart, endInteracting, piece));
+                            makeCastleMove(board, movingKingCoord, movingKing, targetCoord, H1, H8, F1, F8);
                         }
                     }
                 } else {
@@ -374,15 +369,22 @@ public class MoveGenerator {
                         }
                         canCastle = canCastle && board.getPieceOn(searchCoord) == null;
                         if (canCastle) {
-                            ChessCoordinate rookStart = BoardModel.getChessCoordinate(0, targetCoord.getRank());
-                            Piece piece = board.getPieceOn(rookStart);
-                            ChessCoordinate endInteracting = BoardModel.getChessCoordinate(3, targetCoord.getRank());
-                            moves.add(new Move(movingKingCoord, targetCoord, movingKing, rookStart, endInteracting, piece));
+                            makeCastleMove(board, movingKingCoord, movingKing, targetCoord, A1, A8, D1, D8);
                         }
                     }
                 }
             }
         }
+    }
+
+    private void makeCastleMove(BoardModel board, ChessCoordinate movingKingCoord, Piece movingKing,
+                                ChessCoordinate kingEndCoord, ChessCoordinate whiteRookStart,
+                                ChessCoordinate blackRookStart, ChessCoordinate whiteRookEnd,
+                                ChessCoordinate blackRookEnd) {
+        ChessCoordinate rookStart = kingEndCoord.getRank() == 0 ? whiteRookStart : blackRookStart;
+        ChessCoordinate endRookCoord = kingEndCoord.getRank() == 0 ? whiteRookEnd : blackRookEnd;
+        Piece piece = board.getPieceOn(rookStart);
+        moves.add(new Move(movingKingCoord, kingEndCoord, movingKing, rookStart, endRookCoord, piece));
     }
 
     private void generateSlidingMoves() {

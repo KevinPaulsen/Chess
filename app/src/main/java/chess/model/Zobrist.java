@@ -38,7 +38,7 @@ public class Zobrist {
         BoardModel board = game.getBoard();
 
         for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
-            Piece piece = board.getPieceOn(BoardModel.getChessCoordinate(coordIdx));
+            Piece piece = board.getPieceOn(ChessCoordinate.getChessCoordinate(coordIdx));
             if (piece != null) {
                 hashValue ^= zobristHashTable[coordIdx][piece.getUniqueIdx()];
             }

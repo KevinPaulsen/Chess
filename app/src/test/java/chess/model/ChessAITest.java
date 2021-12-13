@@ -4,15 +4,14 @@ import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
-import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
-import static org.junit.Assert.*;
 
 public class ChessAITest {
 
@@ -21,10 +20,7 @@ public class ChessAITest {
         GameModel testGame = new GameModel("r1bqkbnr/p1pp1ppp/1pn5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
-        ChessCoordinate startingCoordinate = BoardModel.getChessCoordinate('f', 3);
-        ChessCoordinate endingCoordinate = BoardModel.getChessCoordinate('f', 7);
-
-        Move expectedMove = new Move(startingCoordinate, endingCoordinate, WHITE_QUEEN, endingCoordinate,
+        Move expectedMove = new Move(F3, F7, WHITE_QUEEN, F7,
                 null, BLACK_PAWN);
         Move actualMove = testAI.getBestMove(false, 1);
 
@@ -36,10 +32,7 @@ public class ChessAITest {
         GameModel testGame = new GameModel("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
-        ChessCoordinate startingCoordinate = BoardModel.getChessCoordinate('d', 8);
-        ChessCoordinate endingCoordinate = BoardModel.getChessCoordinate('h', 4);
-
-        Move expectedMove = new Move(startingCoordinate, endingCoordinate, BLACK_QUEEN);
+        Move expectedMove = new Move(D8, H4, BLACK_QUEEN);
         Move actualMove = testAI.getBestMove(false, 1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
@@ -51,9 +44,9 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('f', 8), BoardModel.getChessCoordinate('a', 8), WHITE_ROOK));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('c', 3), BoardModel.getChessCoordinate('a', 4), BLACK_KNIGHT));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('a', 8), BoardModel.getChessCoordinate('a', 4), WHITE_ROOK, BoardModel.getChessCoordinate('a', 4), null, BLACK_KNIGHT));
+        expectedMoves.add(new Move(F8, A8, WHITE_ROOK));
+        expectedMoves.add(new Move(C3, A4, BLACK_KNIGHT));
+        expectedMoves.add(new Move(A8, A4, WHITE_ROOK, A4, null, BLACK_KNIGHT));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(false, 3);
@@ -68,9 +61,9 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('f', 3), BoardModel.getChessCoordinate('f', 7), WHITE_QUEEN, BoardModel.getChessCoordinate('f', 7), null, BLACK_PAWN));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('e', 8), BoardModel.getChessCoordinate('f', 7), BLACK_KING, BoardModel.getChessCoordinate('f', 7), null, WHITE_QUEEN));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('g', 4), BoardModel.getChessCoordinate('h', 5), WHITE_BISHOP, null, null, null));
+        expectedMoves.add(new Move(F3, F7, WHITE_QUEEN, F7, null, BLACK_PAWN));
+        expectedMoves.add(new Move(E8, F7, BLACK_KING, F7, null, WHITE_QUEEN));
+        expectedMoves.add(new Move(G4, H5, WHITE_BISHOP, null, null, null));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(false, 3);
@@ -85,11 +78,11 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('f', 6), BoardModel.getChessCoordinate('a', 6), WHITE_ROOK, null, null, null));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('f', 7), BoardModel.getChessCoordinate('f', 6), BLACK_PAWN, null, null, null));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('e', 5), BoardModel.getChessCoordinate('f', 6), WHITE_BISHOP, BoardModel.getChessCoordinate('f', 6), null, BLACK_PAWN));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('g', 8), BoardModel.getChessCoordinate('g', 7), BLACK_ROOK, null, null, null));
-        expectedMoves.add(new Move(BoardModel.getChessCoordinate('a', 6), BoardModel.getChessCoordinate('a', 8), WHITE_ROOK, BoardModel.getChessCoordinate('a', 8), null, BLACK_ROOK));
+        expectedMoves.add(new Move(F6, A6, WHITE_ROOK, null, null, null));
+        expectedMoves.add(new Move(F7, F6, BLACK_PAWN, null, null, null));
+        expectedMoves.add(new Move(E5, F6, WHITE_BISHOP, F6, null, BLACK_PAWN));
+        expectedMoves.add(new Move(G8, G7, BLACK_ROOK, null, null, null));
+        expectedMoves.add(new Move(A6, A8, WHITE_ROOK, A8, null, BLACK_ROOK));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(false, 5);
