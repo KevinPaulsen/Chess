@@ -76,8 +76,8 @@ public class Move {
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart, interactingPieceEnd,
-                interactingPiece, null);
+        this(startingCoordinate, endingCoordinate, movingPiece, interactingPiece == null ? null : interactingPieceStart,
+                interactingPieceEnd, interactingPiece, null);
     }
 
     /**
