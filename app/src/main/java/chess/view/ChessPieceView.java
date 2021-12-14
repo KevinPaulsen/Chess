@@ -46,42 +46,18 @@ public class ChessPieceView extends JLabel {
         }
 
         switch (piece) {
-            case WHITE_QUEEN:
-                path += "WQueen.png";
-                break;
-            case WHITE_ROOK:
-                path += "WRook.png";
-                break;
-            case WHITE_BISHOP:
-                path += "WBishop.png";
-                break;
-            case WHITE_KNIGHT:
-                path += "WKnight.png";
-                break;
-            case WHITE_PAWN:
-                path += "WPawn.png";
-                break;
-            case WHITE_KING:
-                path += "WKing.png";
-                break;
-            case BLACK_QUEEN:
-                path += "BQueen.png";
-                break;
-            case BLACK_ROOK:
-                path += "BRook.png";
-                break;
-            case BLACK_BISHOP:
-                path += "BBishop.png";
-                break;
-            case BLACK_KNIGHT:
-                path += "BKnight.png";
-                break;
-            case BLACK_PAWN:
-                path += "BPawn.png";
-                break;
-            case BLACK_KING:
-                path += "BKing.png";
-                break;
+            case WHITE_QUEEN -> path += "WQueen.png";
+            case WHITE_ROOK -> path += "WRook.png";
+            case WHITE_BISHOP -> path += "WBishop.png";
+            case WHITE_KNIGHT -> path += "WKnight.png";
+            case WHITE_PAWN -> path += "WPawn.png";
+            case WHITE_KING -> path += "WKing.png";
+            case BLACK_QUEEN -> path += "BQueen.png";
+            case BLACK_ROOK -> path += "BRook.png";
+            case BLACK_BISHOP -> path += "BBishop.png";
+            case BLACK_KNIGHT -> path += "BKnight.png";
+            case BLACK_PAWN -> path += "BPawn.png";
+            case BLACK_KING -> path += "BKing.png";
         }
         return new ImageIcon(path);
     }
@@ -95,7 +71,7 @@ public class ChessPieceView extends JLabel {
     }
 
     public void capture() {
-        setIcon(BLANK_IMAGE);
+        setIcon(null);
         isOnBoard = false;
     }
 }

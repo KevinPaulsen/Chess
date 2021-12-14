@@ -233,23 +233,4 @@ public class BoardModel {
     public Piece[] getPieceArray() {
         return pieceArray.clone();
     }
-
-    /**
-     * Prints the board to the console. Used only for debug purposes.
-     */
-    public void printBoard() {
-        for (Piece piece : pieceArray) {
-            if (piece == null) {
-                System.out.print("  ");
-            } else {
-                if (piece == Piece.WHITE_PAWN || piece == Piece.BLACK_PAWN) {
-                    System.out.print("P ");
-                } else {
-                    System.out.print(piece + " ");
-                }
-            }
-        }
-        System.out.println();
-    }
-
 }

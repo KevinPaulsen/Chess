@@ -47,6 +47,7 @@ public class ChessView extends JFrame {
     public void slowUpdate(Piece[] board, MouseListener mouseListener, MouseMotionListener motionListener, char turn) {
         boardView.slowUpdateBoard(board, mouseListener, motionListener);
         turnView.setTurn(turn);
+        this.update(getGraphics());
     }
 
     /**
@@ -91,5 +92,4 @@ public class ChessView extends JFrame {
             return getXOnWindow(component.getParent()) + component.getX();
         }
     }
-
 }

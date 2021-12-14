@@ -7,6 +7,7 @@ import chess.model.pieces.Piece;
 import javax.swing.JPanel;
 import javax.swing.OverlayLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -49,18 +50,18 @@ public class ChessBoardView extends JPanel {
             if (move.getInteractingPieceStart() != null) {
                 if (move.getInteractingPieceEnd() == null) {
                     // Capture
-                    ((ChessPieceView) piecesPanel
-                            .getComponent(getZOrder(move.getInteractingPieceStart()))).capture();
+                    ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getInteractingPieceStart()))).capture();
                 } else {
                     // Castle
                     swap(move.getInteractingPieceStart(), move.getInteractingPieceEnd());
                 }
             }
+            ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()))).capture();
             if (move.doesPromote()) {
-                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate())))
-                        .promoteTo(move.getPromotedPiece());
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).promoteTo(move.getPromotedPiece());
+            } else {
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).promoteTo(move.getMovingPiece());
             }
-            swap(move.getStartingCoordinate(), move.getEndingCoordinate());
         }
     }
 
@@ -75,14 +76,23 @@ public class ChessBoardView extends JPanel {
     }
 
     private void swap(ChessCoordinate coordinate1, ChessCoordinate coordinate2) {
-        int movingPieceZOrder = getZOrder(coordinate1);
-        int endSquarePieceZOrder = getZOrder(coordinate2);
-        ChessPieceView movingPiece = (ChessPieceView) piecesPanel
-                .getComponent(movingPieceZOrder);
-        ChessPieceView endSquarePiece = (ChessPieceView) piecesPanel
-                .getComponent(endSquarePieceZOrder);
-        piecesPanel.setComponentZOrder(movingPiece, endSquarePieceZOrder);
-        piecesPanel.setComponentZOrder(endSquarePiece, movingPieceZOrder);
+        int zOrder1 = getZOrder(coordinate1);
+        int zOrder2 = getZOrder(coordinate2);
+
+        if (zOrder1 > zOrder2) {
+            int temp = zOrder1;
+            zOrder1 = zOrder2;
+            zOrder2 = temp;
+        }
+
+        Component first = piecesPanel.getComponent(zOrder1);
+        Component second = piecesPanel.getComponent(zOrder2);
+
+        piecesPanel.remove(first);
+        piecesPanel.remove(second);
+
+        piecesPanel.add(second, zOrder1);
+        piecesPanel.add(first, zOrder2);
     }
 
     /**
@@ -99,8 +109,7 @@ public class ChessBoardView extends JPanel {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 Piece piece = board[rank * 8 + file];
-                ChessPieceView pieceView = makePieceView(piece, mouseListener, motionListener);
-                piecesPanel.add(pieceView);
+                piecesPanel.add(makePieceView(piece, mouseListener, motionListener));
                 squaresPanel.add(makeSquare(rank, file));
             }
         }
@@ -128,7 +137,10 @@ public class ChessBoardView extends JPanel {
      */
     private static JPanel makeSquare(int rank, int file) {
         JPanel panel = new JPanel();
-        panel.setBackground((rank + file) % 2 == 0 ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+        float[] darkHSB = Color.RGBtoHSB(180, 136, 99, null);
+        float[] lightHSB = Color.RGBtoHSB(240, 217, 181, null);
+        panel.setBackground((rank + file) % 2 == 0 ? Color.getHSBColor(darkHSB[0], darkHSB[1], darkHSB[2]) :
+                Color.getHSBColor(lightHSB[0], lightHSB[1], lightHSB[2]));
         return panel;
     }
 
