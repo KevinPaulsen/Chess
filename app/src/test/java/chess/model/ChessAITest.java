@@ -131,4 +131,15 @@ public class ChessAITest {
 
         Assert.assertEquals("Game did not end in a draw", GameModel.DRAW, testGame.getGameOverStatus());
     }
+
+    public static void main(String[] args) {
+        GameModel testGame = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
+        ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
+
+        long startTime = System.currentTimeMillis();
+        testAI.getBestMove(true, 1, 30_000);
+        long endTime = System.currentTimeMillis();
+
+        System.out.printf("Total time: %dms", endTime - startTime);
+    }
 }

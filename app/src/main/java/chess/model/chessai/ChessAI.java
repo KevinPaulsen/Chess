@@ -71,9 +71,9 @@ public class ChessAI {
         Evaluation bestEvalToLatestDepth = null;
 
         int currentDepth = useIterativeDeepening ? 1 : minDepth;
+        long startTime = System.currentTimeMillis();
         do {
             // Asynchronously search for best move
-            long startTime = System.currentTimeMillis();
             int finalDepth = currentDepth;
             CompletableFuture<Evaluation> futureEvaluation =
                     CompletableFuture.supplyAsync(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));
