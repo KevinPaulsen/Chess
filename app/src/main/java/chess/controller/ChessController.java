@@ -28,6 +28,9 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
     private static final boolean AI_ON = true;
 
+    private static final int MINIMUM_DEPTH = 1;
+    private static final int SEARCH_TIME = 1_000;
+
     private final GameModel gameModel;
     private final ChessView view;
     private final ChessAI chessAI;
@@ -91,7 +94,8 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private void makeAIMove() {
         if (futureAIMove == null || futureAIMove.isDone()) {
             futureAIMove = CompletableFuture
-                    .runAsync(() -> gameModel.move(chessAI.getBestMove(true, 0)), aiExecutor)
+                    .runAsync(() -> gameModel.move(chessAI.getBestMove(true,
+                            MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
                     .thenRun(this::printAndUpdate)
                     .exceptionally((ex) -> {
                         ex.printStackTrace();

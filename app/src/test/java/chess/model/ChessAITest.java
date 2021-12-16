@@ -22,7 +22,7 @@ public class ChessAITest {
 
         Move expectedMove = new Move(F3, F7, WHITE_QUEEN, F7,
                 null, BLACK_PAWN);
-        Move actualMove = testAI.getBestMove(false, 1);
+        Move actualMove = testAI.getBestMove(1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
     }
@@ -33,7 +33,7 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         Move expectedMove = new Move(D8, H4, BLACK_QUEEN);
-        Move actualMove = testAI.getBestMove(false, 1);
+        Move actualMove = testAI.getBestMove(1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
     }
@@ -49,7 +49,7 @@ public class ChessAITest {
         expectedMoves.add(new Move(A8, A4, WHITE_ROOK, A4, null, BLACK_KNIGHT));
 
         for (Move expectedMove : expectedMoves) {
-            Move actualMove = testAI.getBestMove(false, 3);
+            Move actualMove = testAI.getBestMove(3);
             Assert.assertEquals("Mate in 3 was not found.", expectedMove, actualMove);
             testGame.move(actualMove);
         }
@@ -66,7 +66,7 @@ public class ChessAITest {
         expectedMoves.add(new Move(G4, H5, WHITE_BISHOP, null, null, null));
 
         for (Move expectedMove : expectedMoves) {
-            Move actualMove = testAI.getBestMove(false, 3);
+            Move actualMove = testAI.getBestMove(3);
             Assert.assertEquals("Mate in 3 was not found.", expectedMove, actualMove);
             testGame.move(actualMove);
         }
@@ -85,7 +85,7 @@ public class ChessAITest {
         expectedMoves.add(new Move(A6, A8, WHITE_ROOK, A8, null, BLACK_ROOK));
 
         for (Move expectedMove : expectedMoves) {
-            Move actualMove = testAI.getBestMove(false, 5);
+            Move actualMove = testAI.getBestMove(5);
             Assert.assertEquals("Mate in 3 was not found.", expectedMove, actualMove);
             testGame.move(actualMove);
         }
@@ -111,7 +111,7 @@ public class ChessAITest {
 
         int startDepth = 5;
         for (Move expectedMove : expectedMoves) {
-            Move actualMove = testAI.getBestMove(false, startDepth);
+            Move actualMove = testAI.getBestMove(startDepth);
             Assert.assertEquals("Forced draw in 3 was not found.", expectedMove, actualMove);
             testGame.move(actualMove);
         }
@@ -125,7 +125,7 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         while (testGame.getGameOverStatus() == GameModel.IN_PROGRESS) {
-            Move actualMove = testAI.getBestMove(true, 0);
+            Move actualMove = testAI.getBestMove(true, 1, 1_000);
             testGame.move(actualMove);
         }
 

@@ -20,11 +20,6 @@ import static chess.model.chessai.TranspositionTable.*;
 public class ChessAI {
 
     /**
-     * The maximum time an iteration can take
-     */
-    private static final long TIME_CUTOFF = 1_000;
-
-    /**
      * This table stores a position hash, and maps it to the found
      * evaluation. This may result in speed up due to transpositions
      * to the same position.
@@ -55,13 +50,23 @@ public class ChessAI {
     }
 
     /**
+     * Returns the best move to the given depth. This does not use iterative deepening.
+     *
+     * @param depth the depth to search to
+     * @return the best move in the position
+     */
+    public Move getBestMove(int depth) {
+        return getBestMove(false, depth, 0);
+    }
+
+    /**
      * Search and find the best move in the current position.
      *
      * @param useIterativeDeepening weather to use iterative deepening
      * @param minDepth                 the depth to search to (not used if using iterative deepening)
      * @return the best move to DEPTH, according to the evaluator.
      */
-    public Move getBestMove(boolean useIterativeDeepening, int minDepth) {
+    public Move getBestMove(boolean useIterativeDeepening, int minDepth, int timeCutoff) {
         GameModel currentGame = new GameModel(this.game);
         Evaluation bestEvalToLatestDepth = null;
 
@@ -76,7 +81,7 @@ public class ChessAI {
             try {
                 if (useIterativeDeepening && currentDepth > minDepth) {
                     // If using iterative deepening, wait for at most maxWaitTime for minimax to finish.
-                    long maxWaitTime = TIME_CUTOFF - System.currentTimeMillis() + startTime;
+                    long maxWaitTime = timeCutoff - System.currentTimeMillis() + startTime;
                     maxWaitTime = maxWaitTime < 0 ? 1 : maxWaitTime;
                     bestEvalToLatestDepth = futureEvaluation.get(maxWaitTime, TimeUnit.MILLISECONDS);
                 } else {
