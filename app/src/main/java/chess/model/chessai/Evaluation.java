@@ -2,6 +2,9 @@ package chess.model.chessai;
 
 import chess.Move;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
 
@@ -11,6 +14,7 @@ public class Evaluation {
     public static final Evaluation BEST_EVALUATION = new Evaluation(Integer.MAX_VALUE, -1);
 
     public static final char NO_LOSER = 'n';
+    public static final char TIE = 'T';
 
     private final Move move;
     private final int evaluation;
@@ -37,7 +41,9 @@ public class Evaluation {
             return evaluation2;
         } else if (evaluation2 == BEST_EVALUATION) {
             return evaluation1;
-        } else if (evaluation1.loser == WHITE) {
+        }
+
+        if (evaluation1.loser == WHITE) {
             if (evaluation2.loser == WHITE) {
                 return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
             } else {
@@ -49,6 +55,8 @@ public class Evaluation {
             } else {
                 return evaluation2;
             }
+        } else if (evaluation1.loser == TIE && evaluation2.loser == TIE) {
+            return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
         } else if (evaluation2.loser == WHITE) {
             return evaluation2;
         } else if (evaluation2.loser == BLACK) {
@@ -63,18 +71,22 @@ public class Evaluation {
             return evaluation2;
         } else if (evaluation2 == WORST_EVALUATION) {
             return evaluation1;
-        } else if (evaluation1.loser == WHITE) {
+        }
+
+        if (evaluation1.loser == WHITE) {
             if (evaluation2.loser == WHITE) {
-                return evaluation1.depth < evaluation2.loser ? evaluation2 : evaluation1;
+                return evaluation1.depth < evaluation2.depth ? evaluation2 : evaluation1;
             } else {
                 return evaluation2;
             }
         } else if (evaluation1.loser == BLACK) {
             if (evaluation2.loser == BLACK) {
-                return evaluation1.depth < evaluation2.loser ? evaluation1 : evaluation2;
+                return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
             } else {
-                return evaluation2;
+                return evaluation1;
             }
+        } else if (evaluation1.loser == TIE && evaluation2.loser == TIE) {
+            return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
         } else if (evaluation2.loser == WHITE) {
             return evaluation1;
         } else if (evaluation2.loser == BLACK) {
@@ -102,9 +114,8 @@ public class Evaluation {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(String.format("Evaluation: %d ", evaluation));
-        builder.append(String.format("Depth: %d", depth));
-        return builder.toString();
+        return String.format("Move: %6s, ", move) +
+                String.format("Evaluation: %7d, ", evaluation) +
+                String.format("Depth: %2d", depth);
     }
 }

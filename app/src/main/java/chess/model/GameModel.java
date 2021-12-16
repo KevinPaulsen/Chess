@@ -236,7 +236,8 @@ public class GameModel {
             board.move(move);
             moveHistory.add(move);
             makeState(board.getWhiteKingCoord(), board.getBlackKingCoord(), move);
-            positionTracker.merge(zobrist.getHashValue(), 1, Integer::sum);
+            positionTracker.merge(getZobristHash(), 1, Integer::sum);
+            checkGameOver();
 
             didMove = true;
         }
@@ -256,7 +257,6 @@ public class GameModel {
 
         this.currentState = currentState;
         stateHistory.add(currentState);
-        checkGameOver();
     }
 
     private void checkGameOver() {
@@ -317,7 +317,7 @@ public class GameModel {
 
     public void undoMove(Move move) {
         if (moveHistory.size() > 0 && moveHistory.get(moveHistory.size() - 1).equals(move)) {
-            long hash = zobrist.getHashValue();
+            long hash = getZobristHash();
             positionTracker.merge(hash, -1, Integer::sum);
             if (positionTracker.get(hash) == 0) {
                 positionTracker.remove(hash);
@@ -453,6 +453,10 @@ public class GameModel {
     }
 
     private int getNumTimesReached() {
+        Integer value = positionTracker.get(getZobristHash());
+        if (value == null) {
+            throw new IllegalStateException();
+        }
         return positionTracker.get(getZobristHash());
     }
 

@@ -13,6 +13,8 @@ import static chess.model.chessai.Constants.*;
 
 public class PositionEvaluator implements Evaluator {
 
+    private static final int WIN_SCORE = 100_000;
+
     private final MoveGenerator moveGenerator;
 
     public PositionEvaluator(GameModel game) {
@@ -39,7 +41,7 @@ public class PositionEvaluator implements Evaluator {
                 return new Evaluation(null, Integer.MAX_VALUE, GameModel.BLACK, 0);
             }
         } else if (game.getGameOverStatus() == GameModel.DRAW) {
-            return new Evaluation(0, 0);
+            return new Evaluation(null, 0, Evaluation.TIE, 0);
         }
 
         for (int rank = 0; rank < 8; rank++) {

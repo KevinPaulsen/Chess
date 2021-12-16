@@ -32,31 +32,13 @@ public interface Evaluator {
     List<Move> getSortedMoves(GameModel game, Move hashMove);
 
     static int getValue(Piece piece) {
-        int score = 0;
-
-        switch (piece) {
-            case WHITE_PAWN:
-            case BLACK_PAWN:
-                score = PAWN_SCORE;
-                break;
-            case WHITE_KNIGHT:
-            case BLACK_KNIGHT:
-                score = KNIGHT_SCORE;
-                break;
-            case WHITE_BISHOP:
-            case BLACK_BISHOP:
-                score = BISHOP_SCORE;
-                break;
-            case WHITE_ROOK:
-            case BLACK_ROOK:
-                score = ROOK_SCORE;
-                break;
-            case WHITE_QUEEN:
-            case BLACK_QUEEN:
-                score = QUEEN_SCORE;
-                break;
-        }
-
-        return score;
+        return switch (piece) {
+            case WHITE_PAWN, BLACK_PAWN -> PAWN_SCORE;
+            case WHITE_KNIGHT, BLACK_KNIGHT -> KNIGHT_SCORE;
+            case WHITE_BISHOP, BLACK_BISHOP -> BISHOP_SCORE;
+            case WHITE_ROOK, BLACK_ROOK -> ROOK_SCORE;
+            case WHITE_QUEEN, BLACK_QUEEN -> QUEEN_SCORE;
+            default -> 0;
+        };
     }
 }

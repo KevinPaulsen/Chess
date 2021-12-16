@@ -15,7 +15,7 @@ public class Zobrist {
     private static final long[][] zobristHashTable = makeHashTable();
     private static final long[] enPassantCoordTable = makeTable(9);
     private static final long[] castlingHashTable = makeTable(16);
-    private static final long[] numTimesReachedTable = makeTable(4);
+    private static final long[] numTimesReachedTable = makeTable(3);
     private static final long[] sideToMove = makeTable(2);
 
     private int addedEnPassantTarget;
@@ -102,7 +102,7 @@ public class Zobrist {
                     "Passed in: " + numTimesReached);
         }
 
-        return hashValue ^ numTimesReachedTable[numTimesReached];
+        return hashValue ^ numTimesReachedTable[numTimesReached - 1];
     }
 
     private static long[][] makeHashTable() {
