@@ -97,8 +97,6 @@ public class GameModel {
      */
     private final List<FastMap> stateHistory;
 
-    private FastMap currentState;
-
     /**
      * The map that tracks the number of times each position has occurred.
      * This maps from hashCode -> number of times this hashCode has appeared.
@@ -128,7 +126,6 @@ public class GameModel {
         this.stateHistory = new ArrayList<>();
         for(FastMap fastMap : gameModel.stateHistory)
             stateHistory.add(new FastMap(fastMap.getMap()));
-        this.currentState = stateHistory.get(stateHistory.size() - 1);
         this.positionTracker = new HashMap<>(gameModel.positionTracker);
         this.moveGenerator = new MoveGenerator(this);
         this.previousLegalMoves = new ArrayList<>();
@@ -158,7 +155,6 @@ public class GameModel {
         boolean blackQueenCastle = fenSections[2].contains("q");
 
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn, enPassantTarget);
-        this.currentState = stateHistory.get(stateHistory.size() - 1);
         zobrist.slowZobrist(this);
 
         previousLegalMoves.add(this.moveGenerator.generateMoves());
@@ -179,8 +175,7 @@ public class GameModel {
             stateMap.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
         }
 
-        this.currentState = stateMap;
-        stateHistory.add(currentState);
+        stateHistory.add(stateMap);
     }
 
     /**
@@ -255,8 +250,6 @@ public class GameModel {
         currentState.flip(WHITE_TO_MOVE_MASK);
 
         zobrist.updateGameData(currentState);
-
-        this.currentState = currentState;
         stateHistory.add(currentState);
     }
 
@@ -327,17 +320,18 @@ public class GameModel {
             moveHistory.remove(moveHistory.size() - 1);
 
             stateHistory.remove(stateHistory.size() - 1);
-            currentState = stateHistory.get(stateHistory.size() - 1);
-            zobrist.updateGameData(currentState);
+            zobrist.updateGameData(getGameState());
             previousLegalMoves.remove(previousLegalMoves.size() - 1);
         }
     }
 
     public boolean canKingSideCastle(char color) {
+        FastMap currentState = getGameState();
         return color == WHITE ? currentState.isMarked(0) : currentState.isMarked(2);
     }
 
     public boolean canQueenSideCastle(char color) {
+        FastMap currentState = getGameState();
         return color == WHITE ? currentState.isMarked(1) : currentState.isMarked(3);
     }
 
@@ -362,7 +356,7 @@ public class GameModel {
     }
 
     public FastMap getGameState() {
-        return currentState;
+        return stateHistory.get(stateHistory.size() - 1);
     }
 
     public char getGameOverStatus() {
