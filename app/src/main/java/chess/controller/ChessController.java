@@ -77,7 +77,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     }
 
     private void undoMove() {
-        gameModel.undoMove(gameModel.getLastMove());
+        gameModel.undoMove();
         updateScreen(true);
     }
 
@@ -133,7 +133,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     @Override
     public void mousePressed(MouseEvent e) {
         Component component = e.getComponent();
-        if (component instanceof ChessPieceView && ((ChessPieceView) component).isOnBoard()) {
+        if (component instanceof ChessPieceView) {
             startCoordinate = view.getCoordinateOf(component, e.getX(), e.getY());
         }
     }

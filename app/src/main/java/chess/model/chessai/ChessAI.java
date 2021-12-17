@@ -187,7 +187,7 @@ public class ChessAI {
         Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
 
         // Undo the move
-        game.undoMove(move);
+        game.undoMove();
 
         // Update the best move so far, and update the AlphaBeta objects.
         if (maximizingPlayer) {

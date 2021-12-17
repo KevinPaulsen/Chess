@@ -125,7 +125,7 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         while (testGame.getGameOverStatus() == GameModel.IN_PROGRESS) {
-            Move actualMove = testAI.getBestMove(true, 1, 1_000);
+            Move actualMove = testAI.getBestMove(true, 5, 1_000);
             testGame.move(actualMove);
         }
 

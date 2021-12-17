@@ -86,6 +86,10 @@ public enum Piece {
         return uniqueIdx;
     }
 
+    public boolean isPawn() {
+        return this == WHITE_PAWN || this == BLACK_PAWN;
+    }
+
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
