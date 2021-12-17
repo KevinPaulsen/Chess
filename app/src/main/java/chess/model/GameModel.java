@@ -237,6 +237,7 @@ public class GameModel {
             moveHistory.add(move);
             makeState(board.getWhiteKingCoord(), board.getBlackKingCoord(), move);
             positionTracker.merge(getZobristHash(), 1, Integer::sum);
+            previousLegalMoves.add(moveGenerator.generateMoves());
             checkGameOver();
 
             didMove = true;
@@ -260,8 +261,8 @@ public class GameModel {
     }
 
     private void checkGameOver() {
-        long hash = zobrist.getHashValue();
-        List<Move> legalMoves = moveGenerator.generateMoves();
+        long hash = getZobristHash();
+        List<Move> legalMoves = getLegalMoves();
         FastMap gameState = getGameState();
         if (positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
             gameState.mergeMask(DRAW_MASK);
@@ -275,7 +276,6 @@ public class GameModel {
                 }
             }
         }
-        previousLegalMoves.add(legalMoves);
     }
 
     private void checkEnPassant(FastMap state, Move lastMove) {

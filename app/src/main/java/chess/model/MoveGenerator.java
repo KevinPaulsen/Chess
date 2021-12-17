@@ -40,7 +40,7 @@ public class MoveGenerator {
 
     public MoveGenerator(GameModel game) {
         this.game = game;
-        this.moves = new ArrayList<>(100);
+        this.moves = new ArrayList<>(150);
         this.inCheck = false;
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
@@ -62,7 +62,7 @@ public class MoveGenerator {
     }
 
     private void resetState() {
-        this.moves = new ArrayList<>(100);
+        this.moves = new ArrayList<>(150);
         this.inCheck = false;
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
@@ -413,10 +413,13 @@ public class MoveGenerator {
 
         // If pinned and in check, this piece can't move.
         if (!inCheck || !isPinned) {
-            for (List<ChessCoordinate> ray : piece.getReachableCoordinateMapFrom(coordinate)) {
+            List<List<ChessCoordinate>> rays = piece.getReachableCoordinateMapFrom(coordinate);
+            for (int rayIdx = 0; rayIdx < rays.size(); rayIdx++) {
+                List<ChessCoordinate> ray = rays.get(rayIdx);
                 // If we are pinned, then we can only move along pin.
                 if ((ray.size() != 0 && (!isPinned || areAligned(coordinate, ray.get(0), friendlyKingCoord)))) {
-                    for (ChessCoordinate targetCoord : ray) {
+                    for (int coordIdx = 0; coordIdx < ray.size(); coordIdx++) {
+                        ChessCoordinate targetCoord = ray.get(coordIdx);
                         Piece targetPiece = board.getPieceOn(targetCoord);
                         if (targetPiece != null && targetPiece.getColor() == piece.getColor()) {
                             break;
@@ -435,14 +438,18 @@ public class MoveGenerator {
 
     private void generateKnightMoves() {
         BoardModel board = game.getBoard();
-        for (ChessCoordinate coordinate : friendlyKnights) {
+        for (int knightIdx = 0; knightIdx < friendlyKnights.size(); knightIdx++) {
+            ChessCoordinate coordinate = friendlyKnights.get(knightIdx);
             if (isPinned(coordinate)) {
                 continue;
             }
             Piece knight = board.getPieceOn(coordinate);
 
-            for (List<ChessCoordinate> ray : knight.getReachableCoordinateMapFrom(coordinate)) {;
-                for (ChessCoordinate targetCoordinate : ray) {
+            List<List<ChessCoordinate>> rays = knight.getReachableCoordinateMapFrom(coordinate);
+            for (int rayIdx = 0; rayIdx < rays.size(); rayIdx++) {
+                List<ChessCoordinate> ray = rays.get(rayIdx);
+                for (int coordIdx = 0; coordIdx < ray.size(); coordIdx++) {
+                    ChessCoordinate targetCoordinate = ray.get(coordIdx);
                     Piece targetPiece = board.getPieceOn(targetCoordinate);
                     if ((targetPiece == null || targetPiece.getColor() != knight.getColor())
                             && (!inCheck || checkRayMap.isMarked(targetCoordinate.getOndDimIndex()))) {

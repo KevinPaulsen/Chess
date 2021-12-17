@@ -103,15 +103,6 @@ public class Move {
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece,
                 Piece promotedPiece) {
-        if (interactingPieceStart == null && interactingPiece != null) {
-            throw new IllegalArgumentException("An interacting piece cannot start on null.");
-        } else if (startingCoordinate == null) {
-            throw new IllegalArgumentException("Starting coordinate cannot be null.");
-        } else if (endingCoordinate == null) {
-            throw new IllegalArgumentException("Ending coordinate cannot be null");
-        } else if (interactingPiece == WHITE_KING || interactingPiece == BLACK_KING) {
-            throw new IllegalArgumentException("Attempting to Capture a King.");
-        }
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
