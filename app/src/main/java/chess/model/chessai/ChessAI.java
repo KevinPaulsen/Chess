@@ -149,7 +149,24 @@ public class ChessAI {
                 break;
             }
 
-            bestEval = getEvaluation(game, maximizingPlayer, bestEval, alphaBeta, move, depth);
+            // Make the move
+            game.move(move);
+
+            // Evaluate the position
+            Evaluation currentEval = new Evaluation(move, miniMax(game, new AlphaBeta(alphaBeta), depth - 1));
+
+            // Undo the move
+            game.undoLastMove();
+
+            if (maximizingPlayer) {
+                // If maximizing player, set the best eval to the max
+                bestEval = Evaluation.max(bestEval, currentEval);
+                alphaBeta.alphaMax(bestEval.getEvaluation());
+            } else {
+                // If minimizing player, set the best eval to the min
+                bestEval = Evaluation.min(bestEval, currentEval);
+                alphaBeta.betaMin(bestEval.getEvaluation());
+            }
         }
 
         // Add best Eval to transposition table.
@@ -162,40 +179,6 @@ public class ChessAI {
                     transpositionTable.put(hash, bestEval, EXACT);
                 }
             }
-        }
-
-        return bestEval;
-    }
-
-    /**
-     * Evaluates a given move to the given depth. Calls the minimax
-     * algorithm to evaluate the move.
-     *
-     * @param maximizingPlayer if the moving player is maximizing.
-     * @param bestEval         the best move found so far.
-     * @param alphaBeta        the AlphaBeta object, used for pruning.
-     * @param move             the move to evaluate.
-     * @param depth            the depth to search to.
-     * @return the Evaluation of the given move.
-     */
-    private Evaluation getEvaluation(GameModel game, boolean maximizingPlayer, Evaluation bestEval,
-                                     AlphaBeta alphaBeta, Move move, int depth) {
-        // Make the given move.
-        game.move(move);
-
-        // Evaluate the position
-        Evaluation moveEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
-
-        // Undo the move
-        game.undoMove();
-
-        // Update the best move so far, and update the AlphaBeta objects.
-        if (maximizingPlayer) {
-            bestEval = Evaluation.max(bestEval, new Evaluation(move, moveEval));
-            alphaBeta.alphaMax(bestEval.getEvaluation());
-        } else {
-            bestEval = Evaluation.min(bestEval, new Evaluation(move, moveEval));
-            alphaBeta.betaMin(bestEval.getEvaluation());
         }
 
         return bestEval;

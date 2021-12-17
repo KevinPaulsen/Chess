@@ -42,7 +42,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private ChessCoordinate startCoordinate;
 
     private ChessController() {
-        gameModel = new GameModel("7b/2q1p1PR/3r1pp1/6k1/3p4/3p1KPp/2n3pP/2r2bB1 w - - 1 1");
+        gameModel = new GameModel();
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel);
         aiExecutor = Executors.newSingleThreadExecutor();
@@ -77,7 +77,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     }
 
     private void undoMove() {
-        gameModel.undoMove();
+        gameModel.undoLastMove();
         updateScreen(true);
     }
 

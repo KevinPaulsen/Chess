@@ -292,7 +292,7 @@ public class GameModel {
      * as if this move never happened. If no move has happened yet,
      * nothing happens.
      */
-    public void undoMove() {
+    public void undoLastMove() {
         Move move = getLastMove();
         if (moveHistory.size() > 0) {
             long hash = getZobristHash();

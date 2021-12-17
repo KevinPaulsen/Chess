@@ -16,7 +16,7 @@ public class GameModelTest {
                 int num = countNumPositions(game, depth - 1);
                 System.out.printf("%s%s\t%6s: %7d\n", move.getStartingCoordinate(), move.getEndingCoordinate(), move, num);
                 sum += num;
-                game.undoMove();
+                game.undoLastMove();
             }
         }
 
@@ -33,7 +33,7 @@ public class GameModelTest {
         for (Move move : List.copyOf(game.getLegalMoves())) {
             if (game.move(move)) {
                 sum += countNumPositions(game, depth - 1);
-                game.undoMove();
+                game.undoLastMove();
             }
         }
         return sum;

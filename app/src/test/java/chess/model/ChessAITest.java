@@ -1,6 +1,5 @@
 package chess.model;
 
-import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
@@ -119,13 +118,21 @@ public class ChessAITest {
         Assert.assertEquals("Game is not Over.", testGame.getGameOverStatus(), GameModel.DRAW);
     }
 
+    private static final long hash3 = new GameModel("7Q/2q1p3/3r1pk1/7p/3p4/3p1KPp/2n3pP/2r2bB1 w - - 5 6").getZobristHash() ^ 198583693469997705L;
+    private static final long hash2 = new GameModel("7Q/2q1p3/3r1pk1/7p/3p4/3p1KPp/2n3pP/2r2bB1 w - - 5 6").getZobristHash() ^ -7405721472350166140L;
+    private static final long hash1 = new GameModel("7Q/2q1p3/3r1pk1/7p/3p4/3p1KPp/2n3pP/2r2bB1 w - - 5 6").getZobristHash() ^ -1802027583124801029L;
+
     @Test
     public void testFindForcedDrawIn4() {
         GameModel testGame = new GameModel("7b/2q1p1PR/3r1pp1/6k1/3p4/3p1KPp/2n3pP/2r2bB1 w - - 0 1");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame);
 
         while (testGame.getGameOverStatus() == GameModel.IN_PROGRESS) {
-            Move actualMove = testAI.getBestMove(true, 5, 1_000);
+            //Move actualMove = testAI.getBestMove(true, 5, 1_000);
+            if (testGame.getZobristWithTimesMoved() == hash2) {
+                System.out.println("found it");
+            }
+            Move actualMove = testAI.getBestMove(6);
             testGame.move(actualMove);
         }
 
