@@ -36,9 +36,9 @@ public class PositionEvaluator implements Evaluator {
         game.getLegalMoves();
         if (game.getGameOverStatus() == GameModel.LOSER) {
             if (game.getTurn() == GameModel.WHITE) {
-                return new Evaluation(null, Integer.MIN_VALUE, GameModel.WHITE, 0);
+                return new Evaluation(null, -10_000, GameModel.WHITE, 0);
             } else {
-                return new Evaluation(null, Integer.MAX_VALUE, GameModel.BLACK, 0);
+                return new Evaluation(null, 10_000, GameModel.BLACK, 0);
             }
         } else if (game.getGameOverStatus() == GameModel.DRAW) {
             return new Evaluation(null, 0, Evaluation.TIE, 0);

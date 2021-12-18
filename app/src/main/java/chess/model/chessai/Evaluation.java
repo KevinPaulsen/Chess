@@ -2,9 +2,6 @@ package chess.model.chessai;
 
 import chess.Move;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
 
@@ -26,7 +23,8 @@ public class Evaluation {
     }
 
     public Evaluation(Move move, Evaluation evaluation) {
-        this(move, evaluation.evaluation, evaluation.loser, evaluation.depth + 1);
+        this(move, evaluation.evaluation + Integer.compare(0, evaluation.evaluation),
+                evaluation.loser, evaluation.depth + 1);
     }
 
     public Evaluation(Move currentMove, int evaluation, char loser, int depth) {

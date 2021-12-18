@@ -121,8 +121,8 @@ public class ChessAI {
         boolean maximizingPlayer = game.getTurn() == 'w';
         Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
 
-        // Search table for current position hash
         var tableValue = transpositionTable.get(hash);
+        // Search table for current position hash
         if (tableValue != null) {
             Evaluation tableEval = tableValue.getEvaluation();
 
@@ -140,7 +140,8 @@ public class ChessAI {
         }
 
         // Search through all the sorted moves
-        List<Move> sortedMoves = evaluator.getSortedMoves(game, tableValue == null ? null : tableValue.getEvaluation().getMove());
+        List<Move> sortedMoves = evaluator.getSortedMoves(game,
+                tableValue == null ? null : tableValue.getEvaluation().getMove());
         boolean didBreak = false;
         for (Move move : sortedMoves) {
             // If we found a better path already, break.
@@ -203,7 +204,7 @@ public class ChessAI {
         }
 
         private boolean betaLessThanAlpha() {
-            return beta <= alpha;
+            return beta < alpha;
         }
 
         private void alphaMax(double eval) {
