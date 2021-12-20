@@ -10,6 +10,7 @@ import chess.model.pieces.Piece;
 import java.util.List;
 
 import static chess.model.chessai.Constants.*;
+import static chess.model.chessai.Evaluation.EXACT;
 
 public class PositionEvaluator implements Evaluator {
 
@@ -36,12 +37,12 @@ public class PositionEvaluator implements Evaluator {
         game.getLegalMoves();
         if (game.getGameOverStatus() == GameModel.LOSER) {
             if (game.getTurn() == GameModel.WHITE) {
-                return new Evaluation(null, -10_000, GameModel.WHITE, 0);
+                return new Evaluation(null, -10_000, GameModel.WHITE, 0, EXACT, null);
             } else {
-                return new Evaluation(null, 10_000, GameModel.BLACK, 0);
+                return new Evaluation(null, 10_000, GameModel.BLACK, 0, EXACT, null);
             }
         } else if (game.getGameOverStatus() == GameModel.DRAW) {
-            return new Evaluation(null, 0, Evaluation.TIE, 0);
+            return new Evaluation(null, 0, Evaluation.TIE, 0, EXACT, null);
         }
 
         for (int rank = 0; rank < 8; rank++) {

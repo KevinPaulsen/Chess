@@ -5,10 +5,18 @@ import chess.Move;
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
 
-public class Evaluation {
+public class Evaluation implements Comparable<Evaluation> {
 
-    public static final Evaluation WORST_EVALUATION = new Evaluation(Integer.MIN_VALUE, -1);
-    public static final Evaluation BEST_EVALUATION = new Evaluation(Integer.MAX_VALUE, -1);
+    public static final Evaluation MIN_EVALUATION = new Evaluation(Integer.MIN_VALUE, -1);
+    public static final Evaluation MAX_EVALUATION = new Evaluation(Integer.MAX_VALUE, -1);
+
+    public static final byte EXACT = 0;
+    public static final byte UPPER = 1;
+    public static final byte LOWER = 2;
+
+    private static final byte LESS_THAN = -1;
+    private static final byte EQUAL = 0;
+    private static final byte GREATER_THAN = 1;
 
     public static final char NO_LOSER = 'n';
     public static final char TIE = 'T';
@@ -17,81 +25,34 @@ public class Evaluation {
     private final int evaluation;
     private final char loser;
     private final int depth;
+    private final byte bound;
+
+    private final Evaluation next;
 
     public Evaluation(int evaluation, int depth) {
-        this(null, evaluation, NO_LOSER, depth);
+        this(null, evaluation, NO_LOSER, depth, EXACT, null);
     }
 
-    public Evaluation(Move move, Evaluation evaluation) {
+    public Evaluation(Move move, Evaluation evaluation, byte bound) {
         this(move, evaluation.evaluation + Integer.compare(0, evaluation.evaluation),
-                evaluation.loser, evaluation.depth + 1);
+                evaluation.loser, evaluation.depth + 1, bound, evaluation);
     }
 
-    public Evaluation(Move currentMove, int evaluation, char loser, int depth) {
+    public Evaluation(Move currentMove, int evaluation, char loser, int depth, byte bound, Evaluation next) {
         this.move = currentMove;
         this.evaluation = evaluation;
         this.loser = loser;
         this.depth = depth;
+        this.bound = bound;
+        this.next = next;
     }
 
     public static Evaluation min(Evaluation evaluation1, Evaluation evaluation2) {
-        if (evaluation1 == BEST_EVALUATION) {
-            return evaluation2;
-        } else if (evaluation2 == BEST_EVALUATION) {
-            return evaluation1;
-        }
-
-        if (evaluation1.loser == WHITE) {
-            if (evaluation2.loser == WHITE) {
-                return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
-            } else {
-                return evaluation1;
-            }
-        } else if (evaluation1.loser == BLACK) {
-            if (evaluation2.loser == BLACK) {
-                return evaluation1.depth < evaluation2.depth ? evaluation2 : evaluation1;
-            } else {
-                return evaluation2;
-            }
-        } else if (evaluation1.loser == TIE && evaluation2.loser == TIE) {
-            return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
-        } else if (evaluation2.loser == WHITE) {
-            return evaluation2;
-        } else if (evaluation2.loser == BLACK) {
-            return evaluation1;
-        } else {
-            return evaluation1.evaluation <= evaluation2.evaluation ? evaluation1 : evaluation2;
-        }
+        return evaluation1.compareTo(evaluation2) > 0 ? evaluation2 : evaluation1;
     }
 
     public static Evaluation max(Evaluation evaluation1, Evaluation evaluation2) {
-        if (evaluation1 == WORST_EVALUATION) {
-            return evaluation2;
-        } else if (evaluation2 == WORST_EVALUATION) {
-            return evaluation1;
-        }
-
-        if (evaluation1.loser == WHITE) {
-            if (evaluation2.loser == WHITE) {
-                return evaluation1.depth < evaluation2.depth ? evaluation2 : evaluation1;
-            } else {
-                return evaluation2;
-            }
-        } else if (evaluation1.loser == BLACK) {
-            if (evaluation2.loser == BLACK) {
-                return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
-            } else {
-                return evaluation1;
-            }
-        } else if (evaluation1.loser == TIE && evaluation2.loser == TIE) {
-            return evaluation1.depth < evaluation2.depth ? evaluation1 : evaluation2;
-        } else if (evaluation2.loser == WHITE) {
-            return evaluation1;
-        } else if (evaluation2.loser == BLACK) {
-            return evaluation2;
-        } else {
-            return evaluation1.evaluation >= evaluation2.evaluation ? evaluation1 : evaluation2;
-        }
+        return evaluation1.compareTo(evaluation2) < 0 ? evaluation2 : evaluation1;
     }
 
     public Move getMove() {
@@ -110,10 +71,95 @@ public class Evaluation {
         return loser;
     }
 
+    public boolean isExact() {
+        return bound == EXACT;
+    }
+
+    public boolean isLower() {
+        return bound == LOWER;
+    }
+
+    public boolean isUpper() {
+        return bound == UPPER;
+    }
+
     @Override
     public String toString() {
-        return String.format("Move: %6s, ", move) +
-                String.format("Evaluation: %7d, ", evaluation) +
-                String.format("Depth: %2d", depth);
+        StringBuilder result = new StringBuilder();
+        result.append(String.format("Evaluation: %-7d ", evaluation));
+        result.append(String.format("Depth: %-2d ", depth));
+        result.append(String.format("Moves: %-6s", move));
+        Evaluation current = next;
+        while (current != null && current.move != null) {
+            result.append(String.format(" | %-6s", current.move));
+            current = current.next;
+        }
+        return result.toString();
+    }
+
+    /**
+     * Compares this object with the specified object for order.  Returns a
+     * negative integer, zero, or a positive integer as this object is less
+     * than, equal to, or greater than the specified object.
+     *
+     * <p>The implementor must ensure
+     * {@code sgn(x.compareTo(y)) == -sgn(y.compareTo(x))}
+     * for all {@code x} and {@code y}.  (This
+     * implies that {@code x.compareTo(y)} must throw an exception iff
+     * {@code y.compareTo(x)} throws an exception.)
+     *
+     * <p>The implementor must also ensure that the relation is transitive:
+     * {@code (x.compareTo(y) > 0 && y.compareTo(z) > 0)} implies
+     * {@code x.compareTo(z) > 0}.
+     *
+     * <p>Finally, the implementor must ensure that {@code x.compareTo(y)==0}
+     * implies that {@code sgn(x.compareTo(z)) == sgn(y.compareTo(z))}, for
+     * all {@code z}.
+     *
+     * <p>It is strongly recommended, but <i>not</i> strictly required that
+     * {@code (x.compareTo(y)==0) == (x.equals(y))}.  Generally speaking, any
+     * class that implements the {@code Comparable} interface and violates
+     * this condition should clearly indicate this fact.  The recommended
+     * language is "Note: this class has a natural ordering that is
+     * inconsistent with equals."
+     *
+     * <p>In the foregoing description, the notation
+     * {@code sgn(}<i>expression</i>{@code )} designates the mathematical
+     * <i>signum</i> function, which is defined to return one of {@code -1},
+     * {@code 0}, or {@code 1} according to whether the value of
+     * <i>expression</i> is negative, zero, or positive, respectively.
+     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
+     * @throws NullPointerException if the specified object is null
+     * @throws ClassCastException   if the specified object's type prevents it
+     *                              from being compared to this object.
+     */
+    @Override
+    public int compareTo(Evaluation o) {
+        if (this == o) {
+            return EQUAL;
+        } else if (this == MIN_EVALUATION) {
+            return LESS_THAN;
+        } else if (this == MAX_EVALUATION) {
+            return GREATER_THAN;
+        } else if (this.loser == WHITE) {
+            if (o.loser == WHITE) {
+                return Integer.compare(this.depth, o.depth);
+            } else {
+                return LESS_THAN;
+            }
+        } else if (this.loser == BLACK) {
+            if (o.loser == BLACK) {
+                return Integer.compare(o.depth, this.depth);
+            } else {
+                return GREATER_THAN;
+            }
+        } else if (this.loser == TIE && o.loser == TIE) {
+            return EQUAL;
+        } else {
+            return Integer.compare(this.evaluation, o.evaluation);
+        }
     }
 }

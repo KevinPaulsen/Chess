@@ -3,6 +3,7 @@ package chess.model.chessai;
 import chess.Move;
 import chess.model.GameModel;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static chess.model.GameModel.IN_PROGRESS;
-import static chess.model.chessai.TranspositionTable.*;
+import static chess.model.chessai.Evaluation.*;
 
 /**
  * This class represents the computer player in a chess algorithm.
@@ -24,7 +25,7 @@ public class ChessAI {
      * evaluation. This may result in speed up due to transpositions
      * to the same position.
      */
-    private final TranspositionTable transpositionTable;
+    private final HashMap<Long, Evaluation> transpositionTable;
 
     /**
      * The evaluator this class uses to evaluate positions, and moves.
@@ -46,7 +47,7 @@ public class ChessAI {
     public ChessAI(Evaluator evaluator, GameModel game) {
         this.evaluator = evaluator;
         this.game = game;
-        this.transpositionTable = new TranspositionTable();
+        this.transpositionTable = new HashMap<>();
     }
 
     /**
@@ -113,37 +114,43 @@ public class ChessAI {
      * @return the Evaluation of the current position assuming optimal play.
      */
     private Evaluation miniMax(GameModel game, AlphaBeta alphaBeta, int depth) {
-        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
+        if (depth < 0) {
+            System.out.println("HOW DID THIS HAPPEN?");
+        }
+        if (depth <= 0 || game.getGameOverStatus() != IN_PROGRESS) {
             return evaluator.evaluate(game);
         }
 
         long hash = game.getZobristWithTimesMoved();
         boolean maximizingPlayer = game.getTurn() == 'w';
-        Evaluation bestEval = maximizingPlayer ? Evaluation.WORST_EVALUATION : Evaluation.BEST_EVALUATION;
+        Evaluation bestEval = maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
+        Move bestMove = null;
 
-        var tableValue = transpositionTable.get(hash);
+        Evaluation tableEval = transpositionTable.get(hash);
         // Search table for current position hash
-        if (tableValue != null) {
-            Evaluation tableEval = tableValue.getEvaluation();
-
+        if (tableEval != null) {
             // If tableDepth is >= current depth use value
-            if (tableEval.getDepth() == depth) {
+            if (tableEval.getDepth() >= depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
                 bestEval = tableEval;
-                if (tableValue.isExact()) {
+                bestMove = tableEval.getMove();
+                if (tableEval.isExact()) {
                     return bestEval;
-                } else if (tableValue.isLower()) {
-                    alphaBeta.betaMin(bestEval.getEvaluation());
-                } else if (tableValue.isUpper()) {
+                } else if(maximizingPlayer) {
                     alphaBeta.alphaMax(bestEval.getEvaluation());
+                } else {
+                    alphaBeta.betaMin(bestEval.getEvaluation());
                 }
             }
         }
 
         // Search through all the sorted moves
-        List<Move> sortedMoves = evaluator.getSortedMoves(game,
-                tableValue == null ? null : tableValue.getEvaluation().getMove());
+        List<Move> sortedMoves = evaluator.getSortedMoves(game, bestMove);
         boolean didBreak = false;
         for (Move move : sortedMoves) {
+            if (move == bestEval.getMove()) {
+                continue;
+            }
+
             // If we found a better path already, break.
             if (alphaBeta.betaLessThanAlpha()) {
                 didBreak = true;
@@ -154,31 +161,34 @@ public class ChessAI {
             game.move(move);
 
             // Evaluate the position
-            Evaluation currentEval = new Evaluation(move, miniMax(game, new AlphaBeta(alphaBeta), depth - 1));
+            Evaluation currentEval = miniMax(game, new AlphaBeta(alphaBeta), depth - 1);
 
             // Undo the move
             game.undoLastMove();
 
             if (maximizingPlayer) {
                 // If maximizing player, set the best eval to the max
-                bestEval = Evaluation.max(bestEval, currentEval);
-                alphaBeta.alphaMax(bestEval.getEvaluation());
-            } else {
+                if (bestEval.compareTo(currentEval) < 0) {
+                    bestEval = currentEval;
+                    bestMove = move;
+                    alphaBeta.alphaMax(bestEval.getEvaluation());
+                }
+            } else if (bestEval.compareTo(currentEval) > 0) {
                 // If minimizing player, set the best eval to the min
-                bestEval = Evaluation.min(bestEval, currentEval);
+                bestEval = currentEval;
+                bestMove = move;
                 alphaBeta.betaMin(bestEval.getEvaluation());
             }
         }
+        if (bestEval != tableEval) {
+            bestEval = new Evaluation(bestMove, bestEval, didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
+        }
 
         // Add best Eval to transposition table.
-        if (bestEval != Evaluation.BEST_EVALUATION && bestEval != Evaluation.WORST_EVALUATION) {
-            tableValue = transpositionTable.get(hash);
-            if (tableValue == null || tableValue.getEvaluation().getDepth() < bestEval.getDepth()) {
-                if (didBreak) {
-                    transpositionTable.put(hash, bestEval, maximizingPlayer ? LOWER : UPPER);
-                } else {
-                    transpositionTable.put(hash, bestEval, EXACT);
-                }
+        if (bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
+            tableEval = transpositionTable.get(hash);
+            if (tableEval == null || tableEval.getDepth() < depth) {
+                transpositionTable.put(hash, bestEval);
             }
         }
 
