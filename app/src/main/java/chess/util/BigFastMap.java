@@ -1,8 +1,9 @@
 package chess.util;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
-public class BigFastMap {
+public class BigFastMap implements Iterable<Long> {
 
     private static final int LONG_SIZE = 64;
 
@@ -14,6 +15,10 @@ public class BigFastMap {
 
     public BigFastMap(long initialValue, int startSize) {
         this.map = new long[calculateSize(startSize)];
+    }
+
+    public BigFastMap(long[] map) {
+        this.map = map;
     }
 
     public void flipBit(int bitIdx) {
@@ -64,5 +69,19 @@ public class BigFastMap {
     @Override
     public int hashCode() {
         return Arrays.hashCode(map);
+    }
+
+    public int numBytes() {
+        return map.length * Long.BYTES;
+    }
+
+    /**
+     * Returns an iterator over elements of type {@code T}.
+     *
+     * @return an Iterator.
+     */
+    @Override
+    public Iterator<Long> iterator() {
+        return Arrays.stream(map).iterator();
     }
 }
