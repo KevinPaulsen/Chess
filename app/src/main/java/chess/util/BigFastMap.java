@@ -21,6 +21,10 @@ public class BigFastMap implements Iterable<Long> {
         this.map = map;
     }
 
+    private static int calculateSize(int size) {
+        return size / LONG_SIZE + 1;
+    }
+
     public void flipBit(int bitIdx) {
         while (calculateSize(bitIdx) > map.length) {
             grow();
@@ -32,10 +36,6 @@ public class BigFastMap implements Iterable<Long> {
 
     private void grow() {
         map = Arrays.copyOf(map, map.length + 1);
-    }
-
-    private static int calculateSize(int size) {
-        return size / LONG_SIZE + 1;
     }
 
     @Override

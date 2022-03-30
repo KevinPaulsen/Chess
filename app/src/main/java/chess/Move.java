@@ -2,10 +2,10 @@ package chess;
 
 import chess.model.pieces.Piece;
 
-import java.util.Locale;
 import java.util.Objects;
 
-import static chess.model.pieces.Piece.*;
+import static chess.model.pieces.Piece.BLACK_PAWN;
+import static chess.model.pieces.Piece.WHITE_PAWN;
 
 /**
  * This class contains all the information needed to make a move.
@@ -56,7 +56,7 @@ public class Move {
      * Creates a move that does not capture or do anything special.
      *
      * @param endingCoordinate the ending coordinate.
-     * @param movingPiece the moving piece.
+     * @param movingPiece      the moving piece.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece) {
         this(startingCoordinate, endingCoordinate, movingPiece,
@@ -67,12 +67,12 @@ public class Move {
      * Creates a move that interacts with another piece. This could be a
      * standard capture, or a castling move.
      *
-     * @param startingCoordinate the coordinate the moving piece starts on.
-     * @param endingCoordinate the coordinate the moving piece moves to.
-     * @param movingPiece the piece that is moved.
+     * @param startingCoordinate    the coordinate the moving piece starts on.
+     * @param endingCoordinate      the coordinate the moving piece moves to.
+     * @param movingPiece           the piece that is moved.
      * @param interactingPieceStart the coordinate the interacting piece starts on.
-     * @param interactingPieceEnd the coordinate the interacting piece moves to.
-     * @param interactingPiece the piece the moving piece interacts with.
+     * @param interactingPieceEnd   the coordinate the interacting piece moves to.
+     * @param interactingPiece      the piece the moving piece interacts with.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
@@ -84,8 +84,8 @@ public class Move {
      * Creates a standard promotion move that does not capture.
      *
      * @param endingCoordinate the coordinate the moving piece moves to.
-     * @param movingPiece the piece that is moved.
-     * @param promotedPiece the piece the moving piece promotes to.
+     * @param movingPiece      the piece that is moved.
+     * @param promotedPiece    the piece the moving piece promotes to.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece, Piece promotedPiece) {
         this(startingCoordinate, endingCoordinate, movingPiece, null, null, null, promotedPiece);
@@ -94,11 +94,11 @@ public class Move {
     /**
      * Creates a move that interacts with another piece and promotes.
      *
-     * @param endingCoordinate the coordinate the moving piece moves to.
-     * @param movingPiece the piece that is moved.
+     * @param endingCoordinate    the coordinate the moving piece moves to.
+     * @param movingPiece         the piece that is moved.
      * @param interactingPieceEnd the coordinate the interacting piece moves to.
-     * @param interactingPiece the piece the moving piece interacts with.
-     * @param promotedPiece the piece the moving piece promotes to.
+     * @param interactingPiece    the piece the moving piece interacts with.
+     * @param promotedPiece       the piece the moving piece promotes to.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece,

@@ -1,8 +1,6 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.model.BoardModel;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,35 +59,6 @@ public enum Piece {
         this.uniqueIdx = uniqueIdx;
     }
 
-    /**
-     * @return the reachableCoordinateMap of this piece.
-     */
-    public List<List<ChessCoordinate>> getReachableCoordinateMapFrom(ChessCoordinate coordinate) {
-        return reachableCoordinateMap.getReachableCoordinatesFrom(coordinate);
-    }
-
-    /**
-     * @return the color of this piece.
-     */
-    public char getColor() {
-        return color;
-    }
-
-    /**
-     * @return the string representation of this piece.
-     */
-    public String getStringRep() {
-        return stringRep;
-    }
-
-    public int getUniqueIdx() {
-        return uniqueIdx;
-    }
-
-    public boolean isPawn() {
-        return this == WHITE_PAWN || this == BLACK_PAWN;
-    }
-
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
@@ -100,10 +69,10 @@ public enum Piece {
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
-            result.add(ImmutableList.copyOf(ray));
+            result.add(ray);
         }
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     /**
@@ -131,7 +100,7 @@ public enum Piece {
             result.add(List.of());
         }
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     private static List<List<ChessCoordinate>> generateRookReachableCoordsAt(ChessCoordinate coordinate) {
@@ -144,10 +113,10 @@ public enum Piece {
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
-            result.add(ImmutableList.copyOf(ray));
+            result.add(ray);
         }
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     private static List<List<ChessCoordinate>> generateBishopReachableCoordsAt(ChessCoordinate coordinate) {
@@ -160,10 +129,10 @@ public enum Piece {
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
-            result.add(ImmutableList.copyOf(ray));
+            result.add(ray);
         }
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     private static List<List<ChessCoordinate>> generateKnightReachableCoordsAt(ChessCoordinate coordinate) {
@@ -174,7 +143,7 @@ public enum Piece {
             result.add(nextCoord == null ? List.of() : List.of(nextCoord));
         }
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     /**
@@ -214,10 +183,10 @@ public enum Piece {
             result.add(List.of());
             result.add(List.of());
         }
-        result.add(0, ImmutableList.copyOf(straightMoves));
+        result.add(0, straightMoves);
 
 
-        return ImmutableList.copyOf(result);
+        return result;
     }
 
     /**
@@ -229,6 +198,7 @@ public enum Piece {
      * @param coordinate the coordinate the pawn is at.
      * @return list of lists of ChessCoordinates that represent the squares the pawn can move.
      */
+    @SuppressWarnings("unchecked")
     private static List<List<ChessCoordinate>> generateBlackPawnReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
@@ -255,11 +225,38 @@ public enum Piece {
             }
         } else {
             result.add(List.of());
-            result.add(List.of());
         }
-        result.add(0, ImmutableList.copyOf(straightMoves));
+        result.add(0, List.of(straightMoves.toArray(straightMoves.toArray(ChessCoordinate[]::new))));
 
+        return List.of(result.toArray(size -> (List<ChessCoordinate>[]) new List[size]));
+    }
 
-        return ImmutableList.copyOf(result);
+    /**
+     * @return the reachableCoordinateMap of this piece.
+     */
+    public List<List<ChessCoordinate>> getReachableCoordinateMapFrom(ChessCoordinate coordinate) {
+        return reachableCoordinateMap.getReachableCoordinatesFrom(coordinate);
+    }
+
+    /**
+     * @return the color of this piece.
+     */
+    public char getColor() {
+        return color;
+    }
+
+    /**
+     * @return the string representation of this piece.
+     */
+    public String getStringRep() {
+        return stringRep;
+    }
+
+    public int getUniqueIdx() {
+        return uniqueIdx;
+    }
+
+    public boolean isPawn() {
+        return this == WHITE_PAWN || this == BLACK_PAWN;
     }
 }

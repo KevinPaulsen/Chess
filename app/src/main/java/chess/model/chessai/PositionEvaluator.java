@@ -2,7 +2,6 @@ package chess.model.chessai;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.BoardModel;
 import chess.model.GameModel;
 import chess.model.MoveGenerator;
 import chess.model.pieces.Piece;
@@ -87,7 +86,7 @@ public class PositionEvaluator implements Evaluator {
      * into this evaluators best guess from most-likely to be the best move, to least
      * likely.
      *
-     * @param game The game to get moves from.
+     * @param game     The game to get moves from.
      * @param hashMove A previous found best move, null if none exists.
      * @return the list of sorted legal moves.
      */

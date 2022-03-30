@@ -1,7 +1,6 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.model.BoardModel;
 
 import java.util.Objects;
 
@@ -25,6 +24,41 @@ public class Direction {
     public Direction(int rise, int run) {
         this.rise = rise;
         this.run = run;
+    }
+
+    private static int scaleToOne(int num) {
+        return num == 0 ? 0 : num / Math.abs(num);
+    }
+
+    public static Direction getDirectionTo(ChessCoordinate start, ChessCoordinate end) {
+        int riseOffset = end.getRank() - start.getRank();
+        int runOffset = end.getFile() - start.getFile();
+        return new Direction(riseOffset, runOffset);
+    }
+
+    /**
+     * If the two directions are axially aligned or diagonally aligned, a direction
+     * between the two is returned. Null otherwise.
+     *
+     * @param start the starting coordinate
+     * @param end   the ending coordinate
+     * @return the direction between the two
+     */
+    public static Direction getNormalDirectionTo(ChessCoordinate start, ChessCoordinate end) {
+        int riseOffset = end.getRank() - start.getRank();
+        int runOffset = end.getFile() - start.getFile();
+
+        if (riseOffset == 0 || runOffset == 0 || Math.abs(riseOffset) == Math.abs(runOffset)) {
+            return new Direction(scaleToOne(riseOffset), scaleToOne(runOffset));
+        }
+        return null;
+    }
+
+    public static boolean areMajorlyAligned(ChessCoordinate start, ChessCoordinate end) {
+        int riseOffset = end.getRank() - start.getRank();
+        int runOffset = end.getFile() - start.getFile();
+        double slope = runOffset == 0 ? 0 : ((double) riseOffset) / runOffset;
+        return slope == 0 || Math.abs(slope) == 1;
     }
 
     /**
@@ -61,43 +95,8 @@ public class Direction {
         return run;
     }
 
-    private static int scaleToOne(int num) {
-        return num == 0 ? 0 : num / Math.abs(num);
-    }
-
     public Direction getOpposite() {
         return new Direction(-rise, -run);
-    }
-
-    public static Direction getDirectionTo(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-        return new Direction(riseOffset, runOffset);
-    }
-
-    /**
-     * If the two directions are axially aligned or diagonally aligned, a direction
-     * between the two is returned. Null otherwise.
-     *
-     * @param start the starting coordinate
-     * @param end the ending coordinate
-     * @return the direction between the two
-     */
-    public static Direction getNormalDirectionTo(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-
-        if (riseOffset == 0 || runOffset == 0 || Math.abs(riseOffset) == Math.abs(runOffset)) {
-            return new Direction(scaleToOne(riseOffset), scaleToOne(runOffset));
-        }
-        return null;
-    }
-
-    public static boolean areMajorlyAligned(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-        double slope = runOffset == 0 ? 0 : ((double) riseOffset) / runOffset;
-        return slope == 0 || Math.abs(slope) == 1;
     }
 
     public boolean isDiagonal() {

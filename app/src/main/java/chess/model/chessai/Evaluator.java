@@ -1,6 +1,5 @@
 package chess.model.chessai;
 
-import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.GameModel;
 import chess.model.pieces.Piece;
@@ -10,6 +9,17 @@ import java.util.List;
 import static chess.model.chessai.Constants.*;
 
 public interface Evaluator {
+
+    static int getValue(Piece piece) {
+        return switch (piece) {
+            case WHITE_PAWN, BLACK_PAWN -> PAWN_SCORE;
+            case WHITE_KNIGHT, BLACK_KNIGHT -> KNIGHT_SCORE;
+            case WHITE_BISHOP, BLACK_BISHOP -> BISHOP_SCORE;
+            case WHITE_ROOK, BLACK_ROOK -> ROOK_SCORE;
+            case WHITE_QUEEN, BLACK_QUEEN -> QUEEN_SCORE;
+            default -> 0;
+        };
+    }
 
     /**
      * Evaluates the given game and returns an evaluation of this position. The
@@ -25,20 +35,9 @@ public interface Evaluator {
      * into this evaluators best guess from most-likely to be the best move, to least
      * likely.
      *
-     * @param game The game to get moves from.
+     * @param game     The game to get moves from.
      * @param hashMove A previous found best move, null if none exists.
      * @return the list of sorted legal moves.
      */
     List<Move> getSortedMoves(GameModel game, Move hashMove);
-
-    static int getValue(Piece piece) {
-        return switch (piece) {
-            case WHITE_PAWN, BLACK_PAWN -> PAWN_SCORE;
-            case WHITE_KNIGHT, BLACK_KNIGHT -> KNIGHT_SCORE;
-            case WHITE_BISHOP, BLACK_BISHOP -> BISHOP_SCORE;
-            case WHITE_ROOK, BLACK_ROOK -> ROOK_SCORE;
-            case WHITE_QUEEN, BLACK_QUEEN -> QUEEN_SCORE;
-            default -> 0;
-        };
-    }
 }

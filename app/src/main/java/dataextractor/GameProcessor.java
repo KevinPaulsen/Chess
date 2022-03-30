@@ -11,13 +11,20 @@ import java.util.Map;
 
 public class GameProcessor {
 
-    private static final GameModel GAME_MODEL = new GameModel();
+    private static final GameModel GAME_MODEL = new GameModel(false);
     private static final int MIN_MOVE = 3;
     private static final int MAX_MOVE = 60;
+    private static final byte PIECE = 0;
+    private static final byte START_FILE = 1;
+    private static final byte START_RANK = 2;
+    private static final byte END_FILE = 3;
+    private static final byte END_RANK = 4;
+    private static final byte EQUALS = 5;
+    private static final byte PROMOTION = 6;
 
     public static void processGame(String moves,
                                    Map<BigFastMap, int[]> posToWins) {
-        GameModel game = new GameModel(GAME_MODEL);
+        GameModel game = new GameModel(false);
         String[] moveStrings = moves.split("\t");
         String winString = moveStrings[moveStrings.length - 1];
 
@@ -30,7 +37,8 @@ public class GameProcessor {
                 }
                 Move move = getMove(game, stringMove);
                 if (game.move(move)) moveNum++;
-                if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
+                else System.out.printf("Move (%s), was not valid.\n", move);
+                /*if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
                     BigFastMap key = game.getRep();
                     if (posToWins.containsKey(key)) {
                         if (winner != -1) {
@@ -40,13 +48,21 @@ public class GameProcessor {
                         int[] winData = winner == 0 ? new int[]{1, 0} : winner == 1 ? new int[]{0, 1} : new int[]{0, 0};
                         posToWins.put(key, winData);
                     }
-                }
+                }//*/
             }
+        }
+
+        while (game.getLastMove() != null) {
+            game.undoLastMove();
         }
     }
 
     private static Move getMove(GameModel game, String stringMove) {
         List<Move> legalMoves = game.getLegalMoves();
+
+        /*if (game.getZobristHash() == 521234645117425928L) {
+            System.out.println("Found it");
+        }//*/
 
         boolean isCastleMove = stringMove.contains("-");
         char[] charRep = isCastleMove ? new char[0] : makeCharRep(stringMove);
@@ -54,6 +70,7 @@ public class GameProcessor {
         for (Move move : legalMoves) {
             ChessCoordinate endCoord = move.getEndingCoordinate();
             Piece movingPiece = move.getMovingPiece();
+
             if (isCastleMove) {
                 if (move.doesCastle()
                         && ((endCoord.getFile() == 6 && stringMove.length() < 5)
@@ -63,63 +80,67 @@ public class GameProcessor {
                     continue;
                 }
             }
-            boolean isPawnMove = movingPiece == Piece.WHITE_PAWN || movingPiece == Piece.BLACK_PAWN;
 
-            if (isPawnMove || charRep[0] == movingPiece.getStringRep().toUpperCase().charAt(0)) {
-                if (charRep[3] != endCoord.getCharFile()
-                        || charRep[4] - 48 != endCoord.getCharRank()) {
-                    continue;
-                }
-
-                if (charRep[1] != 0) {
-                    ChessCoordinate startingCoordinate = move.getStartingCoordinate();
-                    if (charRep[1] >= 97) {
-                        if (charRep[1] != startingCoordinate.getCharFile()) {
-                            continue;
-                        }
-                    } else {
-                        if (charRep[1] - 48 != startingCoordinate.getCharRank()) {
-                            continue;
-                        }
-                    }
-                } else if (charRep[5] == '=' && move.getPromotedPiece().getStringRep().toUpperCase().charAt(0)
-                        != charRep[6]) {
-                    continue;
-                }
-
-                return move;
+            if (!movingPiece.isPawn() && charRep[PIECE] != movingPiece.getStringRep().toUpperCase().charAt(0)) {
+                continue;
             }
+
+            // Ensure that the end coordinate is correct.
+            if (charRep[END_FILE] != endCoord.getCharFile() || charRep[END_RANK] - '0' != endCoord.getCharRank()) {
+                continue;
+            }
+
+            ChessCoordinate startingCoordinate = move.getStartingCoordinate();
+
+            if (charRep[START_FILE] != 0 && charRep[START_FILE] != startingCoordinate.getCharFile()) {
+                continue;
+            }
+
+            if (charRep[START_RANK] != 0 && charRep[START_RANK] - '0' != startingCoordinate.getCharRank()) {
+                continue;
+            }
+
+            if (charRep[EQUALS] == '=' && move.getPromotedPiece().getStringRep().toUpperCase().charAt(0) != charRep[PROMOTION]) {
+                continue;
+            }
+
+            return move;
         }
         return null;
     }
 
     private static char[] makeCharRep(String stringMove) {
+        // [PIECE, START_FILE, START_RANK, END_FILE, END_RANK, EQUALS, PROMOTION_PIECE]
         char[] charRep = new char[7];
 
         char possibleCheckChar = stringMove.charAt(stringMove.length() - 1);
         int endIdx = stringMove.length() - (possibleCheckChar == '+' || possibleCheckChar == '#' ? 2 : 1);
         if (stringMove.charAt(endIdx - 1) == '=') {
-            charRep[5] = '=';
-            charRep[6] = stringMove.charAt(endIdx--);
+            charRep[EQUALS] = '=';
+            charRep[PROMOTION] = stringMove.charAt(endIdx--);
             endIdx--;
         }
 
-        charRep[4] = stringMove.charAt(endIdx--); // Rank
-        charRep[3] = stringMove.charAt(endIdx--); // File
+        charRep[END_RANK] = stringMove.charAt(endIdx--); // Rank
+        charRep[END_FILE] = stringMove.charAt(endIdx--); // File
 
         if (endIdx >= 0) {
+            boolean isPawn = false;
             char currentChar = stringMove.charAt(endIdx);
             if (currentChar == 'x') {
-                charRep[2] = currentChar;
-                endIdx--;
-                currentChar = stringMove.charAt(endIdx);
+                currentChar = stringMove.charAt(--endIdx);
+                isPawn = true;
             }
-            if (currentChar >= 97 || currentChar < 57) {
-                charRep[1] = currentChar;
+            if (currentChar <= '8') {
+                charRep[START_RANK] = currentChar;
+                currentChar = stringMove.charAt(--endIdx);
+            }
+            if ((isPawn || endIdx > 0) && currentChar >= 'a') {
+                charRep[START_FILE] = currentChar;
                 endIdx--;
             }
             if (endIdx == 0) {
-                charRep[0] = stringMove.charAt(endIdx);
+                charRep[PIECE] = stringMove.charAt(endIdx);
             }
         }
 

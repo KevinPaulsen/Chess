@@ -1,7 +1,6 @@
 package chess.model.pieces;
 
 import chess.ChessCoordinate;
-import chess.model.BoardModel;
 
 import java.util.List;
 
@@ -25,16 +24,6 @@ public class ReachableCoordinatesMap {
         reachableCoordinatesMap = ReachableCoordinatesMap.generateReachableCoordinates(mapMaker);
     }
 
-    /**
-     * Gets the list of coordinates reachable from a given coordinate
-     *
-     * @param coordinate the coordinate the piece starts on.
-     * @return the list of coordinates reachable from a given coordinate.
-     */
-    public List<List<ChessCoordinate>> getReachableCoordinatesFrom(ChessCoordinate coordinate) {
-        return reachableCoordinatesMap[coordinate.getOndDimIndex()];
-    }
-
     @SuppressWarnings("unchecked")
     private static List<List<ChessCoordinate>>[] generateReachableCoordinates(CoordinateMapMaker mapMaker) {
         List<List<ChessCoordinate>>[] result = new List[64];
@@ -48,6 +37,16 @@ public class ReachableCoordinatesMap {
         }
 
         return result;
+    }
+
+    /**
+     * Gets the list of coordinates reachable from a given coordinate
+     *
+     * @param coordinate the coordinate the piece starts on.
+     * @return the list of coordinates reachable from a given coordinate.
+     */
+    public List<List<ChessCoordinate>> getReachableCoordinatesFrom(ChessCoordinate coordinate) {
+        return reachableCoordinatesMap[coordinate.getOndDimIndex()];
     }
 
     interface CoordinateMapMaker {

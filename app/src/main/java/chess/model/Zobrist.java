@@ -38,6 +38,38 @@ public class Zobrist {
         this.hashValue = hashValue;
     }
 
+    private static long[][] makeHashTable() {
+        long[][] result = new long[64][13];
+
+        for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
+            for (int pieceIdx = 0; pieceIdx < 13; pieceIdx++) {
+                result[coordIdx][pieceIdx] = generateHash();
+            }
+        }
+
+        return result;
+    }
+
+    private static long[] makeTable(int size) {
+        long[] result = new long[size];
+
+        for (int coordIdx = 0; coordIdx < size; coordIdx++) {
+            result[coordIdx] = generateHash();
+        }
+
+        return result;
+    }
+
+    private static long generateHash() {
+        long hash = 0;
+        for (int bit = 0; bit < 64; bit++) {
+            if (RANDOM.nextBoolean()) {
+                hash |= 1L << bit;
+            }
+        }
+        return hash;
+    }
+
     public void slowZobrist(GameModel game) {
         BoardModel board = game.getBoard();
 
@@ -103,37 +135,5 @@ public class Zobrist {
         }
 
         return hashValue ^ numTimesReachedTable[numTimesReached - 1];
-    }
-
-    private static long[][] makeHashTable() {
-        long[][] result = new long[64][13];
-
-        for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
-            for (int pieceIdx = 0; pieceIdx < 13; pieceIdx++) {
-                result[coordIdx][pieceIdx] = generateHash();
-            }
-        }
-
-        return result;
-    }
-
-    private static long[] makeTable(int size) {
-        long[] result = new long[size];
-
-        for (int coordIdx = 0; coordIdx < size; coordIdx++) {
-            result[coordIdx] = generateHash();
-        }
-
-        return result;
-    }
-
-    private static long generateHash() {
-        long hash = 0;
-        for (int bit = 0; bit < 64; bit++) {
-            if (RANDOM.nextBoolean()) {
-                hash |= 1L << bit;
-            }
-        }
-        return hash;
     }
 }

@@ -8,7 +8,6 @@ import chess.util.FastMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -95,7 +94,7 @@ public class GameModel {
     /**
      * The list of past moves that have occurred in this chess game.
      */
-    private final LinkedList<Move> moveHistory;
+    private final List<Move> moveHistory;
 
     /**
      * The list of each state the board was in before each move. This List
@@ -106,7 +105,7 @@ public class GameModel {
      * Bits 6-7 are game over bits. 00 is in progress, 01 loser, 10 draw.
      * bits 8-13 are the enPassant coordinate.
      */
-    private final LinkedList<FastMap> stateHistory;
+    private final List<FastMap> stateHistory;
 
     /**
      * The map that tracks the number of times each position has occurred.
@@ -118,7 +117,7 @@ public class GameModel {
      * The list of previous legal moves. This is here so the moves don't have
      * to be recalculated on move undo.
      */
-    private final LinkedList<List<Move>> previousLegalMoves;
+    private final List<List<Move>> previousLegalMoves;
 
     /**
      * The move generator for this game.
@@ -130,11 +129,17 @@ public class GameModel {
      */
     private final Zobrist zobrist;
 
+    private final boolean threeFold;
+
     /**
      * The default constructor that creates a normal game.
      */
     public GameModel() {
-        this("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        this(true);
+    }
+
+    public GameModel(boolean threeFold) {
+        this("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", threeFold);
     }
 
     /**
@@ -145,7 +150,7 @@ public class GameModel {
      * @param gameModel the GameModel to copy
      */
     public GameModel(GameModel gameModel) {
-        this(gameModel.getFEN());
+        this(gameModel.getFEN(), gameModel.threeFold);
 
         stateHistory.clear();
         for (FastMap fastMap : gameModel.stateHistory) {
@@ -161,24 +166,29 @@ public class GameModel {
         this.positionTracker.putAll(gameModel.positionTracker);
     }
 
+    public GameModel(String FEN) {
+        this(FEN, true);
+    }
+
     /**
      * Creates a game from the given FEN string. Behavior is undefined
      * when the FEN string is not properly formatted.
      *
      * @param FEN the FEN string for this game.
      */
-    public GameModel(String FEN) {
+    public GameModel(String FEN, boolean threeFold) {
         // Split the FEN into each of its 6 sections.
         String[] fenSections = FEN.split(" ");
 
         // Instantiate each of the fields of this GameModel.
         this.zobrist = new Zobrist();
         this.board = new BoardModel(fenSections[0], this.zobrist);
-        this.moveHistory = new LinkedList<>();
-        this.stateHistory = new LinkedList<>();
+        this.moveHistory = new ArrayList<>();
+        this.stateHistory = new ArrayList<>();
         this.positionTracker = new HashMap<>();
         this.moveGenerator = new MoveGenerator(this);
-        this.previousLegalMoves = new LinkedList<>();
+        this.previousLegalMoves = new ArrayList<>();
+        this.threeFold = threeFold;
 
         // Check for EnPassant target
         ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ? ChessCoordinate
@@ -205,6 +215,29 @@ public class GameModel {
 
         // Set the current position tracker to 1
         positionTracker.put(zobrist.getHashValue(), 1);
+    }
+
+    /**
+     * Check if an enPassant square needs to be set.
+     *
+     * @param state    the state to update
+     * @param lastMove the last move made
+     */
+    private static void checkEnPassant(FastMap state, Move lastMove) {
+        if (lastMove == null) {
+            throw new IllegalArgumentException("lastMove cannot be null");
+        }
+        ChessCoordinate enPassantTarget = null;
+        if (lastMove.getMovingPiece().isPawn()
+                && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
+            int rank = lastMove.getStartingCoordinate().getRank() == 1 ? 2 : 5;
+            enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
+        }
+
+        state.clearMask(EN_PASSANT_MASK);
+        if (enPassantTarget != null) {
+            state.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
+        }
     }
 
     private void addInitialState(boolean whiteKingCastle, boolean whiteQueenCastle,
@@ -307,13 +340,13 @@ public class GameModel {
             board.undoMove(move);
 
             // remove the current move from move history.
-            moveHistory.pollLast();
+            moveHistory.remove(moveHistory.size() - 1);
 
             // Remove the current state from stateHistory.
-            stateHistory.pollLast();
+            stateHistory.remove(stateHistory.size() - 1);
 
             // Remove the current legal moves
-            previousLegalMoves.pollLast();
+            previousLegalMoves.remove(previousLegalMoves.size() - 1);
 
             // Update zobrist
             zobrist.updateGameData(getGameState());
@@ -345,7 +378,7 @@ public class GameModel {
         List<Move> legalMoves = getLegalMoves();
         FastMap currentState = getGameState();
 
-        if (positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
+        if (threeFold && positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
             // If this position has been reached 3 times, the game is a draw
             currentState.mergeMask(DRAW_MASK);
         } else if (legalMoves.size() == 0) {
@@ -360,28 +393,9 @@ public class GameModel {
     }
 
     /**
-     * Check if an enPassant square needs to be set.
-     *
-     * @param state the state to update
-     * @param lastMove the last move made
-     */
-    private static void checkEnPassant(FastMap state, Move lastMove) {
-        ChessCoordinate enPassantTarget = null;
-        if (lastMove.getMovingPiece().isPawn()
-                && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
-            int rank = lastMove.getStartingCoordinate().getRank() == 1 ? 2 : 5;
-            enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
-        }
-
-        state.clearMask(EN_PASSANT_MASK);
-        if (enPassantTarget != null) {
-            state.mergeMask(((long) enPassantTarget.getOndDimIndex()) << 7);
-        }
-    }
-
-    /**
      * Check if castling data needs to be updated
-     * @param state the state to update
+     *
+     * @param state          the state to update
      * @param whiteKingCoord the coordinate of the white king
      * @param blackKingCoord the coordinate of the black king
      */
@@ -456,7 +470,7 @@ public class GameModel {
      * @return the last move made.
      */
     public Move getLastMove() {
-        return moveHistory.peekLast();
+        return moveHistory.size() > 0 ? moveHistory.get(moveHistory.size() - 1) : null;
     }
 
     /**
@@ -470,7 +484,7 @@ public class GameModel {
      * @return the gameState.
      */
     public FastMap getGameState() {
-        return stateHistory.peekLast();
+        return stateHistory.size() > 0 ? stateHistory.get(stateHistory.size() - 1) : null;
     }
 
     /**

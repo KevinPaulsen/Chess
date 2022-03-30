@@ -13,14 +13,11 @@ public class Evaluation implements Comparable<Evaluation> {
     public static final byte EXACT = 0;
     public static final byte UPPER = 1;
     public static final byte LOWER = 2;
-
+    public static final char NO_LOSER = 'n';
+    public static final char TIE = 'T';
     private static final byte LESS_THAN = -1;
     private static final byte EQUAL = 0;
     private static final byte GREATER_THAN = 1;
-
-    public static final char NO_LOSER = 'n';
-    public static final char TIE = 'T';
-
     private final Move move;
     private final int evaluation;
     private final char loser;

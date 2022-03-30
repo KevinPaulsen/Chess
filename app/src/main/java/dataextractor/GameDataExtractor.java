@@ -26,12 +26,6 @@ public class GameDataExtractor {
         this.reader = new PGNReader(pgnPathname);
     }
 
-    public void writeGame(Writer writer) {
-        while (reader.hasNext() && writer != null) {
-            writeTo(writer, reader.next());
-        }
-    }
-
     private static void writeTo(Writer writer, String string) {
         try {
             writer.write(string);
@@ -84,17 +78,23 @@ public class GameDataExtractor {
 
         FlattenedFileReader fileReader = new FlattenedFileReader(FLATTENED_FILENAME);
         int numPlayed = 0;
+        long startTime = System.nanoTime();
         while (fileReader.hasNext()) {
             GameProcessor.processGame(fileReader.next(), posToWins);
             numPlayed++;
-            if (numPlayed % 10_000 == 0) {
-                System.out.printf("Successfully processed %d games\n", numPlayed);
+            if (numPlayed % 50_000 == 0) {
+                long endTime = System.nanoTime();
+                System.out.printf("Successfully processed %d games (%d μs per game)\n", numPlayed, (endTime - startTime) / (50_000 * 1_000L));
+
+                /*
                 if (numPlayed % PRUNE_NUM == 0) {
                     System.out.println("Pruning...");
                     int startSize = posToWins.size();
                     pruneMap(posToWins, numPlayed / PRUNE_NUM);
                     System.out.printf("Successfully pruned %d entries.\n", startSize - posToWins.size());
                 }
+                 */
+                startTime = System.nanoTime();
             }
         }
 
@@ -115,5 +115,11 @@ public class GameDataExtractor {
     public static void main(String[] args) {
         //flattenData();
         processData();
+    }
+
+    public void writeGame(Writer writer) {
+        while (reader.hasNext() && writer != null) {
+            writeTo(writer, reader.next());
+        }
     }
 }

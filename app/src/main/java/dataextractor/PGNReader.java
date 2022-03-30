@@ -16,6 +16,18 @@ public class PGNReader implements Iterator<String> {
         nextGameString = getNextGameString();
     }
 
+    private static Scanner getPGNScanner(String pathName) {
+        File pgnFile = new File(pathName);
+        Scanner scanner;
+        try {
+            scanner = new Scanner(pgnFile);
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+            scanner = null;
+        }
+        return scanner;
+    }
+
     private String formatLine(String line) {
         line = line.replaceAll("([0-9]+[.-])", "");
         line = line.replaceAll("\\s+", "\t");
@@ -76,17 +88,5 @@ public class PGNReader implements Iterator<String> {
         String result = this.nextGameString;
         nextGameString = getNextGameString();
         return result;
-    }
-
-    private static Scanner getPGNScanner(String pathName) {
-        File pgnFile = new File(pathName);
-        Scanner scanner;
-        try {
-            scanner = new Scanner(pgnFile);
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-            scanner = null;
-        }
-        return scanner;
     }
 }

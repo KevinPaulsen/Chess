@@ -1,7 +1,5 @@
 package chess;
 
-import java.util.Objects;
-
 /**
  * This class contains both the integer and normal
  * coordinates for a chess board.
@@ -103,30 +101,6 @@ public enum ChessCoordinate {
         this.bitMask = 1L << ondDimIndex;
     }
 
-    public char getCharFile() {
-        return charFile;
-    }
-
-    public int getCharRank() {
-        return charRank;
-    }
-
-    public int getFile() {
-        return file;
-    }
-
-    public int getRank() {
-        return rank;
-    }
-
-    public int getOndDimIndex() {
-        return ondDimIndex;
-    }
-
-    public long getBitMask() {
-        return bitMask;
-    }
-
     public static boolean isInBounds(int file, int rank) {
         return 0 <= file && file <= 7 && 0 <= rank && rank <= 7;
     }
@@ -207,6 +181,30 @@ public enum ChessCoordinate {
             case 63 -> H8;
             default -> throw new IllegalStateException("Unexpected value: " + oneDimIdx);
         };
+    }
+
+    public char getCharFile() {
+        return charFile;
+    }
+
+    public int getCharRank() {
+        return charRank;
+    }
+
+    public int getFile() {
+        return file;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public int getOndDimIndex() {
+        return ondDimIndex;
+    }
+
+    public long getBitMask() {
+        return bitMask;
     }
 
     @Override

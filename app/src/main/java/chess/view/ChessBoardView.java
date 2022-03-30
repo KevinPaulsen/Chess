@@ -27,8 +27,8 @@ public class ChessBoardView extends JPanel {
      * Creates a new ChessBoardView from the given board,
      * MouseListener and MouseMotionListener.
      *
-     * @param board the board to display
-     * @param mouseListener the mouseListener for the PieceViews to use.
+     * @param board          the board to display
+     * @param mouseListener  the mouseListener for the PieceViews to use.
      * @param motionListener the MouseMotionListener for the PieceViews to use.
      */
     public ChessBoardView(Piece[] board, MouseListener mouseListener,
@@ -37,6 +37,49 @@ public class ChessBoardView extends JPanel {
         squaresPanel = new JPanel(new GridLayout(8, 8));
         piecesPanel = new JPanel(new GridLayout(8, 8));
         initBoardView(board, mouseListener, motionListener);
+    }
+
+    /**
+     * Returns the ZOrder of the piece on the given ChessCoordinate.
+     *
+     * @param coordinate the chessCoordinate to get the ZOrder of
+     * @return the ZOrder of the piece on the given coordinate
+     */
+    private static int getZOrder(ChessCoordinate coordinate) {
+        return (7 - coordinate.getRank()) * 8 + coordinate.getFile();
+    }
+
+    /**
+     * Creates a new Square from the given rank and file.
+     *
+     * @param rank the rank of this SquareView.
+     * @param file the file of this SquareView.
+     * @return the SquareView corresponding to the given rank and file.
+     */
+    private static JPanel makeSquare(int rank, int file) {
+        JPanel panel = new JPanel();
+        float[] darkHSB = Color.RGBtoHSB(180, 136, 99, null);
+        float[] lightHSB = Color.RGBtoHSB(240, 217, 181, null);
+        panel.setBackground((rank + file) % 2 == 0 ? Color.getHSBColor(darkHSB[0], darkHSB[1], darkHSB[2]) :
+                Color.getHSBColor(lightHSB[0], lightHSB[1], lightHSB[2]));
+        return panel;
+    }
+
+    /**
+     * Creates a new Square from the given Piece, MouseListener
+     * and MouseMotionListener.
+     *
+     * @param piece          the piece on this square.
+     * @param mouseListener  the MouseListener for this pieceView to use.
+     * @param motionListener the MouseMotionListener for this pieceView to use.
+     * @return the PieceView representation of this Piece.
+     */
+    private static ChessPieceView makePieceView(Piece piece, MouseListener mouseListener,
+                                                MouseMotionListener motionListener) {
+        ChessPieceView pieceView = new ChessPieceView(piece);
+        pieceView.addMouseListener(mouseListener);
+        pieceView.addMouseMotionListener(motionListener);
+        return pieceView;
     }
 
     /**
@@ -65,16 +108,6 @@ public class ChessBoardView extends JPanel {
         }
     }
 
-    /**
-     * Returns the ZOrder of the piece on the given ChessCoordinate.
-     *
-     * @param coordinate the chessCoordinate to get the ZOrder of
-     * @return the ZOrder of the piece on the given coordinate
-     */
-    private static int getZOrder(ChessCoordinate coordinate) {
-        return (7 - coordinate.getRank()) * 8 + coordinate.getFile();
-    }
-
     private void swap(ChessCoordinate coordinate1, ChessCoordinate coordinate2) {
         int zOrder1 = getZOrder(coordinate1);
         int zOrder2 = getZOrder(coordinate2);
@@ -99,8 +132,8 @@ public class ChessBoardView extends JPanel {
      * Initializes this board View by setting up the piecesPanel and
      * the squaresPanel.
      *
-     * @param board the board to display
-     * @param mouseListener the MouseListener for the PieceViews to use
+     * @param board          the board to display
+     * @param mouseListener  the MouseListener for the PieceViews to use
      * @param motionListener the MouseMotionListener for the PieceViews to use
      */
     private void initBoardView(Piece[] board, MouseListener mouseListener,
@@ -126,38 +159,5 @@ public class ChessBoardView extends JPanel {
                 piecesPanel.add(pieceView);
             }
         }
-    }
-
-    /**
-     * Creates a new Square from the given rank and file.
-     *
-     * @param rank the rank of this SquareView.
-     * @param file the file of this SquareView.
-     * @return the SquareView corresponding to the given rank and file.
-     */
-    private static JPanel makeSquare(int rank, int file) {
-        JPanel panel = new JPanel();
-        float[] darkHSB = Color.RGBtoHSB(180, 136, 99, null);
-        float[] lightHSB = Color.RGBtoHSB(240, 217, 181, null);
-        panel.setBackground((rank + file) % 2 == 0 ? Color.getHSBColor(darkHSB[0], darkHSB[1], darkHSB[2]) :
-                Color.getHSBColor(lightHSB[0], lightHSB[1], lightHSB[2]));
-        return panel;
-    }
-
-    /**
-     * Creates a new Square from the given Piece, MouseListener
-     * and MouseMotionListener.
-     *
-     * @param piece the piece on this square.
-     * @param mouseListener the MouseListener for this pieceView to use.
-     * @param motionListener the MouseMotionListener for this pieceView to use.
-     * @return the PieceView representation of this Piece.
-     */
-    private static ChessPieceView makePieceView(Piece piece, MouseListener mouseListener,
-                                        MouseMotionListener motionListener) {
-        ChessPieceView pieceView = new ChessPieceView(piece);
-        pieceView.addMouseListener(mouseListener);
-        pieceView.addMouseMotionListener(motionListener);
-        return pieceView;
     }
 }

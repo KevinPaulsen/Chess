@@ -2,7 +2,6 @@ package chess.view;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.BoardModel;
 import chess.model.pieces.Piece;
 
 import javax.swing.JFrame;
@@ -30,8 +29,8 @@ public class ChessView extends JFrame {
      * Displayed pieces will use the given MouseListener and MouseMotionListener
      * to drag the pieces.
      *
-     * @param board the board to display.
-     * @param mouseListener the MouseListener for the PieceViews to use.
+     * @param board          the board to display.
+     * @param mouseListener  the MouseListener for the PieceViews to use.
      * @param motionListener the MouseMotionListener for the PieceViews to use.
      */
     public ChessView(Piece[] board, MouseListener mouseListener,
@@ -42,6 +41,22 @@ public class ChessView extends JFrame {
         this.add(boardView, BorderLayout.CENTER);
         this.add(turnView, BorderLayout.SOUTH);
         this.addKeyListener(keyListener);
+    }
+
+    private static int getYOnWindow(Component component) {
+        if (component instanceof ChessBoardView) {
+            return 0;
+        } else {
+            return getYOnWindow(component.getParent()) + component.getY();
+        }
+    }
+
+    private static int getXOnWindow(Component component) {
+        if (component instanceof ChessView) {
+            return 0;
+        } else {
+            return getXOnWindow(component.getParent()) + component.getX();
+        }
     }
 
     public void slowUpdate(Piece[] board, MouseListener mouseListener, MouseMotionListener motionListener, char turn) {
@@ -75,21 +90,5 @@ public class ChessView extends JFrame {
         int xCoordinate = (getXOnWindow(component) + mouseX) / (squareWidth);
         int yCoordinate = 7 - (getYOnWindow(component) + mouseY) / squareHeight;
         return ChessCoordinate.getChessCoordinate(xCoordinate, yCoordinate);
-    }
-
-    private static int getYOnWindow(Component component) {
-        if (component instanceof ChessBoardView) {
-            return 0;
-        } else {
-            return getYOnWindow(component.getParent()) + component.getY();
-        }
-    }
-
-    private static int getXOnWindow(Component component) {
-        if (component instanceof ChessView) {
-            return 0;
-        } else {
-            return getXOnWindow(component.getParent()) + component.getX();
-        }
     }
 }

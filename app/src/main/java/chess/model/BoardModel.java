@@ -5,7 +5,10 @@ import chess.Move;
 import chess.model.pieces.Piece;
 
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static chess.model.pieces.Piece.*;
 
@@ -13,22 +16,27 @@ public class BoardModel {
 
     // The array that holds all the pieces. They are stored in the format [file][rank]
     private final Piece[] pieceArray;
-
+    private final Map<Piece, Set<ChessCoordinate>> pieceLocations;
+    private final Zobrist zobrist;
     private ChessCoordinate whiteKingCoord;
     private ChessCoordinate blackKingCoord;
-
-    private final Zobrist zobrist;
 
     public BoardModel(BoardModel boardModel, Zobrist zobrist) {
         this.pieceArray = Arrays.stream(boardModel.pieceArray)
                 .toArray(Piece[]::new);
         whiteKingCoord = boardModel.whiteKingCoord;
         blackKingCoord = boardModel.blackKingCoord;
+        pieceLocations = new HashMap<>();
         this.zobrist = zobrist;
+
+        for (Map.Entry<Piece, Set<ChessCoordinate>> locationEntry : boardModel.pieceLocations.entrySet()) {
+            pieceLocations.put(locationEntry.getKey(), new HashSet<>(locationEntry.getValue()));
+        }
     }
 
     public BoardModel(String FEN, Zobrist zobrist) {
         this.pieceArray = new Piece[64];
+        this.pieceLocations = new HashMap<>();
         this.zobrist = zobrist;
         int pieceIdx = 63;
         for (char c : FEN.toCharArray()) {
@@ -42,7 +50,7 @@ public class BoardModel {
             }
 
             int translatedIdx = pieceIdx + (7 - 2 * (pieceIdx % 8));
-            pieceArray[translatedIdx] = switch (c) {
+            Piece addedPiece = switch (c) {
                 case 'K' -> WHITE_KING;
                 case 'Q' -> WHITE_QUEEN;
                 case 'R' -> WHITE_ROOK;
@@ -57,10 +65,20 @@ public class BoardModel {
                 case 'p' -> BLACK_PAWN;
                 default -> throw new IllegalStateException("Unexpected value: " + c);
             };
+
+            if (addedPiece == WHITE_KING) {
+                whiteKingCoord = ChessCoordinate.getChessCoordinate(translatedIdx);
+            } else if (addedPiece == BLACK_KING) {
+                blackKingCoord = ChessCoordinate.getChessCoordinate(translatedIdx);
+            }
+            pieceArray[translatedIdx] = addedPiece;
+            if (!pieceLocations.containsKey(addedPiece)) {
+                pieceLocations.put(addedPiece, new HashSet<>());
+            }
+            pieceLocations.get(addedPiece).add(ChessCoordinate.getChessCoordinate(translatedIdx));
+
             pieceIdx--;
         }
-
-        initPieces();
     }
 
     /**
@@ -132,15 +150,23 @@ public class BoardModel {
      */
     private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
+
+            if (piece == WHITE_KING) {
+                whiteKingCoord = coordinate;
+            } else if (piece == BLACK_KING) {
+                blackKingCoord = coordinate;
+            }
+
             pieceArray[coordinate.getOndDimIndex()] = piece;
             zobrist.addPiece(piece, coordinate);
+            pieceLocations.get(piece).add(coordinate);
         }
     }
 
     /**
      * Removes the given piece from the board.
      *
-     * @param piece the piece to remove.
+     * @param piece      the piece to remove.
      * @param coordinate the coordinate the piece is on.
      */
     private void removePiece(Piece piece, ChessCoordinate coordinate) {
@@ -148,8 +174,16 @@ public class BoardModel {
             throw new IllegalStateException("Piece Data is out of sync.");
         }
         if (piece != null) {
+
+            if (piece == WHITE_KING) {
+                whiteKingCoord = coordinate;
+            } else if (piece == BLACK_KING) {
+                blackKingCoord = coordinate;
+            }
+
             pieceArray[coordinate.getOndDimIndex()] = null;
             zobrist.removePiece(piece, coordinate);
+            pieceLocations.get(piece).remove(coordinate);
         }
     }
 
@@ -157,43 +191,22 @@ public class BoardModel {
      * Moves the piece to the given coordinate, and adds the given number of moves
      * to the piece.
      *
-     * @param piece         the piece to move.
+     * @param piece      the piece to move.
      * @param startCoord the starting coordinate of the piece.
-     * @param endCoord the ending coordinate of the piece.
+     * @param endCoord   the ending coordinate of the piece.
      */
     public void movePiece(Piece piece, ChessCoordinate startCoord, ChessCoordinate endCoord) {
         if (piece != null) {
-            if (endCoord == null) {
-                removePiece(piece, startCoord);
-            } else {
-                if (piece == WHITE_KING) {
-                    whiteKingCoord = endCoord;
-                } else if (piece == Piece.BLACK_KING) {
-                    blackKingCoord = endCoord;
-                }
-                pieceArray[startCoord.getOndDimIndex()] = null;
-                zobrist.removePiece(piece, startCoord);
-                pieceArray[endCoord.getOndDimIndex()] = piece;
-                zobrist.addPiece(piece, endCoord);
+            removePiece(piece, startCoord);
+
+            if (endCoord != null) {
+                addPiece(piece, endCoord);
             }
         }
     }
 
-    /**
-     * Initialize the pieces, and local references to the relevant pieces.
-     */
-    private void initPieces() {
-        for (int pieceIdx = 0; pieceIdx < pieceArray.length; pieceIdx++) {
-            Piece piece = pieceArray[pieceIdx];
-            ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(pieceIdx);
-            if (piece != null) {
-                if (piece.getColor() == 'w') {
-                    if (piece == WHITE_KING) whiteKingCoord = coordinate;
-                } else {
-                    if (piece == Piece.BLACK_KING) blackKingCoord = coordinate;
-                }
-            }
-        }
+    public Set<ChessCoordinate> getLocations(Piece piece) {
+        return pieceLocations.getOrDefault(piece, Set.of());
     }
 
     /**
@@ -215,9 +228,7 @@ public class BoardModel {
         if (this == o) return true;
         if (!(o instanceof BoardModel)) return false;
         BoardModel that = (BoardModel) o;
-        return Arrays.equals(pieceArray, that.pieceArray)
-                && Objects.equals(whiteKingCoord, that.whiteKingCoord)
-                && Objects.equals(blackKingCoord, that.blackKingCoord);
+        return Arrays.equals(pieceArray, that.pieceArray);
     }
 
     @Override

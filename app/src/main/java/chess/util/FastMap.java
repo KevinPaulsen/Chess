@@ -1,7 +1,5 @@
 package chess.util;
 
-import java.util.Objects;
-
 /**
  * This Class represents a user-friendly bit mask.
  */

@@ -5,8 +5,10 @@ import chess.model.GameModel;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -37,6 +39,8 @@ public class ChessAI {
      */
     private final GameModel game;
 
+    private final ExecutorService executorService;
+
     /**
      * Simple constructor that makes a new ChessAI with the given
      * evaluator and game.
@@ -48,6 +52,7 @@ public class ChessAI {
         this.evaluator = evaluator;
         this.game = game;
         this.transpositionTable = new HashMap<>();
+        this.executorService = Executors.newFixedThreadPool(4);
     }
 
     /**
@@ -64,7 +69,7 @@ public class ChessAI {
      * Search and find the best move in the current position.
      *
      * @param useIterativeDeepening weather to use iterative deepening
-     * @param minDepth                 the depth to search to (not used if using iterative deepening)
+     * @param minDepth              the depth to search to (not used if using iterative deepening)
      * @return the best move to DEPTH, according to the evaluator.
      */
     public Move getBestMove(boolean useIterativeDeepening, int minDepth, int timeCutoff) {
@@ -76,8 +81,9 @@ public class ChessAI {
         do {
             // Asynchronously search for best move
             int finalDepth = currentDepth;
-            CompletableFuture<Evaluation> futureEvaluation =
-                    CompletableFuture.supplyAsync(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));
+            Future<Evaluation> futureEvaluation = executorService.submit(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));
+            /*CompletableFuture<Evaluation> futureEvaluation =
+                    CompletableFuture.supplyAsync(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));//*/
 
             try {
                 if (useIterativeDeepening && currentDepth > minDepth) {
@@ -135,7 +141,7 @@ public class ChessAI {
                 bestMove = tableEval.getMove();
                 if (tableEval.isExact()) {
                     return bestEval;
-                } else if(maximizingPlayer) {
+                } else if (maximizingPlayer) {
                     alphaBeta.alphaMax(bestEval.getEvaluation());
                 } else {
                     alphaBeta.betaMin(bestEval.getEvaluation());
