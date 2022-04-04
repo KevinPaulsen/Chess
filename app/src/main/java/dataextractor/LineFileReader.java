@@ -6,15 +6,18 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-public class FlattenedFileReader implements Iterator<String> {
+public class LineFileReader implements Iterator<String> {
 
     private final Scanner fileScanner;
 
-    public FlattenedFileReader(String fileName) {
+    int count = 0;
+    private static final int MAX_COUNT = 100_000;
+
+    public LineFileReader(String fileName) {
         this.fileScanner = getFileScanner(fileName);
     }
 
-    private Scanner getFileScanner(String fileName) {
+    static Scanner getFileScanner(String fileName) {
         File pgnFile = new File(fileName);
         Scanner scanner;
         try {
@@ -26,6 +29,10 @@ public class FlattenedFileReader implements Iterator<String> {
         return scanner;
     }
 
+    void close() {
+        fileScanner.close();
+    }
+
     /**
      * Returns {@code true} if the iteration has more elements.
      * (In other words, returns {@code true} if {@link #next} would
@@ -34,7 +41,7 @@ public class FlattenedFileReader implements Iterator<String> {
      * @return {@code true} if the iteration has more elements
      */
     @Override
-    public boolean hasNext() {
+    public synchronized boolean hasNext() {
         return fileScanner.hasNextLine();
     }
 
@@ -45,7 +52,7 @@ public class FlattenedFileReader implements Iterator<String> {
      * @throws NoSuchElementException if the iteration has no more elements
      */
     @Override
-    public String next() {
+    public synchronized String next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }

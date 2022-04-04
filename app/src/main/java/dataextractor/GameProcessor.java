@@ -4,14 +4,12 @@ import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.GameModel;
 import chess.model.pieces.Piece;
-import chess.util.BigFastMap;
 
 import java.util.List;
 import java.util.Map;
 
 public class GameProcessor {
 
-    private static final GameModel GAME_MODEL = new GameModel(false);
     private static final int MIN_MOVE = 3;
     private static final int MAX_MOVE = 60;
     private static final byte PIECE = 0;
@@ -22,33 +20,27 @@ public class GameProcessor {
     private static final byte EQUALS = 5;
     private static final byte PROMOTION = 6;
 
-    public static void processGame(String moves,
-                                   Map<BigFastMap, int[]> posToWins) {
+    public static void processGame(String moves, Map<Long, PositionData> posToWins) {
         GameModel game = new GameModel(false);
         String[] moveStrings = moves.split("\t");
         String winString = moveStrings[moveStrings.length - 1];
 
-        if (!winString.equals("1/1/2")) {
-            int winner = winString.length() == 1 ? Integer.parseInt(winString) : -1;
+        if (winString.length() > 1) {
+            int winner = Integer.parseInt(winString);
             int moveNum = 0;
             for (String stringMove : moveStrings) {
                 if (stringMove.length() == 1) {
                     break;
                 }
-                Move move = getMove(game, stringMove);
-                if (game.move(move)) moveNum++;
-                else System.out.printf("Move (%s), was not valid.\n", move);
-                /*if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
-                    BigFastMap key = game.getRep();
-                    if (posToWins.containsKey(key)) {
-                        if (winner != -1) {
-                            posToWins.get(key)[winner]++;
-                        }
-                    } else {
-                        int[] winData = winner == 0 ? new int[]{1, 0} : winner == 1 ? new int[]{0, 1} : new int[]{0, 0};
-                        posToWins.put(key, winData);
-                    }
-                }//*/
+                
+                if (game.move(getMove(game, stringMove))) moveNum++;
+
+                if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
+                    byte[] byteRep = game.getRep();
+                    int[] winData = winner == 0 ? new int[]{1, 0} : new int[]{0, 1};
+                    PositionData data = new PositionData(byteRep, winData);
+                    posToWins.merge(game.getZobristHash(), data, (oldScore, newScore) -> oldScore.addTo(winner));
+                }
             }
         }
 
@@ -59,10 +51,6 @@ public class GameProcessor {
 
     private static Move getMove(GameModel game, String stringMove) {
         List<Move> legalMoves = game.getLegalMoves();
-
-        /*if (game.getZobristHash() == 521234645117425928L) {
-            System.out.println("Found it");
-        }//*/
 
         boolean isCastleMove = stringMove.contains("-");
         char[] charRep = isCastleMove ? new char[0] : makeCharRep(stringMove);
@@ -145,5 +133,12 @@ public class GameProcessor {
         }
 
         return charRep;
+    }
+
+    record PositionData(byte[] byteRep, int[] score) {
+        synchronized PositionData addTo(int winner) {
+            score[winner]++;
+            return this;
+        }
     }
 }

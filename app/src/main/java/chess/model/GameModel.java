@@ -6,10 +6,12 @@ import chess.model.pieces.Piece;
 import chess.util.BigFastMap;
 import chess.util.FastMap;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
@@ -168,6 +170,10 @@ public class GameModel {
 
     public GameModel(String FEN) {
         this(FEN, true);
+    }
+
+    public GameModel(byte[] representation) {
+        this(getFEN(representation));
     }
 
     /**
@@ -542,10 +548,20 @@ public class GameModel {
         return (int) getZobristWithTimesMoved();
     }
 
+
+    public String getFEN() {
+        return getFEN(board.getPieceArray(), getTurn(), canKingSideCastle(WHITE),
+                canQueenSideCastle(WHITE), canKingSideCastle(BLACK), canQueenSideCastle(BLACK),
+                getEnPassantTarget(), moveHistory.size());
+    }
+
     /**
      * @return the FEN string of the current position
      */
-    public String getFEN() {
+    private static String getFEN(Piece[] board, char turn, boolean whiteKingCastle,
+                                 boolean whiteQueenCastle, boolean blackKingCastle,
+                                 boolean blackQueenCastle, ChessCoordinate enPassantTarget,
+                                 int numMoves) {
         StringBuilder builder = new StringBuilder();
 
         // The Board Info
@@ -553,7 +569,7 @@ public class GameModel {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(file, rank);
-                Piece piece = board.getPieceOn(coordinate);
+                Piece piece = board[coordinate.getOndDimIndex()];
 
                 if (piece == null) {
                     numEmpty++;
@@ -570,26 +586,26 @@ public class GameModel {
 
         // The turn info
         builder.append(" ");
-        builder.append(getTurn());
+        builder.append(turn);
 
         // The Castling Info
         builder.append(" ");
-        if (canKingSideCastle(WHITE) || canKingSideCastle(BLACK)
-                || canQueenSideCastle(WHITE) || canQueenSideCastle(WHITE)) {
-            builder.append(canKingSideCastle(WHITE) ? "K" : "");
-            builder.append(canKingSideCastle(BLACK) ? "k" : "");
-            builder.append(canQueenSideCastle(WHITE) ? "Q" : "");
-            builder.append(canQueenSideCastle(BLACK) ? "q" : "");
+        if (whiteKingCastle || blackKingCastle
+                || whiteQueenCastle || blackQueenCastle) {
+            builder.append(whiteKingCastle ? "K" : "");
+            builder.append(blackKingCastle ? "k" : "");
+            builder.append(whiteQueenCastle ? "Q" : "");
+            builder.append(blackQueenCastle ? "q" : "");
         } else {
             builder.append("-");
         }
 
         // The EnPassant Info
         builder.append(" ");
-        if (getEnPassantTarget() == null) {
+        if (enPassantTarget == null) {
             builder.append("-");
         } else {
-            builder.append(getEnPassantTarget());
+            builder.append(enPassantTarget);
         }
 
         // TODO: Half-Move info
@@ -598,34 +614,138 @@ public class GameModel {
 
         // Fullmove Number
         builder.append(" ");
-        builder.append(moveHistory.size() / 2 + 1);
+        builder.append(numMoves / 2 + 1);
 
         return builder.toString();
     }
 
-    public BigFastMap getRep() {
-        BigFastMap result = new BigFastMap(0, 840);
+    /**
+     * Gets a byte array representation of the board. It will be stored in the following format:
+     *
+     * <ul>
+     *     <li>White King data</li>
+     *     <li>White Queen data</li>
+     *     <li>White Rook data</li>
+     *     <li>White Bishop data</li>
+     *     <li>White Knight data</li>
+     *     <li>White Pawn data</li>
+     *     <li>Black King data</li>
+     *     <li>Black Queen data</li>
+     *     <li>Black Rook data</li>
+     *     <li>Black Bishop data</li>
+     *     <li>Black Knight data</li>
+     *     <li>Black Pawn data</li>
+     *     <li>EnPassant Data</li>
+     *     <li>Castling Data</li>
+     *     <li>Turn to Move Data</li>
+     * </ul>
+     *
+     * Note that piece data is stored in the following format:
+     * <ul>
+     *     <li>Lowest 4 bits say how many pieces</li>
+     *     <li>Coordinate of one of the pieces is stored every 6 bits</li>
+     * </ul>
+     *
+     * Note that enPassant data is stored in the following format:
+     * <ul>
+     *     <li>Lowest bit states if there is an EnPassant Target</li>
+     *     <li>Next 6 bits represent the coordinate of the EnPassantTarget</li>
+     * </ul>
+     *
+     * Note that enPassant data is stored in the following format:
+     * <ul>
+     *     <li>White king-side castling rights (1 for able 0 for unable)</li>
+     *     <li>White queen-side castling rights (1 for able 0 for unable)</li>
+     *     <li>Black king-side castling rights (1 for able 0 for unable)</li>
+     *     <li>Black queen-side castling rights (1 for able 0 for unable)</li>
+     * </ul>
+     *
+     * Finally, the lest significant bit states the turn to move, 1 for white, 0 for black.
+     *
+     * @return byte representation of the current state
+     */
+    public byte[] getRep() {
+        BigInteger result = new BigInteger("0");
 
-        int bitIdx = 0;
-        for (int pieceIdx = 0; pieceIdx < 64; pieceIdx++) {
-            Piece piece = board.getPieceOn(ChessCoordinate.getChessCoordinate(pieceIdx));
-            int uid = piece == null ? EMPTY.getUniqueIdx() : piece.getUniqueIdx();
-            result.flipBit(bitIdx + uid);
-            bitIdx += 13;
+        final int maxTagSize = 4;
+        final int maxCoordSize = 6;
+
+        // Add Piece data
+        for (Piece piece : Piece.values()) {
+            if (piece == EMPTY) continue;
+
+            Set<ChessCoordinate> pieceLocations = board.getLocations(piece);
+            for (ChessCoordinate coord : pieceLocations) {
+                result = result.shiftLeft(maxCoordSize).add(BigInteger.valueOf(coord.getOndDimIndex()));
+            }
+            result = result.shiftLeft(maxTagSize).add(BigInteger.valueOf(pieceLocations.size()));
         }
-        if (canKingSideCastle(WHITE)) result.flipBit(bitIdx);
-        bitIdx++;
-        if (canQueenSideCastle(WHITE)) result.flipBit(bitIdx);
-        bitIdx++;
-        if (canKingSideCastle(BLACK)) result.flipBit(bitIdx);
-        bitIdx++;
-        if (canQueenSideCastle(BLACK)) result.flipBit(bitIdx);
-        bitIdx++;
 
-        if (getEnPassantTarget() != null) result.flipBit(bitIdx + getEnPassantTarget().getOndDimIndex());
-        bitIdx += 64;
-        if (getTurn() == WHITE) result.flipBit(bitIdx);
+        // Add EnPassant Data
+        ChessCoordinate enPassantTarget = getEnPassantTarget();
+        if (enPassantTarget != null) {
+            result = result.shiftLeft(maxCoordSize).add(BigInteger.valueOf(enPassantTarget.getOndDimIndex()));
+            result = result.shiftLeft(1).add(BigInteger.ONE);
+        } else {
+            result = result.shiftLeft(1);
+        }
 
-        return result;
+        // Add castling data
+        result = result.shiftLeft(1).add(BigInteger.valueOf(canKingSideCastle(WHITE) ? 1 : 0));
+        result = result.shiftLeft(1).add(BigInteger.valueOf(canQueenSideCastle(WHITE) ? 1 : 0));
+        result = result.shiftLeft(1).add(BigInteger.valueOf(canKingSideCastle(BLACK) ? 1 : 0));
+        result = result.shiftLeft(1).add(BigInteger.valueOf(canQueenSideCastle(BLACK) ? 1 : 0));
+
+        // Add turn data
+        result = result.shiftLeft(1).add(BigInteger.valueOf(getTurn() == WHITE ? 1 : 0));
+
+        return result.toByteArray();
+    }
+
+    public static String getFEN(byte[] representation) {
+        BigInteger rep = new BigInteger(representation);
+
+        final int maxCoordSize = 6;
+        final int maxTagSize = 4;
+        final BigInteger coordinateMask = BigInteger.valueOf(0b111111);
+        final BigInteger tagMask = BigInteger.valueOf(0b1111);
+
+        char turn = rep.testBit(0) ? WHITE : BLACK;
+        rep = rep.shiftRight(1);
+
+        boolean blackQueenCastle = rep.testBit(0);
+        rep = rep.shiftRight(1);
+        boolean blackKingCastle = rep.testBit(0);
+        rep = rep.shiftRight(1);
+        boolean whiteQueenCastle = rep.testBit(0);
+        rep = rep.shiftRight(1);
+        boolean whiteKingCastle = rep.testBit(0);
+        rep = rep.shiftRight(1);
+
+        ChessCoordinate enPassantTarget = null;
+        if (rep.testBit(0)) {
+            rep = rep.shiftRight(1);
+            enPassantTarget = ChessCoordinate.getChessCoordinate(rep.and(coordinateMask).intValue());
+            rep = rep.shiftRight(maxCoordSize);
+        } else {
+            rep = rep.shiftRight(1);
+        }
+
+        Piece[] board = new Piece[64];
+        Piece[] pieces = Piece.values();
+        for (int pieceIdx = pieces.length - 1; pieceIdx > 0; pieceIdx--) {
+            Piece piece = pieces[pieceIdx];
+
+            int numPieces = rep.and(tagMask).intValue();
+            rep = rep.shiftRight(maxTagSize);
+
+            for (int pieceNum = 0; pieceNum < numPieces; pieceNum++) {
+                int coordinate = rep.and(coordinateMask).intValue();
+                rep = rep.shiftRight(maxCoordSize);
+                board[coordinate] = piece;
+            }
+        }
+
+        return getFEN(board, turn, whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, enPassantTarget, 0);
     }
 }

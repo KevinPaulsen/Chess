@@ -61,8 +61,7 @@ public class BigFastMap implements Iterable<Long> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BigFastMap)) return false;
-        BigFastMap that = (BigFastMap) o;
+        if (!(o instanceof BigFastMap that)) return false;
         return Arrays.equals(map, that.map);
     }
 
