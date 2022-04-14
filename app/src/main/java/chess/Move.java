@@ -212,8 +212,7 @@ public class Move {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Move)) return false;
-        Move move = (Move) o;
+        if (!(o instanceof Move move)) return false;
         return Objects.equals(startingCoordinate, move.startingCoordinate)
                 && Objects.equals(endingCoordinate, move.endingCoordinate)
                 && Objects.equals(movingPiece, move.movingPiece)

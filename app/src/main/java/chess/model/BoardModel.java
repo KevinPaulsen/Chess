@@ -26,17 +26,17 @@ public class BoardModel {
                 .toArray(Piece[]::new);
         whiteKingCoord = boardModel.whiteKingCoord;
         blackKingCoord = boardModel.blackKingCoord;
-        pieceLocations = new HashMap<>();
+        pieceLocations = makePieceLocations();
         this.zobrist = zobrist;
 
         for (Map.Entry<Piece, Set<ChessCoordinate>> locationEntry : boardModel.pieceLocations.entrySet()) {
-            pieceLocations.put(locationEntry.getKey(), new HashSet<>(locationEntry.getValue()));
+            pieceLocations.get(locationEntry.getKey()).addAll(locationEntry.getValue());
         }
     }
 
     public BoardModel(String FEN, Zobrist zobrist) {
         this.pieceArray = new Piece[64];
-        this.pieceLocations = new HashMap<>();
+        this.pieceLocations = makePieceLocations();
         this.zobrist = zobrist;
         int pieceIdx = 63;
         for (char c : FEN.toCharArray()) {
@@ -81,6 +81,16 @@ public class BoardModel {
         }
     }
 
+    private static Map<Piece, Set<ChessCoordinate>> makePieceLocations() {
+        Map<Piece, Set<ChessCoordinate>> result = new HashMap<>();
+        for (Piece piece : Piece.values()) {
+            if (piece == EMPTY) continue;
+
+            result.put(piece, new HashSet<>());
+        }
+        return Map.copyOf(result);
+    }
+
     /**
      * Makes the given move. All pieces will be updated and moved
      * according the information in move. Move is expected to be
@@ -93,6 +103,7 @@ public class BoardModel {
             if (getPieceOn(move.getEndingCoordinate()) != null
                     && (move.getInteractingPieceStart() == null
                     || !move.getInteractingPieceStart().equals(move.getEndingCoordinate()))) {
+                System.out.println("test");
                 throw new IllegalStateException("This move cannot exist");
             }
 
@@ -159,6 +170,9 @@ public class BoardModel {
 
             pieceArray[coordinate.getOndDimIndex()] = piece;
             zobrist.addPiece(piece, coordinate);
+            if (!pieceLocations.containsKey(piece)) {
+                System.out.println("what?");
+            }
             pieceLocations.get(piece).add(coordinate);
         }
     }

@@ -30,6 +30,34 @@ public class Evaluation implements Comparable<Evaluation> {
         this(null, evaluation, NO_LOSER, depth, EXACT, null);
     }
 
+    public Evaluation(Evaluation evaluation, Move move, byte bound) {
+        /*
+        == == -> ==
+        >= >= -> >=
+        <= <= -> <=
+
+        == >= -> >=
+        == <= -> <=
+        >= == -> >=
+        <= == -> <=
+
+        >= <= -> error
+        <= >= -> error
+         */
+        if (bound == LESS_THAN && evaluation.bound == GREATER_THAN || bound == GREATER_THAN && evaluation.bound == LESS_THAN) {
+            throw new IllegalArgumentException("Invalid bound selection");
+        } else if (bound != evaluation.bound) {
+            if (bound == EXACT) bound = evaluation.bound;
+        }
+
+        this.move = move;
+        this.evaluation = evaluation.evaluation + Integer.compare(0, evaluation.evaluation);
+        this.loser = evaluation.loser;
+        this.depth = evaluation.depth + 1;
+        this.bound = bound;
+        this.next = evaluation;
+    }
+
     public Evaluation(Move move, Evaluation evaluation, byte bound) {
         this(move, evaluation.evaluation + Integer.compare(0, evaluation.evaluation),
                 evaluation.loser, evaluation.depth + 1, bound, evaluation);
@@ -83,7 +111,13 @@ public class Evaluation implements Comparable<Evaluation> {
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
-        result.append(String.format("Evaluation: %-7d ", evaluation));
+        result.append("Evaluation ");
+        result.append(switch (bound) {
+            case LOWER -> ">=";
+            case GREATER_THAN -> "<=";
+            default -> "==";
+        });
+        result.append(String.format(" %-7d", evaluation));
         result.append(String.format("Depth: %-2d ", depth));
         result.append(String.format("Moves: %-6s", move));
         Evaluation current = next;
@@ -158,5 +192,31 @@ public class Evaluation implements Comparable<Evaluation> {
         } else {
             return Integer.compare(this.evaluation, o.evaluation);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Evaluation)) return false;
+
+        Evaluation that = (Evaluation) o;
+
+        if (getEvaluation() != that.getEvaluation()) return false;
+        if (getLoser() != that.getLoser()) return false;
+        if (getDepth() != that.getDepth()) return false;
+        if (bound != that.bound) return false;
+        if (getMove() != null ? !getMove().equals(that.getMove()) : that.getMove() != null) return false;
+        return next != null ? next.equals(that.next) : that.next == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getMove() != null ? getMove().hashCode() : 0;
+        result = 31 * result + (int) getEvaluation();
+        result = 31 * result + (int) getLoser();
+        result = 31 * result + getDepth();
+        result = 31 * result + (int) bound;
+        result = 31 * result + (next != null ? next.hashCode() : 0);
+        return result;
     }
 }

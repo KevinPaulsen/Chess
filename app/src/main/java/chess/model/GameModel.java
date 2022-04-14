@@ -748,4 +748,8 @@ public class GameModel {
 
         return getFEN(board, turn, whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, enPassantTarget, 0);
     }
+
+    public int moveNum() {
+        return moveHistory.size();
+    }
 }

@@ -190,9 +190,9 @@ public class GameDataExtractor {
 
     private static void filterData(Filter... filters) {
         LineFileReader fileReader = new LineFileReader(FEN_FILENAME);
-        Writer fileWriter = getFileWriter(FILTERED_FILENAME);
+        Writer fileWriter = getFileWriter(FILTERED_FILENAME + ".test");
 
-        parallelize(8, NUM_POSITIONS, () -> {
+        parallelize(3, NUM_POSITIONS, () -> {
             String line = fileReader.next();
 
             boolean shouldPrune = false;
@@ -233,10 +233,10 @@ public class GameDataExtractor {
     }
 
     public static void main(String[] args) {
-        flattenData();
+        //flattenData();
         //processData();
         //query();
-        //filterData(new NumGameFilter(MIN_GAMES));
+        filterData(new NumGameFilter(MIN_GAMES));
         //formatScore();
         //extractFeature(new BoardRepFeature());
     }

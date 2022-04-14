@@ -20,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import static chess.model.GameModel.*;
+
 /**
  * This class controls both the model and the view for the
  * Chess game.
@@ -44,7 +46,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private ChessController() {
         gameModel = new GameModel();
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
-        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel);
+        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
         pressedKeyCodes = new HashSet<>();
@@ -67,7 +69,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             if (AI_ON) {
                 makeAIMove();
             } else {
-                if (gameModel.getGameOverStatus() != GameModel.IN_PROGRESS) {
+                if (gameModel.getGameOverStatus() != IN_PROGRESS) {
                     System.out.println("GAME OVER");
                 }
             }
@@ -94,8 +96,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private void makeAIMove() {
         if (futureAIMove == null || futureAIMove.isDone()) {
             futureAIMove = CompletableFuture
-                    .runAsync(() -> gameModel.move(chessAI.getBestMove(true,
-                            MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
+                    .runAsync(() -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
                     .thenRun(this::printAndUpdate)
                     .exceptionally((ex) -> {
                         ex.printStackTrace();
@@ -106,13 +107,17 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
     private void printAndUpdate() {
         updateScreen(false);
-        if (gameModel.getGameOverStatus() != GameModel.IN_PROGRESS) {
-            System.out.println("GAME OVER");
+        if (gameModel.getGameOverStatus() != IN_PROGRESS) {
+            System.out.printf("GAME OVER (%s)\n", switch (gameModel.getGameOverStatus()) {
+                case DRAW -> "Draw";
+                case LOSER -> gameModel.getTurn() == WHITE ? "White lost" : "Black Lost";
+                default -> "Error";
+            });
         }
     }
 
     private void letAIFinishGame() {
-        if (gameModel.getGameOverStatus() == GameModel.IN_PROGRESS && !pressedKeyCodes.contains(KeyEvent.VK_S)) {
+        if (gameModel.getGameOverStatus() == IN_PROGRESS && !pressedKeyCodes.contains(KeyEvent.VK_S)) {
             CompletableFuture.runAsync(this::makeAIMove, finishGameExecutor)
                     .thenRunAsync(() -> {
                         futureAIMove.join();

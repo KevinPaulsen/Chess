@@ -5,15 +5,21 @@ import chess.model.GameModel;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static chess.model.GameModel.IN_PROGRESS;
+import static chess.model.GameModel.WHITE;
 import static chess.model.chessai.Evaluation.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * This class represents the computer player in a chess algorithm.
@@ -27,7 +33,7 @@ public class ChessAI {
      * evaluation. This may result in speed up due to transpositions
      * to the same position.
      */
-    private final HashMap<Long, Evaluation> transpositionTable;
+    private final Map<Long, Evaluation> transpositionTable;
 
     /**
      * The evaluator this class uses to evaluate positions, and moves.
@@ -40,6 +46,8 @@ public class ChessAI {
     private final GameModel game;
 
     private final ExecutorService executorService;
+    private final boolean useTranspositionTable;
+    private final boolean useIterativeDeepening;
 
     /**
      * Simple constructor that makes a new ChessAI with the given
@@ -48,10 +56,12 @@ public class ChessAI {
      * @param evaluator the evaluator this AI uses.
      * @param game      the game this AI is in.
      */
-    public ChessAI(Evaluator evaluator, GameModel game) {
+    public ChessAI(Evaluator evaluator, GameModel game, boolean useIterativeDeepening, boolean useTranspositionTable) {
         this.evaluator = evaluator;
         this.game = game;
-        this.transpositionTable = new HashMap<>();
+        this.useIterativeDeepening = useIterativeDeepening;
+        this.useTranspositionTable = useTranspositionTable;
+        this.transpositionTable = new ConcurrentHashMap<>();
         this.executorService = Executors.newFixedThreadPool(4);
     }
 
@@ -62,50 +72,43 @@ public class ChessAI {
      * @return the best move in the position
      */
     public Move getBestMove(int depth) {
-        return getBestMove(false, depth, 0);
+        return getBestMove(depth, 0);
     }
 
     /**
      * Search and find the best move in the current position.
      *
-     * @param useIterativeDeepening weather to use iterative deepening
      * @param minDepth              the depth to search to (not used if using iterative deepening)
+     * @param timeCutoff the max time to search for.
      * @return the best move to DEPTH, according to the evaluator.
      */
-    public Move getBestMove(boolean useIterativeDeepening, int minDepth, int timeCutoff) {
+    public Move getBestMove(int minDepth, int timeCutoff) {
         GameModel currentGame = new GameModel(this.game);
+
         Evaluation bestEvalToLatestDepth = null;
 
-        int currentDepth = useIterativeDeepening ? 1 : minDepth;
-        long startTime = System.currentTimeMillis();
-        do {
-            // Asynchronously search for best move
-            int finalDepth = currentDepth;
-            Future<Evaluation> futureEvaluation = executorService.submit(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));
-            /*CompletableFuture<Evaluation> futureEvaluation =
-                    CompletableFuture.supplyAsync(() -> miniMax(currentGame, new AlphaBeta(), finalDepth));//*/
+        if (!useIterativeDeepening) {
+            bestEvalToLatestDepth = miniMax(currentGame, new AlphaBeta(), minDepth);
+        } else {
+            // Do minimax iteratively up to minDepth
+            long start = System.nanoTime();
+            for (int depth = 1; depth <= minDepth; depth++) {
+                bestEvalToLatestDepth = miniMax(currentGame, new AlphaBeta(), depth);
+            }
+            long end = System.nanoTime();
+
+            // Continue search starting at minDepth + 1, until timeout
+            IterativeDeepener deepener = new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
+            CompletableFuture<Void> future = CompletableFuture.runAsync(deepener, executorService);
 
             try {
-                if (useIterativeDeepening && currentDepth > minDepth) {
-                    // If using iterative deepening, wait for at most maxWaitTime for minimax to finish.
-                    long maxWaitTime = timeCutoff - System.currentTimeMillis() + startTime;
-                    maxWaitTime = maxWaitTime < 0 ? 1 : maxWaitTime;
-                    bestEvalToLatestDepth = futureEvaluation.get(maxWaitTime, TimeUnit.MILLISECONDS);
-                } else {
-                    // else, wait however long it takes.
-                    bestEvalToLatestDepth = futureEvaluation.get();
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-                continue;
-            } catch (TimeoutException e) {
-                futureEvaluation.cancel(true);
-                break;
+                future.get(NANOSECONDS.convert(timeCutoff, MILLISECONDS) - end + start, NANOSECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
+                future.cancel(true);
             }
-
-            currentDepth++;
-        } while (useIterativeDeepening);
-
+            deepener.kill();
+            bestEvalToLatestDepth = deepener.bestEval;
+        }
         System.out.println(bestEvalToLatestDepth);
         return bestEvalToLatestDepth == null ? null : bestEvalToLatestDepth.getMove();
     }
@@ -120,15 +123,12 @@ public class ChessAI {
      * @return the Evaluation of the current position assuming optimal play.
      */
     private Evaluation miniMax(GameModel game, AlphaBeta alphaBeta, int depth) {
-        if (depth < 0) {
-            System.out.println("HOW DID THIS HAPPEN?");
-        }
-        if (depth <= 0 || game.getGameOverStatus() != IN_PROGRESS) {
+        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
             return evaluator.evaluate(game);
         }
 
         long hash = game.getZobristWithTimesMoved();
-        boolean maximizingPlayer = game.getTurn() == 'w';
+        boolean maximizingPlayer = game.getTurn() == WHITE;
         Evaluation bestEval = maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
         Move bestMove = null;
 
@@ -136,9 +136,9 @@ public class ChessAI {
         // Search table for current position hash
         if (tableEval != null) {
             // If tableDepth is >= current depth use value
+            bestMove = tableEval.getMove();
             if (tableEval.getDepth() >= depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
                 bestEval = tableEval;
-                bestMove = tableEval.getMove();
                 if (tableEval.isExact()) {
                     return bestEval;
                 } else if (maximizingPlayer) {
@@ -153,9 +153,6 @@ public class ChessAI {
         List<Move> sortedMoves = evaluator.getSortedMoves(game, bestMove);
         boolean didBreak = false;
         for (Move move : sortedMoves) {
-            if (move == bestEval.getMove()) {
-                continue;
-            }
 
             // If we found a better path already, break.
             if (alphaBeta.betaLessThanAlpha()) {
@@ -187,14 +184,13 @@ public class ChessAI {
             }
         }
         if (bestEval != tableEval) {
-            bestEval = new Evaluation(bestMove, bestEval, didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
+            bestEval = new Evaluation(bestEval, bestMove, didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
         }
 
         // Add best Eval to transposition table.
-        if (bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
-            tableEval = transpositionTable.get(hash);
-            if (tableEval == null || tableEval.getDepth() < depth) {
-                transpositionTable.put(hash, bestEval);
+        if (useTranspositionTable && bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
+            if (bestEval.isExact()) {
+                transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
             }
         }
 
@@ -233,6 +229,52 @@ public class ChessAI {
             if (eval < beta) {
                 beta = eval;
             }
+        }
+    }
+
+    private class IterativeDeepener implements Runnable {
+
+        private volatile boolean killed;
+        private Evaluation bestEval;
+        private final GameModel game;
+        private final int startDepth;
+
+        public IterativeDeepener(Evaluation bestEval, GameModel game, int startDepth) {
+            this.killed = false;
+            this.bestEval = bestEval;
+            this.game = game;
+            this.startDepth = startDepth;
+        }
+
+        /**
+         * When an object implementing interface {@code Runnable} is used
+         * to create a thread, starting the thread causes the object's
+         * {@code run} method to be called in that separately executing
+         * thread.
+         * <p>
+         * The general contract of the method {@code run} is that it may
+         * take any action whatsoever.
+         *
+         * @see Thread#run()
+         */
+        @Override
+        public void run() {
+            int count = 1;
+            while (!killed) {
+                try {
+                    runToDepth(startDepth + count++);
+                } catch (InterruptedException ex) {
+                    killed = true;
+                }
+            }
+        }
+
+        private void kill() {
+            killed = true;
+        }
+
+        private void runToDepth(int depth) throws InterruptedException {
+            bestEval = miniMax(game, new AlphaBeta(), depth);
         }
     }
 }

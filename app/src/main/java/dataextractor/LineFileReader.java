@@ -53,10 +53,6 @@ public class LineFileReader implements Iterator<String> {
      */
     @Override
     public synchronized String next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-
         return fileScanner.nextLine();
     }
 }
