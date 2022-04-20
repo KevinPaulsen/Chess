@@ -89,7 +89,8 @@ public class GameModelTest {
         long start, end;
         start = end = System.nanoTime();
         try {
-            executor.submit(positionCounter).get(60_000, TimeUnit.MILLISECONDS);
+            //executor.submit(positionCounter).get();
+            executor.submit(positionCounter).get(90_000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {

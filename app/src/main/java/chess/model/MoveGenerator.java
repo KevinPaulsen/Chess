@@ -8,7 +8,9 @@ import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -30,6 +32,8 @@ public class MoveGenerator {
     private boolean inDoubleCheck;
     private boolean pinsExistInPosition;
 
+    private final Map<Long, List<Move>> cachedPositions;
+
     private Piece friendlyPawn;
     private Piece friendlyKnight;
     private Piece friendlyBishop;
@@ -50,6 +54,8 @@ public class MoveGenerator {
         this.inCheck = false;
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
+
+        this.cachedPositions = new MoveLRUCache(11_000);
 
         this.checkRayMap = new FastMap();
         this.pinRayMap = new FastMap();
@@ -137,19 +143,22 @@ public class MoveGenerator {
     }
 
     public List<Move> generateMoves() {
-        resetState();
-        calculateAttackData();
+        if (cachedPositions.containsKey(game.getZobristHash())) {
+            moves = new ArrayList<>(cachedPositions.get(game.getZobristHash()));
+        } else {
+            resetState();
+            calculateAttackData();
 
-        generateKingMoves();
+            generateKingMoves();
 
-        if (inDoubleCheck) {
-            return moves;
+            if (!inDoubleCheck) {
+                generateSlidingMoves();
+                generateKnightMoves();
+                generatePawnMoves();
+            }
+
+            cachedPositions.put(game.getZobristHash(), moves);
         }
-
-        generateSlidingMoves();
-        generateKnightMoves();
-        generatePawnMoves();//*/
-
         return moves;
     }
 
@@ -603,5 +612,19 @@ public class MoveGenerator {
 
     private Set<ChessCoordinate> attackingQueens() {
         return board.getLocations(attackingQueen);
+    }
+
+    private static class MoveLRUCache extends LinkedHashMap<Long, List<Move>> {
+        private final int max_entries;
+
+        public MoveLRUCache(int max_entries) {
+            super((int) (max_entries / 0.75), 0.75f, true);
+            this.max_entries = max_entries;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Long, List<Move>> eldest) {
+            return size() > max_entries;
+        }
     }
 }
