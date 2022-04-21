@@ -674,7 +674,7 @@ public class GameModel {
         for (Piece piece : Piece.values()) {
             if (piece == EMPTY) continue;
 
-            Set<ChessCoordinate> pieceLocations = board.getLocations(piece);
+            List<ChessCoordinate> pieceLocations = board.getLocations(piece);
             for (ChessCoordinate coord : pieceLocations) {
                 result = result.shiftLeft(maxCoordSize).add(BigInteger.valueOf(coord.getOndDimIndex()));
             }

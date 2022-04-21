@@ -5,6 +5,7 @@ out
 bin
 
 data/*
+model_learning/*
 
 # Ignore Gradle project-specific cache directory
 .gradle

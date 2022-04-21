@@ -3,40 +3,95 @@ package chess.model;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.pieces.Piece;
+import chess.util.FastMap;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static chess.model.GameModel.BLACK;
+import static chess.model.GameModel.WHITE;
 import static chess.model.pieces.Piece.*;
 
 public class BoardModel {
 
     // The array that holds all the pieces. They are stored in the format [file][rank]
-    private final Piece[] pieceArray;
-    private final Map<Piece, Set<ChessCoordinate>> pieceLocations;
+    private final FastMap wPawns;
+    private final FastMap wKnights;
+    private final FastMap wBishops;
+    private final FastMap wRooks;
+    private final FastMap wQueens;
+    private final FastMap wKing;
+    private final FastMap bPawns;
+    private final FastMap bKnights;
+    private final FastMap bBishops;
+    private final FastMap bRooks;
+    private final FastMap bQueens;
+    private final FastMap bKing;
+
+    private final Map<Piece, FastMap> pieceMaps;
+    private final Map<Piece, FastMap> whiteMaps;
+    private final Map<Piece, FastMap> blackMaps;
+
+    private final FastMap black;
+    private final FastMap white;
+    private final FastMap occupied;
+
     private final Zobrist zobrist;
-    private ChessCoordinate whiteKingCoord;
-    private ChessCoordinate blackKingCoord;
-
-    public BoardModel(BoardModel boardModel, Zobrist zobrist) {
-        this.pieceArray = Arrays.stream(boardModel.pieceArray)
-                .toArray(Piece[]::new);
-        whiteKingCoord = boardModel.whiteKingCoord;
-        blackKingCoord = boardModel.blackKingCoord;
-        pieceLocations = makePieceLocations();
-        this.zobrist = zobrist;
-
-        for (Map.Entry<Piece, Set<ChessCoordinate>> locationEntry : boardModel.pieceLocations.entrySet()) {
-            pieceLocations.get(locationEntry.getKey()).addAll(locationEntry.getValue());
-        }
-    }
 
     public BoardModel(String FEN, Zobrist zobrist) {
-        this.pieceArray = new Piece[64];
-        this.pieceLocations = makePieceLocations();
+
+        wPawns = new FastMap();
+        wKnights = new FastMap();
+        wBishops = new FastMap();
+        wRooks = new FastMap();
+        wQueens = new FastMap();
+        wKing = new FastMap();
+        bPawns = new FastMap();
+        bKnights = new FastMap();
+        bBishops = new FastMap();
+        bRooks = new FastMap();
+        bQueens = new FastMap();
+        bKing = new FastMap();
+
+        pieceMaps = Map.ofEntries(
+                Map.entry(WHITE_PAWN, wPawns),
+                Map.entry(WHITE_KNIGHT, wKnights),
+                Map.entry(WHITE_BISHOP, wBishops),
+                Map.entry(WHITE_ROOK, wRooks),
+                Map.entry(WHITE_QUEEN, wQueens),
+                Map.entry(WHITE_KING, wKing),
+                Map.entry(BLACK_PAWN, bPawns),
+                Map.entry(BLACK_KNIGHT, bKnights),
+                Map.entry(BLACK_BISHOP, bBishops),
+                Map.entry(BLACK_ROOK, bRooks),
+                Map.entry(BLACK_QUEEN, bQueens),
+                Map.entry(BLACK_KING, bKing));
+        whiteMaps = Map.ofEntries(
+                Map.entry(WHITE_PAWN, wPawns),
+                Map.entry(WHITE_KNIGHT, wKnights),
+                Map.entry(WHITE_BISHOP, wBishops),
+                Map.entry(WHITE_ROOK, wRooks),
+                Map.entry(WHITE_QUEEN, wQueens),
+                Map.entry(WHITE_KING, wKing));
+        blackMaps = Map.ofEntries(
+                Map.entry(BLACK_PAWN, bPawns),
+                Map.entry(BLACK_KNIGHT, bKnights),
+                Map.entry(BLACK_BISHOP, bBishops),
+                Map.entry(BLACK_ROOK, bRooks),
+                Map.entry(BLACK_QUEEN, bQueens),
+                Map.entry(BLACK_KING, bKing));
+
+
+        black = new FastMap();
+        white = new FastMap();
+        occupied = new FastMap();
+
+
         this.zobrist = zobrist;
         int pieceIdx = 63;
         for (char c : FEN.toCharArray()) {
@@ -49,33 +104,30 @@ public class BoardModel {
                 continue;
             }
 
-            int translatedIdx = pieceIdx + (7 - 2 * (pieceIdx % 8));
-            Piece addedPiece = switch (c) {
-                case 'K' -> WHITE_KING;
-                case 'Q' -> WHITE_QUEEN;
-                case 'R' -> WHITE_ROOK;
-                case 'B' -> WHITE_BISHOP;
-                case 'N' -> WHITE_KNIGHT;
-                case 'P' -> WHITE_PAWN;
-                case 'k' -> BLACK_KING;
-                case 'q' -> BLACK_QUEEN;
-                case 'r' -> BLACK_ROOK;
-                case 'b' -> BLACK_BISHOP;
-                case 'n' -> BLACK_KNIGHT;
-                case 'p' -> BLACK_PAWN;
+            byte squareIdx = (byte) (pieceIdx + (7 - 2 * (pieceIdx % 8)));
+            FastMap bitBoard = switch (c) {
+                case 'K' -> wKing;
+                case 'Q' -> wQueens;
+                case 'R' -> wRooks;
+                case 'B' -> wBishops;
+                case 'N' -> wKnights;
+                case 'P' -> wPawns;
+                case 'k' -> bKing;
+                case 'q' -> bQueens;
+                case 'r' -> bRooks;
+                case 'b' -> bBishops;
+                case 'n' -> bKnights;
+                case 'p' -> bPawns;
                 default -> throw new IllegalStateException("Unexpected value: " + c);
             };
 
-            if (addedPiece == WHITE_KING) {
-                whiteKingCoord = ChessCoordinate.getChessCoordinate(translatedIdx);
-            } else if (addedPiece == BLACK_KING) {
-                blackKingCoord = ChessCoordinate.getChessCoordinate(translatedIdx);
+            bitBoard.mark(squareIdx);
+            if (c < 'a') {
+                white.mark(squareIdx);
+            } else {
+                black.mark(squareIdx);
             }
-            pieceArray[translatedIdx] = addedPiece;
-            if (!pieceLocations.containsKey(addedPiece)) {
-                pieceLocations.put(addedPiece, new HashSet<>());
-            }
-            pieceLocations.get(addedPiece).add(ChessCoordinate.getChessCoordinate(translatedIdx));
+            occupied.mark(squareIdx);
 
             pieceIdx--;
         }
@@ -100,13 +152,6 @@ public class BoardModel {
      */
     public void move(Move move) {
         if (move != null) {
-            if (getPieceOn(move.getEndingCoordinate()) != null
-                    && (move.getInteractingPieceStart() == null
-                    || !move.getInteractingPieceStart().equals(move.getEndingCoordinate()))) {
-                System.out.println("test");
-                throw new IllegalStateException("This move cannot exist");
-            }
-
             movePiece(move.getInteractingPiece(), move.getInteractingPieceStart(), move.getInteractingPieceEnd());
 
             if (move.doesPromote()) {
@@ -150,7 +195,23 @@ public class BoardModel {
      * @return the piece on the given coordinate.
      */
     public Piece getPieceOn(ChessCoordinate coordinate) {
-        return coordinate == null ? null : pieceArray[coordinate.getOndDimIndex()];
+        if (coordinate == null) return null;
+
+        int oneDimIdx = coordinate.getOndDimIndex();
+
+        if (!occupied.isMarked(oneDimIdx)) return null;
+
+        if (white.isMarked(oneDimIdx)) {
+            for (Map.Entry<Piece, FastMap> entry : whiteMaps.entrySet()) {
+                if (entry.getValue().isMarked(oneDimIdx)) return entry.getKey();
+            }
+        } else {
+            for (Map.Entry<Piece, FastMap> entry : blackMaps.entrySet()) {
+                if (entry.getValue().isMarked(oneDimIdx)) return entry.getKey();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -161,19 +222,16 @@ public class BoardModel {
      */
     private void addPiece(Piece piece, ChessCoordinate coordinate) {
         if (piece != null && coordinate != null) {
+            byte oneDimIdx = (byte) coordinate.getOndDimIndex();
 
-            if (piece == WHITE_KING) {
-                whiteKingCoord = coordinate;
-            } else if (piece == BLACK_KING) {
-                blackKingCoord = coordinate;
-            }
+            pieceMaps.get(piece).mark(oneDimIdx);
 
-            pieceArray[coordinate.getOndDimIndex()] = piece;
+            occupied.mark(oneDimIdx);
+
+            if (piece.getColor() == WHITE) white.mark(oneDimIdx);
+            else black.mark(oneDimIdx);
+
             zobrist.addPiece(piece, coordinate);
-            if (!pieceLocations.containsKey(piece)) {
-                System.out.println("what?");
-            }
-            pieceLocations.get(piece).add(coordinate);
         }
     }
 
@@ -184,20 +242,17 @@ public class BoardModel {
      * @param coordinate the coordinate the piece is on.
      */
     private void removePiece(Piece piece, ChessCoordinate coordinate) {
-        if (getPieceOn(coordinate) == null) {
-            throw new IllegalStateException("Piece Data is out of sync.");
-        }
         if (piece != null) {
+            byte oneDimIdx = (byte) coordinate.getOndDimIndex();
 
-            if (piece == WHITE_KING) {
-                whiteKingCoord = coordinate;
-            } else if (piece == BLACK_KING) {
-                blackKingCoord = coordinate;
-            }
+            pieceMaps.get(piece).unmark(oneDimIdx);
 
-            pieceArray[coordinate.getOndDimIndex()] = null;
+            occupied.unmark(oneDimIdx);
+
+            if (piece.getColor() == WHITE) white.unmark(oneDimIdx);
+            else black.unmark(oneDimIdx);
+
             zobrist.removePiece(piece, coordinate);
-            pieceLocations.get(piece).remove(coordinate);
         }
     }
 
@@ -219,30 +274,42 @@ public class BoardModel {
         }
     }
 
-    public Set<ChessCoordinate> getLocations(Piece piece) {
-        return pieceLocations.getOrDefault(piece, Set.of());
+    public List<ChessCoordinate> getLocations(Piece piece) {
+        FastMap map = pieceMaps.get(piece);
+
+        Collection<Byte> markedIndices = map.markedIndices();
+        List<ChessCoordinate> locations = new ArrayList<>(8);
+
+        for (byte coordIdx : markedIndices) {
+            locations.add(ChessCoordinate.getChessCoordinate(coordIdx));
+        }
+
+        return locations;
     }
 
     /**
      * @return the reference to the white king.
      */
     public ChessCoordinate getWhiteKingCoord() {
-        return whiteKingCoord;
+        if (pieceMaps.get(WHITE_KING).getLowestSet() == 64) {
+            System.out.println("oof");
+        }
+        return ChessCoordinate.getChessCoordinate(pieceMaps.get(WHITE_KING).getLowestSet());
     }
 
     /**
      * @return the reference to the black king.
      */
     public ChessCoordinate getBlackKingCoord() {
-        return blackKingCoord;
+        return ChessCoordinate.getChessCoordinate(pieceMaps.get(BLACK_KING).getLowestSet());
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BoardModel)) return false;
-        BoardModel that = (BoardModel) o;
-        return Arrays.equals(pieceArray, that.pieceArray);
+        if (!(o instanceof BoardModel that)) return false;
+
+        return pieceMaps.equals(that.pieceMaps);
     }
 
     @Override
@@ -256,6 +323,40 @@ public class BoardModel {
      * @return the 2D array of pieces.
      */
     public Piece[] getPieceArray() {
-        return pieceArray.clone();
+        Piece[] pieceArray = new Piece[64];
+
+        for (int idx = 0; idx < pieceArray.length; idx++) {
+            pieceArray[idx] = getPieceOn(ChessCoordinate.getChessCoordinate(idx));
+        }
+
+        return pieceArray;
+    }
+
+    public boolean isOccupiedByColor(ChessCoordinate potentialCoordinate, char color) {
+        if (color == WHITE) {
+            return white.isMarked(potentialCoordinate.getOndDimIndex());
+        } else {
+            return black.isMarked(potentialCoordinate.getOndDimIndex());
+        }
+    }
+
+    public boolean isKing(ChessCoordinate coordinate) {
+        return wKing.isMarked(coordinate.getOndDimIndex()) || bKing.isMarked(coordinate.getOndDimIndex());
+    }
+
+    public boolean isQueen(ChessCoordinate coordinate) {
+        return wQueens.isMarked(coordinate.getOndDimIndex()) || bQueens.isMarked(coordinate.getOndDimIndex());
+    }
+
+    public boolean isBishop(ChessCoordinate coordinate) {
+        return wBishops.isMarked(coordinate.getOndDimIndex()) || bBishops.isMarked(coordinate.getOndDimIndex());
+    }
+
+    public boolean isRook(ChessCoordinate coordinate) {
+        return wRooks.isMarked(coordinate.getOndDimIndex()) || bRooks.isMarked(coordinate.getOndDimIndex());
+    }
+
+    public boolean isOccupied(ChessCoordinate potentialCoordinate) {
+        return occupied.isMarked(potentialCoordinate.getOndDimIndex());
     }
 }

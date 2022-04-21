@@ -42,6 +42,7 @@ public class GameModelTest {
         for (int depth = 0; depth < expectedNumPositions.length; depth++) {
             int expected = expectedNumPositions[depth];
             int actual = countNumPositions(gameModel, depth, false);
+            System.out.println();
             Assert.assertEquals("Wrong number of nodes found.", expected, actual);
         }
     }
@@ -49,6 +50,7 @@ public class GameModelTest {
     @Test
     public void testStartingPositionDepth() {
         GameModel game = new GameModel();
+        //game = new GameModel("rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKBR1 b Qkq - 3 2");
         int[] expectedNumPositions = {1, 20, 400, 8902, 197_281, 4_865_609};
         runCountTest(game, expectedNumPositions);
     }
@@ -64,7 +66,8 @@ public class GameModelTest {
     public void testPawnBoardDepth() {
         GameModel game = new GameModel("2k5/1ppppp2/8/1K1P3q/8/8/2P1PP1P/8 w - - 0 1");
         int[] expectedNumPositions = {1, 13, 314, 3_598, 92_331, 1_001_929/*, 25_685_493/**/};
-        runCountTest(game, expectedNumPositions);
+        System.out.printf("num positions: %d\n", countNumPositions(game, 4, true));
+        //runCountTest(game, expectedNumPositions);
     }
 
     @Test
@@ -80,6 +83,9 @@ public class GameModelTest {
 
     @Test
     public void runSpeedTest() {
+        /*
+        Bitmap test 1: 3696 (run with profiler)
+         */
         GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
 

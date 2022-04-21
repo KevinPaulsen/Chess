@@ -1,5 +1,13 @@
 package chess.util;
 
+import chess.ChessCoordinate;
+
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 /**
  * This Class represents a user-friendly bit mask.
  */
@@ -61,8 +69,34 @@ public class FastMap {
         map ^= mask;
     }
 
+    public void mark(byte bitNum) {
+        map |= 0b1L << bitNum;
+    }
+
+    public void unmark(byte bitNum) {
+        map &= ~(0b1L << bitNum);
+    }
+
+    public Collection<Byte> markedIndices() {
+        long mapCopy = map;
+        List<Byte> indices = new ArrayList<>(8);
+
+        byte count = 0;
+
+        // TODO: TEST!!
+        for (int i = Long.numberOfTrailingZeros(mapCopy); mapCopy != 0; mapCopy = (mapCopy >>> i) >>> 1, i = Long.numberOfTrailingZeros(mapCopy), count++) {
+            indices.add(count += (byte) i);
+
+            if (indices.size() > 10) {
+                System.out.println("oof");
+            }
+        }
+
+        return indices;
+    }
+
     public boolean isMarked(int squareNum) {
-        return ((map >> squareNum) & 1) == 1;
+        return ((map >> squareNum) & 0b1L) == 1;
     }
 
     public long getMap() {
@@ -81,13 +115,16 @@ public class FastMap {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof FastMap)) return false;
-        FastMap fastMap = (FastMap) o;
+        if (!(o instanceof FastMap fastMap)) return false;
         return map == fastMap.map;
     }
 
     @Override
     public int hashCode() {
         return Long.hashCode(map);
+    }
+
+    public byte getLowestSet() {
+        return (byte) Long.numberOfTrailingZeros(map);
     }
 }
