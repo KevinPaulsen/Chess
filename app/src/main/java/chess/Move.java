@@ -1,5 +1,6 @@
 package chess;
 
+import chess.model.BoardModel;
 import chess.model.pieces.Piece;
 
 import java.util.Objects;
@@ -40,12 +41,6 @@ public class Move {
     private final ChessCoordinate interactingPieceEnd;
 
     /**
-     * The piece that is interacting with the moving piece. This may be a captured
-     * piece or a rook that is castling.
-     */
-    private final Piece interactingPiece;
-
-    /**
      * The piece the moving piece gets promoted to.
      */
     private final Piece promotedPiece;
@@ -59,8 +54,7 @@ public class Move {
      * @param movingPiece      the moving piece.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece,
-                null, null, null);
+        this(startingCoordinate, endingCoordinate, movingPiece, null, null, null);
     }
 
     /**
@@ -72,12 +66,11 @@ public class Move {
      * @param movingPiece           the piece that is moved.
      * @param interactingPieceStart the coordinate the interacting piece starts on.
      * @param interactingPieceEnd   the coordinate the interacting piece moves to.
-     * @param interactingPiece      the piece the moving piece interacts with.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
-                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece) {
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd) {
         this(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
-                interactingPieceEnd, interactingPiece, null);
+                interactingPieceEnd, null);
     }
 
     /**
@@ -87,8 +80,9 @@ public class Move {
      * @param movingPiece      the piece that is moved.
      * @param promotedPiece    the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece, Piece promotedPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece, null, null, null, promotedPiece);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
+                Piece promotedPiece) {
+        this(startingCoordinate, endingCoordinate, movingPiece, null, null, promotedPiece);
     }
 
     /**
@@ -97,18 +91,15 @@ public class Move {
      * @param endingCoordinate    the coordinate the moving piece moves to.
      * @param movingPiece         the piece that is moved.
      * @param interactingPieceEnd the coordinate the interacting piece moves to.
-     * @param interactingPiece    the piece the moving piece interacts with.
      * @param promotedPiece       the piece the moving piece promotes to.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
-                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece interactingPiece,
-                Piece promotedPiece) {
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece promotedPiece) {
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.movingPiece = movingPiece;
-        this.interactingPieceStart = interactingPiece == null ? null : interactingPieceStart;
+        this.interactingPieceStart = interactingPieceStart;
         this.interactingPieceEnd = interactingPieceEnd;
-        this.interactingPiece = interactingPiece;
         this.promotedPiece = promotedPiece;
         this.moveNumber = currentMove;
         currentMove++;
@@ -122,7 +113,7 @@ public class Move {
     }
 
     public boolean doesCastle() {
-        return interactingPiece != null && interactingPieceEnd != null;
+        return interactingPieceStart != null && interactingPieceEnd != null;
     }
 
     /**
@@ -163,8 +154,8 @@ public class Move {
     /**
      * @return the interacting piece.
      */
-    public Piece getInteractingPiece() {
-        return interactingPiece;
+    public Piece getInteractingPiece(BoardModel board) {
+        return board.getPieceOn(interactingPieceStart);
     }
 
     /**
@@ -188,14 +179,14 @@ public class Move {
         } else {
             // Pawn
             if (movingPiece == WHITE_PAWN || movingPiece == BLACK_PAWN) {
-                if (interactingPiece != null) {
+                if (interactingPieceStart != null) {
                     result.append(startingCoordinate.getCharFile());
                 }
             } else {
                 result.append(movingPiece.getStringRep().toUpperCase());
             }
 
-            if (interactingPiece != null) {
+            if (interactingPieceStart != null) {
                 result.append("x");
             }
             result.append(endingCoordinate.toString());
@@ -218,13 +209,12 @@ public class Move {
                 && Objects.equals(movingPiece, move.movingPiece)
                 && Objects.equals(interactingPieceStart, move.interactingPieceStart)
                 && Objects.equals(interactingPieceEnd, move.interactingPieceEnd)
-                && Objects.equals(interactingPiece, move.interactingPiece)
                 && Objects.equals(promotedPiece, move.promotedPiece);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
-                interactingPieceEnd, interactingPiece, promotedPiece, moveNumber);
+                interactingPieceEnd, promotedPiece, moveNumber);
     }
 }

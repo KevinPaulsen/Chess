@@ -66,8 +66,7 @@ public class GameModelTest {
     public void testPawnBoardDepth() {
         GameModel game = new GameModel("2k5/1ppppp2/8/1K1P3q/8/8/2P1PP1P/8 w - - 0 1");
         int[] expectedNumPositions = {1, 13, 314, 3_598, 92_331, 1_001_929/*, 25_685_493/**/};
-        System.out.printf("num positions: %d\n", countNumPositions(game, 4, true));
-        //runCountTest(game, expectedNumPositions);
+        runCountTest(game, expectedNumPositions);
     }
 
     @Test
@@ -84,7 +83,9 @@ public class GameModelTest {
     @Test
     public void runSpeedTest() {
         /*
-        Bitmap test 1: 3696 (run with profiler)
+        Bitmap test v1: 3696 (run with profiler)
+        Bitmap test v2: 2730 (run without profiler)
+        Bitmap test v2: 3980 (run with profiler)
          */
         GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
@@ -96,7 +97,7 @@ public class GameModelTest {
         start = end = System.nanoTime();
         try {
             //executor.submit(positionCounter).get();
-            executor.submit(positionCounter).get(90_000, TimeUnit.MILLISECONDS);
+            executor.submit(positionCounter).get(120_000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {

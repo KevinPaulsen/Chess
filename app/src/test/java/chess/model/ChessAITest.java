@@ -19,7 +19,7 @@ public class ChessAITest {
         GameModel testGame = new GameModel("r1bqkbnr/p1pp1ppp/1pn5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true,true);
 
-        Move expectedMove = new Move(F3, F7, WHITE_QUEEN, F7, null, BLACK_PAWN);
+        Move expectedMove = new Move(F3, F7, WHITE_QUEEN, F7, null);
         Move actualMove = testAI.getBestMove(1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
@@ -44,7 +44,7 @@ public class ChessAITest {
         List<Move> expectedMoves = new ArrayList<>();
         expectedMoves.add(new Move(F8, A8, WHITE_ROOK));
         expectedMoves.add(new Move(C3, A4, BLACK_KNIGHT));
-        expectedMoves.add(new Move(A8, A4, WHITE_ROOK, A4, null, BLACK_KNIGHT));
+        expectedMoves.add(new Move(A8, A4, WHITE_ROOK, A4, null));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(3);
@@ -59,8 +59,8 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(F3, F7, WHITE_QUEEN, F7, null, BLACK_PAWN));
-        expectedMoves.add(new Move(E8, F7, BLACK_KING, F7, null, WHITE_QUEEN));
+        expectedMoves.add(new Move(F3, F7, WHITE_QUEEN, F7, null));
+        expectedMoves.add(new Move(E8, F7, BLACK_KING, F7, null));
         expectedMoves.add(new Move(G4, H5, WHITE_BISHOP, null, null, null));
 
         for (Move expectedMove : expectedMoves) {
@@ -76,11 +76,11 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(F6, A6, WHITE_ROOK, null, null, null));
-        expectedMoves.add(new Move(F7, F6, BLACK_PAWN, null, null, null));
-        expectedMoves.add(new Move(E5, F6, WHITE_BISHOP, F6, null, BLACK_PAWN));
-        expectedMoves.add(new Move(G8, G7, BLACK_ROOK, null, null, null));
-        expectedMoves.add(new Move(A6, A8, WHITE_ROOK, A8, null, BLACK_ROOK));
+        expectedMoves.add(new Move(F6, A6, WHITE_ROOK));
+        expectedMoves.add(new Move(F7, F6, BLACK_PAWN));
+        expectedMoves.add(new Move(E5, F6, WHITE_BISHOP, F6, null));
+        expectedMoves.add(new Move(G8, G7, BLACK_ROOK));
+        expectedMoves.add(new Move(A6, A8, WHITE_ROOK, A8, null));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(5);

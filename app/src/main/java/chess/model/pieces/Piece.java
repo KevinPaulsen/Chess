@@ -75,6 +75,25 @@ public enum Piece {
         return result;
     }
 
+    public static Piece getPiece(int uniqueIdx) {
+        return switch (uniqueIdx) {
+            case 0 -> EMPTY;
+            case 1 -> WHITE_KING;
+            case 2 -> WHITE_QUEEN;
+            case 3 -> WHITE_ROOK;
+            case 4 -> WHITE_BISHOP;
+            case 5 -> WHITE_KNIGHT;
+            case 6 -> WHITE_PAWN;
+            case 7 -> BLACK_KING;
+            case 8 -> BLACK_QUEEN;
+            case 9 -> BLACK_ROOK;
+            case 10 -> BLACK_BISHOP;
+            case 11 -> BLACK_KNIGHT;
+            case 12 -> BLACK_PAWN;
+            default -> throw new IllegalArgumentException();
+        };
+    }
+
     /**
      * This method will return a List of Lists of ChessCoordinates. The second list
      * will always be exactly 10 elements long. The fist 8 are the 8 directions the

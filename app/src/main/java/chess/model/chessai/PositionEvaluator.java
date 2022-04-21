@@ -2,6 +2,7 @@ package chess.model.chessai;
 
 import chess.ChessCoordinate;
 import chess.Move;
+import chess.model.BoardModel;
 import chess.model.GameModel;
 import chess.model.MoveGenerator;
 import chess.model.pieces.Piece;
@@ -16,9 +17,11 @@ public class PositionEvaluator implements Evaluator {
     private static final int WIN_SCORE = 100_000;
 
     private final MoveGenerator moveGenerator;
+    private final GameModel game;
 
     public PositionEvaluator(GameModel game) {
         this.moveGenerator = new MoveGenerator(game);
+        this.game = game;
     }
 
     /**
@@ -112,8 +115,8 @@ public class PositionEvaluator implements Evaluator {
         int score = 0;
 
         // If the move captures weight moves that capture with lower value pieces higher
-        if (move.getInteractingPiece() != null && move.getInteractingPieceEnd() == null) {
-            score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece())
+        if (move.getInteractingPiece(game.getBoard()) != null && move.getInteractingPieceEnd() == null) {
+            score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece(game.getBoard()))
                     - Evaluator.getValue(move.getMovingPiece()));
         }
 

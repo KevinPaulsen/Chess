@@ -28,7 +28,7 @@ import static chess.model.GameModel.*;
  */
 public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
 
-    private static final boolean AI_ON = false;
+    private static final boolean AI_ON = true;
 
     private static final int MINIMUM_DEPTH = 1;
     private static final int SEARCH_TIME = 1_000;
@@ -44,7 +44,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     private ChessCoordinate startCoordinate;
 
     private ChessController() {
-        gameModel = new GameModel("2k5/1ppppp2/8/1K1P3q/8/8/2P1PP1P/8 w - - 0 1");
+        gameModel = new GameModel();
         view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();

@@ -50,10 +50,10 @@ public class PieceValueEvaluator implements Evaluator {
     private float getMoveVal(BoardModel board, Move move) {
         float score = 1.0f;
 
-        if (move.getInteractingPiece() != null) {
+        if (move.getInteractingPiece(board) != null) {
             if (move.getInteractingPieceEnd() == null) {
                 score *= Math.abs(Evaluator.getValue(move.getMovingPiece())
-                        - Evaluator.getValue(move.getInteractingPiece())) / 100f + 1f;
+                        - Evaluator.getValue(move.getInteractingPiece(board))) / 100f + 1f;
             }
             score *= 1.5;
         }//*/
