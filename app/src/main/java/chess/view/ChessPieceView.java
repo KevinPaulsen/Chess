@@ -62,7 +62,7 @@ public class ChessPieceView extends JLabel {
         return new ImageIcon(path);
     }
 
-    public void promoteTo(Piece promotedPiece) {
+    public void setImage(Piece promotedPiece) {
         setIcon(getImage(promotedPiece));
     }
 

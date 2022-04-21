@@ -315,9 +315,9 @@ public class MoveGenerator {
                     // Skip endCoordinates that are occupied by friendly pieces.
                     if (board.isOccupiedByColor(targetCoord, friendlyColor)) continue;
 
-                    moves.add(new Move(friendlyKingCoord, targetCoord, movingKing, targetCoord, null));
+                    moves.add(new Move(friendlyKingCoord, targetCoord, targetCoord, null));
                 } else {
-                    moves.add(new Move(friendlyKingCoord, targetCoord, movingKing));
+                    moves.add(new Move(friendlyKingCoord, targetCoord));
                 }
             }
         }
@@ -373,7 +373,7 @@ public class MoveGenerator {
                                 ChessCoordinate blackRookEnd) {
         ChessCoordinate rookStart = kingEndCoord.getRank() == 0 ? whiteRookStart : blackRookStart;
         ChessCoordinate endRookCoord = kingEndCoord.getRank() == 0 ? whiteRookEnd : blackRookEnd;
-        moves.add(new Move(movingKingCoord, kingEndCoord, movingKing, rookStart, endRookCoord));
+        moves.add(new Move(movingKingCoord, kingEndCoord, rookStart, endRookCoord));
     }
 
     private void generateSlidingMoves() {
@@ -409,10 +409,10 @@ public class MoveGenerator {
 
                         if (!inCheck || checkRayMap.isMarked(targetCoord.getOndDimIndex())) {
                             if (board.isOccupied(targetCoord)) {
-                                moves.add(new Move(coordinate, targetCoord, piece, targetCoord, null));
+                                moves.add(new Move(coordinate, targetCoord, targetCoord, null));
                                 break;
                             } else {
-                                moves.add(new Move(coordinate, targetCoord, piece));
+                                moves.add(new Move(coordinate, targetCoord));
                             }
                         }
 
@@ -438,9 +438,9 @@ public class MoveGenerator {
                     if (!board.isOccupiedByColor(targetCoordinate, friendlyColor)
                             && (!inCheck || checkRayMap.isMarked(targetCoordinate.getOndDimIndex()))) {
                         if (board.isOccupied(targetCoordinate)) {
-                            moves.add(new Move(coordinate, targetCoordinate, knight, targetCoordinate, null));
+                            moves.add(new Move(coordinate, targetCoordinate, targetCoordinate, null));
                         } else {
-                            moves.add(new Move(coordinate, targetCoordinate, knight));
+                            moves.add(new Move(coordinate, targetCoordinate));
                         }
                     }
                 }
@@ -464,14 +464,14 @@ public class MoveGenerator {
                                     || (pawn == BLACK_PAWN && targetCoord.getRank() == 0)) {
                                 // Promotion square
                                 if (pawn.getColor() == WHITE) {
-                                    makePromotionMoves(coordinate, targetCoord, null, pawn,
+                                    makePromotionMoves(coordinate, targetCoord, null,
                                             WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
                                 } else {
-                                    makePromotionMoves(coordinate, targetCoord, null, pawn,
+                                    makePromotionMoves(coordinate, targetCoord, null,
                                             BLACK_QUEEN, BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT);
                                 }
                             } else {
-                                moves.add(new Move(coordinate, targetCoord, pawn));
+                                moves.add(new Move(coordinate, targetCoord));
                             }
                         }
                     } else {
@@ -494,7 +494,8 @@ public class MoveGenerator {
         }
     }
 
-    private void addAttackingPawnMoves(ChessCoordinate coordinate, boolean isPinned, ChessCoordinate captureCoord, Direction direction) {
+    private void addAttackingPawnMoves(ChessCoordinate coordinate, boolean isPinned,
+                                       ChessCoordinate captureCoord, Direction direction) {
         Piece pawn = friendlyColor == WHITE ? WHITE_PAWN : BLACK_PAWN;
 
         if (isPinned && !areAligned(coordinate, friendlyKingCoord, captureCoord)) {
@@ -513,18 +514,18 @@ public class MoveGenerator {
                         && (board.isOccupied(targetCoord) // Ensure that the targetPiece is a pawn
                         && (!areAligned(coordinate, friendlyKingCoord, targetCoord) // Proceed if not aligned with king
                         || !longRangeAttacker(coordinate, targetCoord)))) { // Proceed if not attacker
-                    moves.add(new Move(coordinate, captureCoord, pawn, targetCoord, null));
+                    moves.add(new Move(coordinate, captureCoord, targetCoord, null));
                 }
             }
         } else {
             if (!inCheck || checkRayMap.isMarked(captureCoord.getOndDimIndex())) {
                 if (board.isOccupiedByColor(captureCoord, attackingColor)) {
                     if (pawn == WHITE_PAWN && captureCoord.getRank() == 7) {
-                        makePromotionMoves(coordinate, captureCoord, captureCoord, pawn, WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
+                        makePromotionMoves(coordinate, captureCoord, captureCoord, WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
                     } else if (pawn == BLACK_PAWN && captureCoord.getRank() == 0) {
-                        makePromotionMoves(coordinate, captureCoord, captureCoord, pawn, BLACK_QUEEN, BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT);
+                        makePromotionMoves(coordinate, captureCoord, captureCoord, BLACK_QUEEN, BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT);
                     } else {
-                        moves.add(new Move(coordinate, captureCoord, pawn, captureCoord, null));
+                        moves.add(new Move(coordinate, captureCoord, captureCoord, null));
                     }
                 }
             }
@@ -533,12 +534,11 @@ public class MoveGenerator {
 
     private void makePromotionMoves(ChessCoordinate coordinate, ChessCoordinate targetCoord,
                                     ChessCoordinate interactingPieceStart,
-                                    Piece pawn, Piece queen, Piece rook,
-                                    Piece bishop, Piece knight) {
-        moves.add(new Move(coordinate, targetCoord, pawn, interactingPieceStart, null, queen));
-        moves.add(new Move(coordinate, targetCoord, pawn, interactingPieceStart, null, rook));
-        moves.add(new Move(coordinate, targetCoord, pawn, interactingPieceStart, null, bishop));
-        moves.add(new Move(coordinate, targetCoord, pawn, interactingPieceStart, null, knight));
+                                    Piece queen, Piece rook, Piece bishop, Piece knight) {
+        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, queen));
+        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, rook));
+        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, bishop));
+        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, knight));
     }
 
     private boolean longRangeAttacker(ChessCoordinate coordinate, ChessCoordinate capturedCoord) {

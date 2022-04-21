@@ -57,7 +57,7 @@ public class GameProcessor {
 
         for (Move move : legalMoves) {
             ChessCoordinate endCoord = move.getEndingCoordinate();
-            Piece movingPiece = move.getMovingPiece();
+            Piece movingPiece = move.getMovingPiece(game.getBoard());
 
             if (isCastleMove) {
                 if (move.doesCastle()

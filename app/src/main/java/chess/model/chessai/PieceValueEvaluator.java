@@ -50,16 +50,18 @@ public class PieceValueEvaluator implements Evaluator {
     private float getMoveVal(BoardModel board, Move move) {
         float score = 1.0f;
 
+        Piece movingPiece = move.getMovingPiece(board);
+
         if (move.getInteractingPiece(board) != null) {
             if (move.getInteractingPieceEnd() == null) {
-                score *= Math.abs(Evaluator.getValue(move.getMovingPiece())
+                score *= Math.abs(Evaluator.getValue(movingPiece)
                         - Evaluator.getValue(move.getInteractingPiece(board))) / 100f + 1f;
             }
             score *= 1.5;
         }//*/
 
-        if (!(move.getMovingPiece() == WHITE_PAWN || move.getMovingPiece() == BLACK_PAWN)
-                && attackedByPawn(board, move.getEndingCoordinate(), move.getMovingPiece().getColor())) {
+        if (!board.isPawn(move.getStartingCoordinate())
+                && attackedByPawn(board, move.getEndingCoordinate(), movingPiece.getColor())) {
             score *= 0.5;
         }
 

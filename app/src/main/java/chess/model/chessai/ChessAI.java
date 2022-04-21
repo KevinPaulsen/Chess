@@ -137,7 +137,7 @@ public class ChessAI {
         if (tableEval != null) {
             // If tableDepth is >= current depth use value
             bestMove = tableEval.getMove();
-            if (tableEval.getDepth() >= depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
+            if (tableEval.getDepth() == depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
                 bestEval = tableEval;
                 if (tableEval.isExact()) {
                     return bestEval;

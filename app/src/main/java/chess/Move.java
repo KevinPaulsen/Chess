@@ -26,11 +26,6 @@ public class Move {
     private final ChessCoordinate endingCoordinate;
 
     /**
-     * The piece that is moving.
-     */
-    private final Piece movingPiece;
-
-    /**
      * The coordinate the interacting piece starts on.
      */
     private final ChessCoordinate interactingPieceStart;
@@ -50,11 +45,11 @@ public class Move {
     /**
      * Creates a move that does not capture or do anything special.
      *
+     * @param startingCoordinate    the coordinate the moving piece starts on.
      * @param endingCoordinate the ending coordinate.
-     * @param movingPiece      the moving piece.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece, null, null, null);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate) {
+        this(startingCoordinate, endingCoordinate, null, null, null);
     }
 
     /**
@@ -63,41 +58,38 @@ public class Move {
      *
      * @param startingCoordinate    the coordinate the moving piece starts on.
      * @param endingCoordinate      the coordinate the moving piece moves to.
-     * @param movingPiece           the piece that is moved.
      * @param interactingPieceStart the coordinate the interacting piece starts on.
      * @param interactingPieceEnd   the coordinate the interacting piece moves to.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd) {
-        this(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
-                interactingPieceEnd, null);
+        this(startingCoordinate, endingCoordinate, interactingPieceStart, interactingPieceEnd, null);
     }
 
     /**
      * Creates a standard promotion move that does not capture.
      *
+     * @param startingCoordinate    the coordinate the moving piece starts on.
      * @param endingCoordinate the coordinate the moving piece moves to.
-     * @param movingPiece      the piece that is moved.
      * @param promotedPiece    the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
-                Piece promotedPiece) {
-        this(startingCoordinate, endingCoordinate, movingPiece, null, null, promotedPiece);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece promotedPiece) {
+        this(startingCoordinate, endingCoordinate, null, null, promotedPiece);
     }
 
     /**
      * Creates a move that interacts with another piece and promotes.
      *
+     * @param startingCoordinate    the coordinate the moving piece starts on.
      * @param endingCoordinate    the coordinate the moving piece moves to.
-     * @param movingPiece         the piece that is moved.
+     * @param interactingPieceStart the coordinate the interacting piece starts on.
      * @param interactingPieceEnd the coordinate the interacting piece moves to.
      * @param promotedPiece       the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece movingPiece,
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate,
                 ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece promotedPiece) {
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
-        this.movingPiece = movingPiece;
         this.interactingPieceStart = interactingPieceStart;
         this.interactingPieceEnd = interactingPieceEnd;
         this.promotedPiece = promotedPiece;
@@ -133,8 +125,8 @@ public class Move {
     /**
      * @return the moving piece.
      */
-    public Piece getMovingPiece() {
-        return movingPiece;
+    public Piece getMovingPiece(BoardModel board) {
+        return board.getPieceOn(startingCoordinate);
     }
 
     /**
@@ -177,19 +169,8 @@ public class Move {
                 result.append("O-O-O");
             }
         } else {
-            // Pawn
-            if (movingPiece == WHITE_PAWN || movingPiece == BLACK_PAWN) {
-                if (interactingPieceStart != null) {
-                    result.append(startingCoordinate.getCharFile());
-                }
-            } else {
-                result.append(movingPiece.getStringRep().toUpperCase());
-            }
-
-            if (interactingPieceStart != null) {
-                result.append("x");
-            }
-            result.append(endingCoordinate.toString());
+            result.append(startingCoordinate);
+            result.append(endingCoordinate);
         }
 
         if (doesPromote()) {
@@ -206,7 +187,6 @@ public class Move {
         if (!(o instanceof Move move)) return false;
         return Objects.equals(startingCoordinate, move.startingCoordinate)
                 && Objects.equals(endingCoordinate, move.endingCoordinate)
-                && Objects.equals(movingPiece, move.movingPiece)
                 && Objects.equals(interactingPieceStart, move.interactingPieceStart)
                 && Objects.equals(interactingPieceEnd, move.interactingPieceEnd)
                 && Objects.equals(promotedPiece, move.promotedPiece);
@@ -214,7 +194,7 @@ public class Move {
 
     @Override
     public int hashCode() {
-        return Objects.hash(startingCoordinate, endingCoordinate, movingPiece, interactingPieceStart,
+        return Objects.hash(startingCoordinate, endingCoordinate, interactingPieceStart,
                 interactingPieceEnd, promotedPiece, moveNumber);
     }
 }

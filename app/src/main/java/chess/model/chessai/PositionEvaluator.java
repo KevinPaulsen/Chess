@@ -7,6 +7,7 @@ import chess.model.GameModel;
 import chess.model.MoveGenerator;
 import chess.model.pieces.Piece;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static chess.model.chessai.Constants.*;
@@ -16,12 +17,8 @@ public class PositionEvaluator implements Evaluator {
 
     private static final int WIN_SCORE = 100_000;
 
-    private final MoveGenerator moveGenerator;
-    private final GameModel game;
 
     public PositionEvaluator(GameModel game) {
-        this.moveGenerator = new MoveGenerator(game);
-        this.game = game;
     }
 
     /**
@@ -67,7 +64,7 @@ public class PositionEvaluator implements Evaluator {
         return new Evaluation(whiteScore - blackScore, 0);
     }
 
-    private double readTable(Piece piece, ChessCoordinate coordinate) {
+    private static double readTable(Piece piece, ChessCoordinate coordinate) {
         int[] table = switch (piece) {
             case WHITE_PAWN, BLACK_PAWN -> PAWN_VALUE_MAP;
             case WHITE_KNIGHT, BLACK_KNIGHT -> KNIGHT_VALUE_MAP;
@@ -96,7 +93,7 @@ public class PositionEvaluator implements Evaluator {
     @Override
     public List<Move> getSortedMoves(GameModel game, Move hashMove) {
         List<Move> legalMoves = game.getLegalMoves();
-        legalMoves.sort(this::moveComparator);
+        legalMoves.sort(new MoveComparator(game));
         if (hashMove != null) {
             if (legalMoves.remove(hashMove)) {
                 legalMoves.add(0, hashMove);
@@ -107,35 +104,36 @@ public class PositionEvaluator implements Evaluator {
         return legalMoves;
     }
 
-    private int moveComparator(Move move1, Move move2) {
-        return evaluateMove(move2) - evaluateMove(move1);
-    }
+    private record MoveComparator(GameModel game) implements Comparator<Move> {
 
-    private int evaluateMove(Move move) {
-        int score = 0;
-
-        // If the move captures weight moves that capture with lower value pieces higher
-        if (move.getInteractingPiece(game.getBoard()) != null && move.getInteractingPieceEnd() == null) {
-            score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece(game.getBoard()))
-                    - Evaluator.getValue(move.getMovingPiece()));
-        }
-
-        if (move.doesPromote()) {
-            switch (move.getPromotedPiece()) {
-                case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
-                case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
-                case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
-                case WHITE_KNIGHT, BLACK_KNIGHT -> score += KNIGHT_SCORE;
+        @Override
+            public int compare(Move o1, Move o2) {
+                return Integer.compare(evaluateMove(o1), evaluateMove(o2));
             }
-        } else {
-            if (moveGenerator.getOpponentAttackMap().isMarked(move.getEndingCoordinate().getOndDimIndex())) {
-                score -= 100;
+
+        private int evaluateMove(Move move) {
+                int score = 0;
+
+                Piece movingPiece = move.getMovingPiece(game.getBoard());
+                // If the move captures weight moves that capture with lower value pieces higher
+                if (move.getInteractingPiece(game.getBoard()) != null && move.getInteractingPieceEnd() == null) {
+                    score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece(game.getBoard()))
+                            - Evaluator.getValue(movingPiece));
+                }
+
+                if (move.doesPromote()) {
+                    switch (move.getPromotedPiece()) {
+                        case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
+                        case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
+                        case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
+                        case WHITE_KNIGHT, BLACK_KNIGHT -> score += KNIGHT_SCORE;
+                    }
+                }
+
+                score += readTable(movingPiece, move.getEndingCoordinate())
+                        - readTable(movingPiece, move.getStartingCoordinate());
+
+                return score;
             }
         }
-
-        score += readTable(move.getMovingPiece(), move.getEndingCoordinate())
-                - readTable(move.getMovingPiece(), move.getStartingCoordinate());
-
-        return score;
-    }
 }

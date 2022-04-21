@@ -1,6 +1,7 @@
 package chess.model;
 
 import chess.Move;
+import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,6 +17,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static chess.ChessCoordinate.D5;
+import static chess.ChessCoordinate.D7;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {
@@ -50,7 +53,6 @@ public class GameModelTest {
     @Test
     public void testStartingPositionDepth() {
         GameModel game = new GameModel();
-        //game = new GameModel("rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKBR1 b Qkq - 3 2");
         int[] expectedNumPositions = {1, 20, 400, 8902, 197_281, 4_865_609};
         runCountTest(game, expectedNumPositions);
     }
@@ -87,7 +89,7 @@ public class GameModelTest {
         Bitmap test v2: 2730 (run without profiler)
         Bitmap test v2: 3980 (run with profiler)
          */
-        GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
+        /*GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
 
         PositionCounter positionCounter = new PositionCounter(complicated, 12, counter);
@@ -108,7 +110,7 @@ public class GameModelTest {
 
         long totalTime = end - start;
         System.out.printf("Reached %d positions in 60s\n", counter.get());
-        System.out.printf("Approximately %d ns per position\n", totalTime / counter.get());
+        System.out.printf("Approximately %d ns per position\n", totalTime / counter.get());//*/
     }
 
     private static void runToDepth(GameModel game, int depth, AtomicLong counter) {

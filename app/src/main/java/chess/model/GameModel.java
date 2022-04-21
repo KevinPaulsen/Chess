@@ -229,12 +229,12 @@ public class GameModel {
      * @param state    the state to update
      * @param lastMove the last move made
      */
-    private static void checkEnPassant(FastMap state, Move lastMove) {
+    private static void checkEnPassant(FastMap state, Move lastMove, boolean isPawn) {
         if (lastMove == null) {
             throw new IllegalArgumentException("lastMove cannot be null");
         }
         ChessCoordinate enPassantTarget = null;
-        if (lastMove.getMovingPiece().isPawn()
+        if (isPawn
                 && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
             int rank = lastMove.getStartingCoordinate().getRank() == 1 ? 2 : 5;
             enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
@@ -317,6 +317,9 @@ public class GameModel {
             moveHistory.add(move);
             stateHistory.add(makeState());
             positionTracker.merge(getZobristHash(), 1, Integer::sum);
+            if (getZobristHash() == 7738851834672920716L) {
+                System.out.println("oof");
+            }
             previousLegalMoves.add(moveGenerator.generateMoves());
             checkGameOver();
 
@@ -368,7 +371,8 @@ public class GameModel {
         currentState.merge(getGameState());
 
         checkCastling(currentState, board.getWhiteKingCoord(), board.getBlackKingCoord());
-        checkEnPassant(currentState, getLastMove());
+        Move lastMove = getLastMove();
+        checkEnPassant(currentState, lastMove, board.isPawn(lastMove.getEndingCoordinate()));
         currentState.flip(WHITE_TO_MOVE_MASK);
 
         zobrist.updateGameData(currentState);

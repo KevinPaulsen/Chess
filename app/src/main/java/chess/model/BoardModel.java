@@ -326,7 +326,12 @@ public class BoardModel {
                 || pieceMaps[BLACK_ROOK.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
     }
 
-    public boolean isOccupied(ChessCoordinate potentialCoordinate) {
-        return occupied.isMarked(potentialCoordinate.getOndDimIndex());
+    public boolean isPawn(ChessCoordinate coordinate) {
+        return pieceMaps[WHITE_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
+                || pieceMaps[BLACK_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
+    }
+
+    public boolean isOccupied(ChessCoordinate coordinate) {
+        return occupied.isMarked(coordinate.getOndDimIndex());
     }
 }

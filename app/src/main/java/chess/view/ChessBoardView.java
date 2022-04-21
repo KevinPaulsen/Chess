@@ -101,9 +101,9 @@ public class ChessBoardView extends JPanel {
             }
             ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()))).capture();
             if (move.doesPromote()) {
-                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).promoteTo(move.getPromotedPiece());
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).setImage(move.getPromotedPiece());
             } else {
-                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).promoteTo(move.getMovingPiece());
+                swap(move.getStartingCoordinate(), move.getEndingCoordinate());
             }
         }
     }

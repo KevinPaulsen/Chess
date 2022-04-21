@@ -83,13 +83,8 @@ public class FastMap {
 
         byte count = 0;
 
-        // TODO: TEST!!
         for (int i = Long.numberOfTrailingZeros(mapCopy); mapCopy != 0; mapCopy = (mapCopy >>> i) >>> 1, i = Long.numberOfTrailingZeros(mapCopy), count++) {
             indices.add(count += (byte) i);
-
-            if (indices.size() > 10) {
-                System.out.println("oof");
-            }
         }
 
         return indices;
