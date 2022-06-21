@@ -334,4 +334,24 @@ public class BoardModel {
     public boolean isOccupied(ChessCoordinate coordinate) {
         return occupied.isMarked(coordinate.getOndDimIndex());
     }
+
+    public long getOccupancyMap() {
+        return occupied.getMap();
+    }
+
+    public long getOccupancyMap(char color) {
+        return color == WHITE ? white.getMap() : black.getMap();
+    }
+
+    public long getBishops(Piece friendlyBishop) {
+        return pieceMaps[friendlyBishop.getUniqueIdx() % 12].getMap();
+    }
+
+    public long getRooks(Piece friendlyRook) {
+        return pieceMaps[friendlyRook.getUniqueIdx() % 12].getMap();
+    }
+
+    public long getQueens(Piece friendlyQueen) {
+        return pieceMaps[friendlyQueen.getUniqueIdx() % 12].getMap();
+    }
 }

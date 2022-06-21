@@ -3,7 +3,6 @@ package chess.model;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.pieces.Piece;
-import chess.util.BigFastMap;
 import chess.util.FastMap;
 
 import java.math.BigInteger;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
@@ -317,9 +315,6 @@ public class GameModel {
             moveHistory.add(move);
             stateHistory.add(makeState());
             positionTracker.merge(getZobristHash(), 1, Integer::sum);
-            if (getZobristHash() == 7738851834672920716L) {
-                System.out.println("oof");
-            }
             previousLegalMoves.add(moveGenerator.generateMoves());
             checkGameOver();
 

@@ -1,24 +1,12 @@
 package chess.model;
 
 import chess.Move;
-import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static chess.ChessCoordinate.D5;
-import static chess.ChessCoordinate.D7;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {

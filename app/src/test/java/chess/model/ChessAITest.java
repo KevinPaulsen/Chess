@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static chess.ChessCoordinate.*;
-import static chess.model.pieces.Piece.*;
 
 public class ChessAITest {
 

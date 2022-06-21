@@ -1,61 +1,61 @@
 package chess.model.pieces;
 
+import java.util.Iterator;
 import java.util.Set;
 
-public enum Directions {
+import static chess.model.pieces.Direction.*;
+
+public enum Directions implements Iterable<Direction> {
 
     DIAGONALS(Set.of(
-            new Direction(1, 1),
-            new Direction(1, -1),
-            new Direction(-1, 1),
-            new Direction(-1, -1)
+            UP_LEFT,
+            UP_RIGHT,
+            DOWN_LEFT,
+            DOWN_RIGHT
     )),
     STRAIGHTS(Set.of(
-            new Direction(1, 0),
-            new Direction(-1, 0),
-            new Direction(0, 1),
-            new Direction(0, -1)
+            LEFT,
+            RIGHT,
+            UP,
+            DOWN
     )),
     KNIGHTS(Set.of(
-            new Direction(2, 1),
-            new Direction(2, -1),
-            new Direction(1, 2),
-            new Direction(1, -2),
-            new Direction(-1, 2),
-            new Direction(-1, -2),
-            new Direction(-2, 1),
-            new Direction(-2, -1)
+            UP_UP_RIGHT,
+            UP_UP_LEFT,
+            UP_LEFT_LEFT,
+            DOWN_LEFT_LEFT,
+            DOWN_DOWN_LEFT,
+            DOWN_DOWN_RIGHT,
+            DOWN_RIGHT_RIGHT,
+            UP_RIGHT_RIGHT
     )),
     VERTICAL(Set.of(
-            new Direction(1, 0),
-            new Direction(-1, 0)
+            UP,
+            DOWN
     )),
     LATERAL(Set.of(
-            new Direction(0, 1),
-            new Direction(0, -1)
+            RIGHT,
+            LEFT
     )),
     ALL_DIRECTIONS(Set.of(
-            new Direction(1, 1),
-            new Direction(1, -1),
-            new Direction(-1, 1),
-            new Direction(-1, -1),
-            new Direction(1, 0),
-            new Direction(-1, 0),
-            new Direction(0, 1),
-            new Direction(0, -1)
+            UP,
+            UP_LEFT,
+            LEFT,
+            DOWN_LEFT,
+            DOWN,
+            DOWN_RIGHT,
+            RIGHT,
+            UP_RIGHT
     ));
 
-    public static final Direction UP = new Direction(1, 0);
-    public static final Direction DOWN = new Direction(-1, 0);
-    public static final Direction LEFT = new Direction(0, -1);
-    public static final Direction RIGHT = new Direction(0, 1);
-    public static final Direction UP_RIGHT = new Direction(1, 1);
-    public static final Direction UP_LEFT = new Direction(1, -1);
-    public static final Direction DOWN_RIGHT = new Direction(-1, 1);
-    public static final Direction DOWN_LEFT = new Direction(-1, -1);
     public final Set<Direction> directions;
 
     Directions(Set<Direction> directions) {
         this.directions = directions;
+    }
+
+    @Override
+    public Iterator<Direction> iterator() {
+        return directions.iterator();
     }
 }

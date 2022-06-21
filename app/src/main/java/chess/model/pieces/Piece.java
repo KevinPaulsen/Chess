@@ -5,27 +5,30 @@ import chess.ChessCoordinate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static chess.model.pieces.Direction.*;
+import static chess.model.pieces.Directions.*;
+
 /**
  * This class is an abstract representation of a Piece. Any piece can implement
  * this class. A piece contains information about how the piece moves, and its
  * color, and where it is on the board.
  */
 public enum Piece {
-    EMPTY(null, 'w', "", 0),
+    EMPTY(null, null, 'w', "", 0),
 
-    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1),
-    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 2),
-    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 3),
-    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 4),
-    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 5),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
+    WHITE_KING(Piece::generateKingReachableCoordsAt, ALL_DIRECTIONS, 'w', "K", 1),
+    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, ALL_DIRECTIONS, 'w', "Q", 2),
+    WHITE_ROOK(Piece::generateRookReachableCoordsAt, STRAIGHTS, 'w', "R", 3),
+    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, DIAGONALS, 'w', "B", 4),
+    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, KNIGHTS, 'w', "N", 5),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, VERTICAL, 'w', "P", 6),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7),
-    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 8),
-    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 9),
-    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 10),
-    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 11),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
+    BLACK_KING(Piece::generateKingReachableCoordsAt, ALL_DIRECTIONS, 'b', "k", 7),
+    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, ALL_DIRECTIONS, 'b', "q", 8),
+    BLACK_ROOK(Piece::generateRookReachableCoordsAt, STRAIGHTS, 'b', "r", 9),
+    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, DIAGONALS, 'b', "b", 10),
+    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, KNIGHTS, 'b', "n", 11),
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, VERTICAL, 'b', "p", 12);
 
     /**
      * The map of reachable coordinates
@@ -47,22 +50,25 @@ public enum Piece {
      */
     private final int uniqueIdx;
 
+    private final Directions directions;
+
     /**
      * Construct a new piece with the given reachableCoordinate map.
      *
      * @param mapMaker the mapMaker for this piece.
      */
-    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, String stringRep, int uniqueIdx) {
+    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, Directions directions, char color, String stringRep, int uniqueIdx) {
         this.reachableCoordinateMap = new ReachableCoordinatesMap(mapMaker);
         this.color = color;
         this.stringRep = stringRep;
         this.uniqueIdx = uniqueIdx;
+        this.directions = directions;
     }
 
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
+        for (Direction direction : ALL_DIRECTIONS.directions) {
             List<ChessCoordinate> ray = new ArrayList<>();
             for (ChessCoordinate currentCoord = direction.next(coordinate);
                  currentCoord != null;
@@ -105,7 +111,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateKingReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : Directions.ALL_DIRECTIONS.directions) {
+        for (Direction direction : ALL_DIRECTIONS.directions) {
             ChessCoordinate nextCoord = direction.next(coordinate);
             result.add(nextCoord == null ? List.of() : List.of(nextCoord));
         }
@@ -180,21 +186,21 @@ public enum Piece {
         List<ChessCoordinate> straightMoves = new ArrayList<>();
         if (coordinate.getRank() < 7) {
             // Add the Straight Moves
-            straightMoves.add(Directions.UP.next(coordinate));
+            straightMoves.add(UP.next(coordinate));
             if (coordinate.getRank() == 1) {
-                straightMoves.add(Directions.UP.next(straightMoves.get(0)));
+                straightMoves.add(UP.next(straightMoves.get(0)));
             }
 
             // Add the right diagonal
             if (coordinate.getFile() < 7) {
-                result.add(List.of(Directions.UP_RIGHT.next(coordinate)));
+                result.add(List.of(UP_RIGHT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
 
             // Add the left diagonal
             if (coordinate.getFile() > 0) {
-                result.add(List.of(Directions.UP_LEFT.next(coordinate)));
+                result.add(List.of(UP_LEFT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
@@ -224,21 +230,21 @@ public enum Piece {
         List<ChessCoordinate> straightMoves = new ArrayList<>();
         if (coordinate.getRank() > 0) {
             // Add the Straight Moves
-            straightMoves.add(Directions.DOWN.next(coordinate));
+            straightMoves.add(DOWN.next(coordinate));
             if (coordinate.getRank() == 6) {
-                straightMoves.add(Directions.DOWN.next(straightMoves.get(0)));
+                straightMoves.add(DOWN.next(straightMoves.get(0)));
             }
 
             // Add the right diagonal
             if (coordinate.getFile() < 7) {
-                result.add(List.of(Directions.DOWN_RIGHT.next(coordinate)));
+                result.add(List.of(DOWN_RIGHT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
 
             // Add the left diagonal
             if (coordinate.getFile() > 0) {
-                result.add(List.of(Directions.DOWN_LEFT.next(coordinate)));
+                result.add(List.of(DOWN_LEFT.next(coordinate)));
             } else {
                 result.add(List.of());
             }
@@ -255,6 +261,10 @@ public enum Piece {
      */
     public List<List<ChessCoordinate>> getReachableCoordinateMapFrom(ChessCoordinate coordinate) {
         return reachableCoordinateMap.getReachableCoordinatesFrom(coordinate);
+    }
+
+    public Directions getDirections() {
+        return directions;
     }
 
     /**

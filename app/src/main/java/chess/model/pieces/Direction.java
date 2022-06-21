@@ -2,18 +2,36 @@ package chess.model.pieces;
 
 import chess.ChessCoordinate;
 
-import java.util.Objects;
-
 /**
  * This class stores a direction, and can calculate if
  * two ChessCoordinates are aligned.
  */
-public class Direction {
+public enum Direction {
 
-    // The vertical increase
-    private final int rise;
-    // The horizontal increase
-    private final int run;
+    // Straights
+    UP(1, 0),
+    DOWN(-1, 0),
+    LEFT(0, -1),
+    RIGHT(0, 1),
+
+    // Diagonals
+    UP_RIGHT(1, 1),
+    UP_LEFT(1, -1),
+    DOWN_RIGHT(-1, 1),
+    DOWN_LEFT(-1, -1),
+
+    // Knights
+    UP_UP_RIGHT(2, 1),
+    UP_UP_LEFT(2, -1),
+    UP_LEFT_LEFT(1, -2),
+    UP_RIGHT_RIGHT(1, 2),
+    DOWN_LEFT_LEFT(-1, -2),
+    DOWN_RIGHT_RIGHT(-1, 2),
+    DOWN_DOWN_LEFT(-2, -1),
+    DOWN_DOWN_RIGHT(-2, 1);
+
+    final int rise;
+    final int run;
 
     /**
      * Creates a new Direction with the given rise and run.
@@ -21,44 +39,9 @@ public class Direction {
      * @param rise the vertical increase
      * @param run  the horizontal increase.
      */
-    public Direction(int rise, int run) {
+    Direction(int rise, int run) {
         this.rise = rise;
         this.run = run;
-    }
-
-    private static int scaleToOne(int num) {
-        return num == 0 ? 0 : num / Math.abs(num);
-    }
-
-    public static Direction getDirectionTo(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-        return new Direction(riseOffset, runOffset);
-    }
-
-    /**
-     * If the two directions are axially aligned or diagonally aligned, a direction
-     * between the two is returned. Null otherwise.
-     *
-     * @param start the starting coordinate
-     * @param end   the ending coordinate
-     * @return the direction between the two
-     */
-    public static Direction getNormalDirectionTo(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-
-        if (riseOffset == 0 || runOffset == 0 || Math.abs(riseOffset) == Math.abs(runOffset)) {
-            return new Direction(scaleToOne(riseOffset), scaleToOne(runOffset));
-        }
-        return null;
-    }
-
-    public static boolean areMajorlyAligned(ChessCoordinate start, ChessCoordinate end) {
-        int riseOffset = end.getRank() - start.getRank();
-        int runOffset = end.getFile() - start.getFile();
-        double slope = runOffset == 0 ? 0 : ((double) riseOffset) / runOffset;
-        return slope == 0 || Math.abs(slope) == 1;
     }
 
     /**
@@ -79,49 +62,6 @@ public class Direction {
             }
         }
         return next;
-    }
-
-    /**
-     * @return the rise of this direction
-     */
-    public int getRise() {
-        return rise;
-    }
-
-    /**
-     * @return the run of this direction
-     */
-    public int getRun() {
-        return run;
-    }
-
-    public Direction getOpposite() {
-        return new Direction(-rise, -run);
-    }
-
-    public boolean isDiagonal() {
-        return rise * run != 0;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Direction)) return false;
-        Direction direction = (Direction) o;
-        return rise == direction.rise && run == direction.run;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(rise, run);
-    }
-
-    public boolean isKnightDirection() {
-        return Math.abs(rise) + Math.abs(run) == 3 && !isAxial();
-    }
-
-    public boolean isAxial() {
-        return rise * run == 0;
     }
 }
 

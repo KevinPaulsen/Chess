@@ -1,12 +1,8 @@
 package chess.util;
 
-import chess.ChessCoordinate;
-
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This Class represents a user-friendly bit mask.
