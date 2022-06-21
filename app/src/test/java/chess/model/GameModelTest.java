@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static chess.ChessCoordinate.A2;
+import static chess.ChessCoordinate.A3;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {

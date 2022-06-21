@@ -70,6 +70,8 @@ public class MoveGenerator {
      */
     private static final long[][] coordinateToMask = createMaskMap();
 
+    private static final long[] knightMoveMask = createKnightMoveMask();
+
     private final GameModel game;
     private final BoardModel board;
     private long checkRayMap;
@@ -111,11 +113,6 @@ public class MoveGenerator {
         this.hvPinRayMap = 0;
         this.d12PinRayMap = 0;
         this.opponentAttackMap = new FastMap();
-
-        /*System.out.println("00000000 | " + String.format("%8s", Integer.toBinaryString(getRay(0x00FF000000000000L, B8, RIGHT) & 0xFF)).replace(' ', '0'));
-        System.out.println("00000001 | " + String.format("%8s", Integer.toBinaryString(getRay(0x00FF000000000000L, B8, DOWN_LEFT) & 0xFF)).replace(' ', '0'));
-        System.out.println("00000100 | " + String.format("%8s", Integer.toBinaryString(getRay(0x00FF000000000000L, B8, DOWN_RIGHT) & 0xFF)).replace(' ', '0'));
-        System.out.println("01111110 | " + String.format("%8s", Integer.toBinaryString(getRay(0x00FFFFFFFFFFFF00L, H8, DOWN) & 0xFF)).replace(' ', '0'));//*/
     }
 
     /**
@@ -172,6 +169,28 @@ public class MoveGenerator {
         }
 
         return coordinateToMask;
+    }
+
+    private static long[] createKnightMoveMask() {
+        long[] knightMoveMask = new long[64];
+
+        for (int coordIdx = 0; coordIdx < knightMoveMask.length; coordIdx++) {
+            ChessCoordinate coordinate = getChessCoordinate(coordIdx);
+            long mask = 0x0;
+
+            if (coordinate.getFile() > 0 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 17);
+            if (coordinate.getFile() < 7 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 15);
+            if (coordinate.getFile() > 1 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 10);
+            if (coordinate.getFile() < 6 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 6);
+            if (coordinate.getFile() > 1 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 6);
+            if (coordinate.getFile() < 6 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 10);
+            if (coordinate.getFile() > 0 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 15);
+            if (coordinate.getFile() < 7 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 17);
+
+            knightMoveMask[coordIdx] = mask;
+        }
+
+        return knightMoveMask;
     }
 
     private static byte getRay(long relevantBits, ChessCoordinate coordinate, Direction direction) {
@@ -614,27 +633,12 @@ public class MoveGenerator {
     }
 
     private void generateKnightMoves() {
-        Piece knight = friendlyColor == WHITE ? WHITE_KNIGHT : BLACK_KNIGHT;
-        for (ChessCoordinate coordinate : friendlyKnights()) {
-            if (isPinned(coordinate)) {
-                continue;
-            }
-
-            List<List<ChessCoordinate>> rays = knight.getReachableCoordinateMapFrom(coordinate);
-            for (int rayIdx = 0; rayIdx < rays.size(); rayIdx++) {
-                List<ChessCoordinate> ray = rays.get(rayIdx);
-                for (int coordIdx = 0; coordIdx < ray.size(); coordIdx++) {
-                    ChessCoordinate targetCoordinate = ray.get(coordIdx);
-                    if (!board.isOccupiedByColor(targetCoordinate, friendlyColor)
-                            && (!inCheck || ((checkRayMap & targetCoordinate.getBitMask()) != 0))) {
-                        if (board.isOccupied(targetCoordinate)) {
-                            moves.add(new Move(coordinate, targetCoordinate, targetCoordinate, null));
-                        } else {
-                            moves.add(new Move(coordinate, targetCoordinate));
-                        }
-                    }
-                }
-            }
+        long knights = board.getKnights(friendlyKnight) & ~(hvPinRayMap | d12PinRayMap);
+        BitIterator bitIterator = new BitIterator(knights);
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            long moveMask = knightMoveMask[coordinate.getOndDimIndex()] & ~board.getOccupancyMap(friendlyColor) & checkRayMap;
+            addMoves(friendlyKnight, coordinate, moveMask);
         }
     }
 

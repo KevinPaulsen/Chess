@@ -354,4 +354,8 @@ public class BoardModel {
     public long getQueens(Piece friendlyQueen) {
         return pieceMaps[friendlyQueen.getUniqueIdx() % 12].getMap();
     }
+
+    public long getKnights(Piece friendlyKnight) {
+        return pieceMaps[friendlyKnight.getUniqueIdx() % 12].getMap();
+    }
 }
