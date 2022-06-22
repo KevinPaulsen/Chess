@@ -612,20 +612,19 @@ public class MoveGenerator {
     private long getMoveMask(ChessCoordinate coordinate, Direction direction, long board) {
         long moveMask = 0;
 
-        long relevantBits = board & coordinateToMask[coordinate.getOndDimIndex()][direction.ordinal()];
-        byte movementRay = getRay(relevantBits, coordinate, direction);
-        byte position = getRay(coordinate.getBitMask(), coordinate, direction);
+        long rayMask = coordinateToMask[coordinate.getOndDimIndex()][direction.ordinal()];
+        long relevantBits = board & rayMask;
 
         switch (direction) {
-            case UP, UP_RIGHT, RIGHT, DOWN_RIGHT -> {
-                byte leftBits = (byte) (-position ^ position);
-                byte rightBits = (byte) (((Integer.lowestOneBit(movementRay) - 1) << 1) + 1);
-                moveMask = getMap((byte) (leftBits & rightBits), coordinate, direction);
+            case DOWN, LEFT, DOWN_LEFT, DOWN_RIGHT -> {
+                long leftBits = coordinate.getBitMask() - 1;
+                long rightBits = relevantBits == 0 ? 0xFFFFFFFFFFFFFFFFL : -Long.highestOneBit(relevantBits);
+                moveMask = leftBits & rightBits & rayMask;
             }
-            case UP_LEFT, LEFT, DOWN_LEFT, DOWN -> {
-                byte rightBits = (byte) (position - 1);
-                byte leftBits = (byte) (((byte) 0x80) >> LEADING_ZEROS[movementRay & 0xFF]);
-                moveMask = getMap((byte) (leftBits & rightBits), coordinate, direction);
+            case UP_LEFT, UP, UP_RIGHT, RIGHT -> {
+                long leftBits = Long.lowestOneBit(relevantBits << 1) - 1;
+                long rightBits = -coordinate.getBitMask() << 1;
+                moveMask = leftBits & rightBits & rayMask;
             }
         }
 
