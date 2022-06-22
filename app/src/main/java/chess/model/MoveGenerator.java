@@ -5,7 +5,6 @@ import chess.Move;
 import chess.model.pieces.Direction;
 import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
-import chess.util.FastMap;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,57 +26,47 @@ import static chess.model.pieces.Piece.*;
  */
 public class MoveGenerator {
 
+    private static final long ONES = 0xFFFFFFFFFFFFFFFFL;
     private static final int BITS_IN_BYTE = 8;
 
-    private static final byte[] LEADING_ZEROS = {
-            8, 7, 6, 6, 5, 5, 5, 5,
-            4, 4, 4, 4, 4, 4, 4, 4,
-            3, 3, 3, 3, 3, 3, 3, 3,
-            3, 3, 3, 3, 3, 3, 3, 3,
-            2, 2, 2, 2, 2, 2, 2, 2,
-            2, 2, 2, 2, 2, 2, 2, 2,
-            2, 2, 2, 2, 2, 2, 2, 2,
-            2, 2, 2, 2, 2, 2, 2, 2,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0
+    private static final long[] FILE_MASKS = {
+            0x0101010101010101L,
+            0x0202020202020202L,
+            0x0404040404040404L,
+            0x0808080808080808L,
+            0x1010101010101010L,
+            0x2020202020202020L,
+            0x4040404040404040L,
+            0x8080808080808080L,
+    };
+
+    private static final long[] ROW_MASKS = {
+            0x00000000000000FFL,
+            0x000000000000FF00L,
+            0x0000000000FF0000L,
+            0x00000000FF000000L,
+            0x000000FF00000000L,
+            0x0000FF0000000000L,
+            0x00FF000000000000L,
+            0xFF00000000000000L,
     };
 
     /**
      * Accessed by
      * coordinateToMask[posIdx][direction.ordinal]
      */
-    private static final long[][] coordinateToMask = createMaskMap();
+    private static final long[][] coordinateToMask = createDirectionMaskMap();
 
-    private static final long[] knightMoveMask = createKnightMoveMask();
+    private static final long[] KNIGHT_MOVE_MASKS = createKnightMoveMasks();
+
+    private static final long[] KING_MOVE_MASKS = createKingMoveMasks();
 
     private final GameModel game;
     private final BoardModel board;
-    private long checkRayMap;
+    private long checkRayMask;
     private long hvPinRayMap;
     private long d12PinRayMap;
-    private final FastMap opponentAttackMap;
+    private long opponentAttackMap;
     private final Map<Long, List<Move>> cachedPositions;
     private List<Move> moves;
     private boolean inCheck;
@@ -109,38 +98,10 @@ public class MoveGenerator {
 
         this.cachedPositions = new MoveLRUCache(11_000);
 
-        this.checkRayMap = 0;
+        this.checkRayMask = 0;
         this.hvPinRayMap = 0;
         this.d12PinRayMap = 0;
-        this.opponentAttackMap = new FastMap();
-    }
-
-    /**
-     * Updates the given sliding piece's attack map. Adds all the squares this piece
-     * can move to to the given map. This will go though the firendly king, and
-     * continue the ray past it.
-     *
-     * @param board          the board the piece is on.
-     * @param attackingPiece the attacking piece to update.
-     * @param coordinate     the coordinate this piece is on
-     * @param map            the map to mark.
-     */
-    private static void updateSlidingAttackPiece(BoardModel board, Piece attackingPiece,
-                                                 ChessCoordinate coordinate, FastMap map) {
-        List<List<ChessCoordinate>> reachableCoordinateMap = attackingPiece.getReachableCoordinateMapFrom(coordinate);
-        for (int rayIdx = 0; rayIdx < reachableCoordinateMap.size(); rayIdx++) {
-            List<ChessCoordinate> potentialRay = reachableCoordinateMap.get(rayIdx);
-            for (int coordIdx = 0; coordIdx < potentialRay.size(); coordIdx++) {
-                ChessCoordinate potentialCoordinate = potentialRay.get(coordIdx);
-                map.mergeMask(potentialCoordinate.getBitMask());
-
-                if (board.isOccupied(potentialCoordinate)
-                        && (board.isOccupiedByColor(potentialCoordinate, attackingPiece.getColor())
-                        || !board.isKing(potentialCoordinate))) {
-                    break;
-                }
-            }
-        }
+        this.opponentAttackMap = 0x0;
     }
 
     private static boolean areAligned(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
@@ -150,140 +111,16 @@ public class MoveGenerator {
         return product1 == product2;
     }
 
-    private static long[][] createMaskMap() {
-        long[][] coordinateToMask = new long[Long.BYTES * BITS_IN_BYTE][ALL_DIRECTIONS.directions.size()];
-
-        for (int coordIdx = 0; coordIdx < coordinateToMask.length; coordIdx++) {
-            for (Direction direction : ALL_DIRECTIONS.directions) {
-                long mask = 0x0;
-                ChessCoordinate coordinate = direction.next(ChessCoordinate.getChessCoordinate(coordIdx));
-
-                while (coordinate != null) {
-                    mask |= coordinate.getBitMask();
-                    coordinate = direction.next(coordinate);
-                }
-
-                if (Long.bitCount(mask) > 7) throw new IllegalStateException();
-                coordinateToMask[coordIdx][direction.ordinal()] = mask;
-            }
-        }
-
-        return coordinateToMask;
-    }
-
-    private static long[] createKnightMoveMask() {
-        long[] knightMoveMask = new long[64];
-
-        for (int coordIdx = 0; coordIdx < knightMoveMask.length; coordIdx++) {
-            ChessCoordinate coordinate = getChessCoordinate(coordIdx);
-            long mask = 0x0;
-
-            if (coordinate.getFile() > 0 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 17);
-            if (coordinate.getFile() < 7 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 15);
-            if (coordinate.getFile() > 1 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 10);
-            if (coordinate.getFile() < 6 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 6);
-            if (coordinate.getFile() > 1 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 6);
-            if (coordinate.getFile() < 6 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 10);
-            if (coordinate.getFile() > 0 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 15);
-            if (coordinate.getFile() < 7 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 17);
-
-            knightMoveMask[coordIdx] = mask;
-        }
-
-        return knightMoveMask;
-    }
-
-    private static byte getRay(long relevantBits, ChessCoordinate coordinate, Direction direction) {
-        final int rowMask = 0xFF;
-        byte ray = 0x0;
-
-        switch (direction) {
-            case LEFT, RIGHT -> ray = (byte) (relevantBits >>> (8 * coordinate.getRank()));
-            case UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT -> {
-                ray |= relevantBits & rowMask;
-                ray |= (relevantBits >>> 8) & rowMask;
-                ray |= (relevantBits >>> 16) & rowMask;
-                ray |= (relevantBits >>> 24) & rowMask;
-                ray |= (relevantBits >>> 32) & rowMask;
-                ray |= (relevantBits >>> 40) & rowMask;
-                ray |= (relevantBits >>> 48) & rowMask;
-                ray |= (relevantBits >>> 56) & rowMask;
-            }
-            case UP, DOWN -> {
-                int file = coordinate.getFile();
-                ray |= (relevantBits & rowMask) >>> file;
-                ray |= ((relevantBits >>> 8) & rowMask) >>> file << 1;
-                ray |= ((relevantBits >>> 16) & rowMask) >>> file << 2;
-                ray |= ((relevantBits >>> 24) & rowMask) >>> file << 3;
-                ray |= ((relevantBits >>> 32) & rowMask) >>> file << 4;
-                ray |= ((relevantBits >>> 40) & rowMask) >>> file << 5;
-                ray |= ((relevantBits >>> 48) & rowMask) >>> file << 6;
-                ray |= ((relevantBits >>> 56) & rowMask) >>> file << 7;
-            }
-        }
-
-        return ray;
-    }
-
-    private static long getMap(byte ray, ChessCoordinate coordinate, Direction direction) {
-        long relevantBits = 0x0L;
-
-        switch (direction) {
-            case LEFT, RIGHT -> relevantBits = (((long) ray & 0xFF) << (8 * coordinate.getRank()));
-            case UP_LEFT -> {
-                for (int file = coordinate.getFile() - 1, rank = coordinate.getRank() + 1;
-                     file >= 0 && rank < 8; file--, rank++) {
-                    relevantBits |= (ray & (0b1L << file)) << (8 * rank);
-                }
-            }
-            case UP_RIGHT -> {
-                for (int file = coordinate.getFile() + 1, rank = coordinate.getRank() + 1;
-                     file < 8 && rank < 8; file++, rank++) {
-                    relevantBits |= (ray & (0b1L << file)) << (8 * rank);
-                }
-            }
-            case DOWN_RIGHT -> {
-                for (int file = coordinate.getFile() + 1, rank = coordinate.getRank() - 1;
-                     file < 8 && rank >= 0; file++, rank--) {
-                    relevantBits |= (ray & (0b1L << file)) << (8 * rank);
-                }
-            }
-            case DOWN_LEFT -> {
-                for (int file = coordinate.getFile() - 1, rank = coordinate.getRank() - 1;
-                     file >= 0 && rank >= 0; file--, rank--) {
-                    relevantBits |= (ray & (0b1L << file)) << (8 * rank);
-                }
-            }
-            case UP -> {
-                int file = coordinate.getFile();
-                for (int rank = coordinate.getRank() + 1; rank < 8; rank++) {
-                    long isolatedBit = ray & (0b1L << rank);
-                    long correctedFile = rank > file ? isolatedBit >> (rank - file) : (isolatedBit << (file - rank));
-                    relevantBits |= correctedFile << (rank * 8);
-                }
-            }
-            case DOWN -> {
-                int file = coordinate.getFile();
-                for (int rank = coordinate.getRank() - 1; rank >= 0; rank--) {
-                    long isolatedBit = ray & (0b1L << rank);
-                    long correctedFile = rank > file ? isolatedBit >> (rank - file) : (isolatedBit << (file - rank));
-                    relevantBits |= correctedFile << (rank * 8);
-                }
-            }
-        }
-        return relevantBits;
-    }
-
     private void resetState() {
         this.moves = new ArrayList<>(150);
         this.inCheck = false;
         this.inDoubleCheck = false;
         this.pinsExistInPosition = false;
 
-        this.checkRayMap = 0;
+        this.checkRayMask = 0;
         this.hvPinRayMap = 0;
         this.d12PinRayMap = 0;
-        this.opponentAttackMap.clear();
+        this.opponentAttackMap = 0;
 
         this.friendlyColor = game.getTurn();
         this.attackingColor = friendlyColor == WHITE ? BLACK : WHITE;
@@ -344,46 +181,65 @@ public class MoveGenerator {
     }
 
     private void calculateAttackData() {
-        opponentAttackMap.merge(calculateSlidingAttackMap());
+        opponentAttackMap |= calculateSlidingAttackMap();
 
         // Calculate the pin and check rays
-        List<ChessCoordinate> attackingQueens = attackingQueens();
-        if (attackingRooks().size() > 0 || attackingQueens.size() > 0) {
+        boolean hasQueens = board.getQueens(attackingQueen) != 0;
+        if (board.getRooks(attackingRook) != 0 || hasQueens) {
             calculatePinsAndCheckRays(board, WHITE_ROOK.getReachableCoordinateMapFrom(friendlyKingCoord), false);
         }
-        if (attackingBishops().size() > 0 || attackingQueens.size() > 0) {
+        if (board.getBishops(attackingBishop) != 0 || hasQueens) {
             calculatePinsAndCheckRays(board, WHITE_BISHOP.getReachableCoordinateMapFrom(friendlyKingCoord), true);
         }
 
         // Calculate Knight Attacks
-        List<ChessCoordinate> attackingKnights = attackingKnights();
-        for (int idx = 0; idx < attackingKnights.size(); idx++) {
-            ChessCoordinate knightCoord = attackingKnights.get(idx);
-            List<List<ChessCoordinate>> reachableCoordinates = WHITE_KNIGHT.getReachableCoordinateMapFrom(knightCoord);
-            for (int rayIdx = 0; rayIdx < reachableCoordinates.size(); rayIdx++) {
-                updateAttackingSquares(friendlyKingCoord, knightCoord, reachableCoordinates, rayIdx);
+        long friendlyKingMask = friendlyKingCoord.getBitMask();
+        BitIterator bitIterator = new BitIterator(board.getKnights(attackingKnight));
+        while (bitIterator.hasNext()) {
+            ChessCoordinate knightCoord = bitIterator.next();
+            long attackMask = KNIGHT_MOVE_MASKS[knightCoord.getOndDimIndex()];
+            opponentAttackMap |= attackMask;
+
+            if ((attackMask & friendlyKingMask) != 0) {
+                inDoubleCheck = inCheck;
+                inCheck = true;
+                checkRayMask |= knightCoord.getBitMask();
             }
         }
 
+        long pawns = board.getPawns(attackingPawn);
+        long pawnAttackSquares;
+        if (friendlyColor == BLACK) {
+            pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) << 7) | ((pawns & ~FILE_MASKS[7]) << 9);
+        } else {
+            pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) >>> 9) | ((pawns & ~FILE_MASKS[7]) >>> 7);
+        }
+
+        opponentAttackMap |= pawnAttackSquares;
+        if ((pawnAttackSquares & friendlyKingMask) != 0) {
+            inDoubleCheck = inCheck;
+            inCheck = true;
+            int kingFile = friendlyKingCoord.getFile();
+            long attackingPieceMask = ROW_MASKS[friendlyKingCoord.getRank() + ((friendlyColor == WHITE) ? 1 : -1)]
+                    & ((kingFile > 0 ? FILE_MASKS[friendlyKingCoord.getFile() - 1] : 0)
+                    | (kingFile < 7 ? FILE_MASKS[friendlyKingCoord.getFile() + 1] : 0));
+            checkRayMask |= pawns & attackingPieceMask;
+        }//*/
+
         // Calculate Pawn Attacks
-        Piece pawn = friendlyColor == WHITE ? BLACK_PAWN : WHITE_PAWN;
-        List<ChessCoordinate> attackingPawns = attackingPawns();
-        for (int idx = 0; idx < attackingPawns.size(); idx++) {
-            ChessCoordinate pawnCoord = attackingPawns.get(idx);
-            List<List<ChessCoordinate>> reachableCoordinates = pawn.getReachableCoordinateMapFrom(pawnCoord);
+        /*bitIterator = new BitIterator(board.getPawns(attackingPawn));
+        while (bitIterator.hasNext()) {
+            ChessCoordinate pawnCoord = bitIterator.next();
+            List<List<ChessCoordinate>> reachableCoordinates = attackingPawn.getReachableCoordinateMapFrom(pawnCoord);
             for (int rayIdx = 1; rayIdx <= 2; rayIdx++) {
                 updateAttackingSquares(friendlyKingCoord, pawnCoord, reachableCoordinates, rayIdx);
             }
-        }
-
-        Piece attackingKing = friendlyColor == WHITE ? BLACK_KING : WHITE_KING;
+        }//*/
 
         // Calculate King Attacks
-        List<List<ChessCoordinate>> reachableCoordinates = attackingKing.getReachableCoordinateMapFrom(attackingKingSquare);
-        for (int rayIdx = 0; rayIdx < 8; rayIdx++) {
-            updateAttackingSquares(friendlyKingCoord, attackingKingSquare, reachableCoordinates, rayIdx);
-        }
-        if (checkRayMap == 0) checkRayMap = ~checkRayMap;
+        opponentAttackMap |= KING_MOVE_MASKS[attackingKingSquare.getOndDimIndex()];
+
+        if (checkRayMask == 0) checkRayMask = ~checkRayMask;
     }
 
     private void updateAttackingSquares(ChessCoordinate kingCoord, ChessCoordinate pieceCoord,
@@ -391,11 +247,11 @@ public class MoveGenerator {
         List<ChessCoordinate> ray = reachableCoordinates.get(rayIdx);
         for (int coordIdx = 0; coordIdx < ray.size(); coordIdx++) {
             ChessCoordinate targetCoord = ray.get(coordIdx);
-            opponentAttackMap.mergeMask(targetCoord.getBitMask());
+            opponentAttackMap |= targetCoord.getBitMask();
             if (targetCoord.equals(kingCoord)) {
                 inDoubleCheck = inCheck;
                 inCheck = true;
-                checkRayMap |= pieceCoord.getBitMask();
+                checkRayMask |= pieceCoord.getBitMask();
             }
         }
     }
@@ -434,7 +290,7 @@ public class MoveGenerator {
                                     hvPinRayMap |= rayMap;
                                 }
                             } else {
-                                checkRayMap |= rayMap;
+                                checkRayMask |= rayMap;
                                 inDoubleCheck = inCheck;
                                 inCheck = true;
                             }
@@ -451,28 +307,26 @@ public class MoveGenerator {
      *
      * @return the map of all the squares attacked by the sliding pieces.
      */
-    private FastMap calculateSlidingAttackMap() {
-        FastMap slidingAttackMap = new FastMap();
+    private long calculateSlidingAttackMap() {
+        long slidingAttackMap = 0x0;
+        long board = this.board.getOccupancyMap() ^ friendlyKingCoord.getBitMask();
 
         Piece piece = friendlyColor == WHITE ? BLACK_QUEEN : WHITE_QUEEN;
-        List<ChessCoordinate> attackingQueens = attackingQueens();
-        for (int idx = 0; idx < attackingQueens.size(); idx++) {
-            ChessCoordinate queenCoord = attackingQueens.get(idx);
-            updateSlidingAttackPiece(board, piece, queenCoord, slidingAttackMap);
+        BitIterator bitIterator = new BitIterator(this.board.getQueens(piece));
+        while (bitIterator.hasNext()) {
+            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
 
         piece = friendlyColor == WHITE ? BLACK_ROOK : WHITE_ROOK;
-        List<ChessCoordinate> attackingRooks = attackingRooks();
-        for (int idx = 0; idx < attackingRooks.size(); idx++) {
-            ChessCoordinate rookCoord = attackingRooks.get(idx);
-            updateSlidingAttackPiece(board, piece, rookCoord, slidingAttackMap);
+        bitIterator = new BitIterator(this.board.getQueens(piece));
+        while (bitIterator.hasNext()) {
+            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
 
         piece = friendlyColor == WHITE ? BLACK_BISHOP : WHITE_BISHOP;
-        List<ChessCoordinate> attackingBishops = attackingBishops();
-        for (int idx = 0; idx < attackingBishops.size(); idx++) {
-            ChessCoordinate bishopCoord = attackingBishops.get(idx);
-            updateSlidingAttackPiece(board, piece, bishopCoord, slidingAttackMap);
+        bitIterator = new BitIterator(this.board.getQueens(piece));
+        while (bitIterator.hasNext()) {
+            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
 
         return slidingAttackMap;
@@ -483,25 +337,9 @@ public class MoveGenerator {
         List<List<ChessCoordinate>> possibleEndCoordinates = movingKing.getReachableCoordinateMapFrom(friendlyKingCoord);
 
         // Add moves for the regular king moves
-        for (int endCoordIdx = 0; endCoordIdx < 8; endCoordIdx++) {
-            List<ChessCoordinate> targetCoords = possibleEndCoordinates.get(endCoordIdx);
-            for (int targetCoordIdx = 0; targetCoordIdx < targetCoords.size(); targetCoordIdx++) {
-                ChessCoordinate targetCoord = targetCoords.get(targetCoordIdx);
-
-                if (opponentAttackMap.isMarked(targetCoord.getOndDimIndex())) {
-                    continue;
-                }
-
-                if (board.isOccupied(targetCoord)) {
-                    // Skip endCoordinates that are occupied by friendly pieces.
-                    if (board.isOccupiedByColor(targetCoord, friendlyColor)) continue;
-
-                    moves.add(new Move(friendlyKingCoord, targetCoord, targetCoord, null));
-                } else {
-                    moves.add(new Move(friendlyKingCoord, targetCoord));
-                }
-            }
-        }
+        long kingMoveMask = KING_MOVE_MASKS[friendlyKingCoord.getOndDimIndex()]
+                & ~(board.getOccupancyMap(friendlyColor) | opponentAttackMap);
+        addMoves(movingKing, friendlyKingCoord, kingMoveMask);
 
         // Add castling moves
         for (int endCoordIdx = 8; endCoordIdx <= 9; endCoordIdx++) {
@@ -518,7 +356,7 @@ public class MoveGenerator {
                         for (int numChecked = 0; numChecked < 3;
                              numChecked++, searchCoord = RIGHT.next(searchCoord)) {
                             if (numChecked > 0 && board.isOccupied(searchCoord)
-                                    || opponentAttackMap.isMarked(searchCoord.getOndDimIndex())) {
+                                    || ((opponentAttackMap >>> searchCoord.getOndDimIndex()) & 1) == 1) {
                                 canCastle = false;
                                 break;
                             }
@@ -533,7 +371,7 @@ public class MoveGenerator {
                         for (int numChecked = 0; numChecked < 3;
                              numChecked++, searchCoord = LEFT.next(searchCoord)) {
                             if (numChecked > 0 && board.isOccupied(searchCoord)
-                                    || opponentAttackMap.isMarked(searchCoord.getOndDimIndex())) {
+                                    || ((opponentAttackMap >>> searchCoord.getOndDimIndex()) & 1) == 1) {
                                 canCastle = false;
                                 break;
                             }
@@ -557,12 +395,25 @@ public class MoveGenerator {
         moves.add(new Move(movingKingCoord, kingEndCoord, rookStart, endRookCoord));
     }
 
-    private void generateRookAndBishopMoves(long board, long pinRayMap, Piece friendlyPiece) {
-        long pinnedPieces = board & pinRayMap;
-        long unpinnedPieces = board & ~pinRayMap;
+    private void generateRookAndBishopMoves(long slidingPieceMask, long pinMask, Piece friendlyPiece) {
+        long pinnedPieces = slidingPieceMask & pinMask;
+        long unpinnedPieces = slidingPieceMask & ~pinMask;
 
-        generateSlidingPieceMoves(friendlyPiece, pinnedPieces, pinRayMap);
-        generateSlidingPieceMoves(friendlyPiece, unpinnedPieces, 0xFFFFFFFFFFFFFFFFL);
+        BitIterator bitIterator = new BitIterator(pinnedPieces);
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            long legalMoveMap = generateSlidingPieceMoves(friendlyPiece, coordinate, board.getOccupancyMap())
+                    & pinMask & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            addMoves(friendlyPiece, coordinate, legalMoveMap);
+        }
+
+        bitIterator = new BitIterator(unpinnedPieces);
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            long legalMoveMap = generateSlidingPieceMoves(friendlyPiece, coordinate, board.getOccupancyMap())
+                    & ONES & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            addMoves(friendlyPiece, coordinate, legalMoveMap);
+        }
     }
 
     private void generateQueenMoves() {
@@ -571,24 +422,38 @@ public class MoveGenerator {
         long d12PinnedQueens = queens & d12PinRayMap;
         long unpinnedQueens = queens & ~(hvPinRayMap | d12PinRayMap);
 
-        generateSlidingPieceMoves(friendlyQueen, hvPinnedQueens, hvPinRayMap);
-        generateSlidingPieceMoves(friendlyQueen, d12PinnedQueens, d12PinRayMap);
-        generateSlidingPieceMoves(friendlyQueen, unpinnedQueens, 0xFFFFFFFFFFFFFFFFL);
-    }
-
-    private void generateSlidingPieceMoves(Piece piece, long pieceMap, long pinMask) {
-        BitIterator bitIterator = new BitIterator(pieceMap);
+        BitIterator bitIterator = new BitIterator(hvPinnedQueens);
         while (bitIterator.hasNext()) {
             ChessCoordinate coordinate = bitIterator.next();
-
-            long moveMask = 0x0;
-            Directions directions = piece.getDirections();
-            for (Direction direction : directions) {
-                moveMask |= getMoveMask(coordinate, direction, board.getOccupancyMap());
-            }
-            moveMask &= ~board.getOccupancyMap(game.getTurn()) & checkRayMap & pinMask;
-            addMoves(friendlyQueen, coordinate, moveMask);
+            long legalMoveMap = generateSlidingPieceMoves(friendlyQueen, coordinate, board.getOccupancyMap())
+                    & hvPinRayMap & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            addMoves(friendlyQueen, coordinate, legalMoveMap);
         }
+
+        bitIterator = new BitIterator(d12PinnedQueens);
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            long legalMoveMap = generateSlidingPieceMoves(friendlyQueen, coordinate, board.getOccupancyMap())
+                    & d12PinRayMap & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            addMoves(friendlyQueen, coordinate, legalMoveMap);
+        }
+
+        bitIterator = new BitIterator(unpinnedQueens);
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            long legalMoveMap = generateSlidingPieceMoves(friendlyQueen, coordinate, board.getOccupancyMap())
+                    & ONES & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            addMoves(friendlyQueen, coordinate, legalMoveMap);
+        }
+    }
+
+    private long generateSlidingPieceMoves(Piece piece, ChessCoordinate coordinate, long board) {
+        long moveMask = 0x0;
+        Directions directions = piece.getDirections();
+        for (Direction direction : directions) {
+            moveMask |= getMoveMask(coordinate, direction, board);
+        }
+        return moveMask;
     }
 
     private void addMoves(Piece piece, ChessCoordinate startingCoordinate, long moveMask) {
@@ -618,7 +483,7 @@ public class MoveGenerator {
         switch (direction) {
             case DOWN, LEFT, DOWN_LEFT, DOWN_RIGHT -> {
                 long leftBits = coordinate.getBitMask() - 1;
-                long rightBits = relevantBits == 0 ? 0xFFFFFFFFFFFFFFFFL : -Long.highestOneBit(relevantBits);
+                long rightBits = relevantBits == 0 ? ONES : -Long.highestOneBit(relevantBits);
                 moveMask = leftBits & rightBits & rayMask;
             }
             case UP_LEFT, UP, UP_RIGHT, RIGHT -> {
@@ -636,15 +501,16 @@ public class MoveGenerator {
         BitIterator bitIterator = new BitIterator(knights);
         while (bitIterator.hasNext()) {
             ChessCoordinate coordinate = bitIterator.next();
-            long moveMask = knightMoveMask[coordinate.getOndDimIndex()] & ~board.getOccupancyMap(friendlyColor) & checkRayMap;
+            long moveMask = KNIGHT_MOVE_MASKS[coordinate.getOndDimIndex()] & ~board.getOccupancyMap(friendlyColor) & checkRayMask;
             addMoves(friendlyKnight, coordinate, moveMask);
         }
     }
 
     private void generatePawnMoves() {
-        Piece pawn = friendlyColor == WHITE ? WHITE_PAWN : BLACK_PAWN;
-        for (ChessCoordinate coordinate : friendlyPawns()) {
-            List<List<ChessCoordinate>> finalCoordinates = pawn.getReachableCoordinateMapFrom(coordinate);
+        BitIterator bitIterator = new BitIterator(board.getPawns(friendlyPawn));
+        while (bitIterator.hasNext()) {
+            ChessCoordinate coordinate = bitIterator.next();
+            List<List<ChessCoordinate>> finalCoordinates = friendlyPawn.getReachableCoordinateMapFrom(coordinate);
             boolean isPinned = isPinned(coordinate);
 
             List<ChessCoordinate> targetCoords = finalCoordinates.get(0);
@@ -652,11 +518,11 @@ public class MoveGenerator {
                 ChessCoordinate targetCoord = targetCoords.get(targetCoordIdx);
                 if (!isPinned || areAligned(coordinate, friendlyKingCoord, targetCoord)) {
                     if (!board.isOccupied(targetCoord)) {
-                        if (!inCheck || ((checkRayMap & targetCoord.getBitMask()) != 0)) {
-                            if ((pawn == WHITE_PAWN && targetCoord.getRank() == 7)
-                                    || (pawn == BLACK_PAWN && targetCoord.getRank() == 0)) {
+                        if (!inCheck || ((checkRayMask & targetCoord.getBitMask()) != 0)) {
+                            if ((friendlyPawn == WHITE_PAWN && targetCoord.getRank() == 7)
+                                    || (friendlyPawn == BLACK_PAWN && targetCoord.getRank() == 0)) {
                                 // Promotion square
-                                if (pawn.getColor() == WHITE) {
+                                if (friendlyPawn.getColor() == WHITE) {
                                     makePromotionMoves(coordinate, targetCoord, null,
                                             WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
                                 } else {
@@ -702,8 +568,8 @@ public class MoveGenerator {
                 ChessCoordinate targetCoord = direction.next(coordinate);
 
                 if ((!inCheck // Proceed if not in check
-                        || (checkRayMap & captureCoord.getBitMask()) != 0    // Proceed if move blocks check
-                        || (checkRayMap & targetCoord.getBitMask()) != 0)     // Proceed if move captures attacker
+                        || (checkRayMask & captureCoord.getBitMask()) != 0    // Proceed if move blocks check
+                        || (checkRayMask & targetCoord.getBitMask()) != 0)     // Proceed if move captures attacker
                         && (board.isOccupied(targetCoord) // Ensure that the targetPiece is a pawn
                         && (!areAligned(coordinate, friendlyKingCoord, targetCoord) // Proceed if not aligned with king
                         || !longRangeAttacker(coordinate, targetCoord)))) { // Proceed if not attacker
@@ -711,7 +577,7 @@ public class MoveGenerator {
                 }
             }
         } else {
-            if (!inCheck || (checkRayMap & captureCoord.getBitMask()) != 0) {
+            if (!inCheck || (checkRayMask & captureCoord.getBitMask()) != 0) {
                 if (board.isOccupiedByColor(captureCoord, attackingColor)) {
                     if (pawn == WHITE_PAWN && captureCoord.getRank() == 7) {
                         makePromotionMoves(coordinate, captureCoord, captureCoord, WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
@@ -763,48 +629,8 @@ public class MoveGenerator {
                 || (d12PinRayMap & coordinate.getBitMask()) != 0);
     }
 
-    public FastMap getOpponentAttackMap() {
+    public long getOpponentAttackMap() {
         return opponentAttackMap;
-    }
-
-    private List<ChessCoordinate> friendlyPawns() {
-        return board.getLocations(friendlyPawn);
-    }
-
-    private List<ChessCoordinate> friendlyKnights() {
-        return board.getLocations(friendlyKnight);
-    }
-
-    private List<ChessCoordinate> friendlyBishops() {
-        return board.getLocations(friendlyBishop);
-    }
-
-    private List<ChessCoordinate> friendlyRooks() {
-        return board.getLocations(friendlyRook);
-    }
-
-    private List<ChessCoordinate> friendlyQueens() {
-        return board.getLocations(friendlyQueen);
-    }
-
-    private List<ChessCoordinate> attackingPawns() {
-        return board.getLocations(attackingPawn);
-    }
-
-    private List<ChessCoordinate> attackingKnights() {
-        return board.getLocations(attackingKnight);
-    }
-
-    private List<ChessCoordinate> attackingBishops() {
-        return board.getLocations(attackingBishop);
-    }
-
-    private List<ChessCoordinate> attackingRooks() {
-        return board.getLocations(attackingRook);
-    }
-
-    private List<ChessCoordinate> attackingQueens() {
-        return board.getLocations(attackingQueen);
     }
 
     private static class MoveLRUCache extends LinkedHashMap<Long, List<Move>> {
@@ -819,6 +645,71 @@ public class MoveGenerator {
         protected boolean removeEldestEntry(Map.Entry<Long, List<Move>> eldest) {
             return size() > max_entries;
         }
+    }
+
+    private static long[][] createDirectionMaskMap() {
+        long[][] coordinateToMask = new long[Long.BYTES * BITS_IN_BYTE][ALL_DIRECTIONS.directions.size()];
+
+        for (int coordIdx = 0; coordIdx < coordinateToMask.length; coordIdx++) {
+            for (Direction direction : ALL_DIRECTIONS.directions) {
+                long mask = 0x0;
+                ChessCoordinate coordinate = direction.next(ChessCoordinate.getChessCoordinate(coordIdx));
+
+                while (coordinate != null) {
+                    mask |= coordinate.getBitMask();
+                    coordinate = direction.next(coordinate);
+                }
+
+                if (Long.bitCount(mask) > 7) throw new IllegalStateException();
+                coordinateToMask[coordIdx][direction.ordinal()] = mask;
+            }
+        }
+
+        return coordinateToMask;
+    }
+
+    private static long[] createKnightMoveMasks() {
+        long[] knightMoveMask = new long[64];
+
+        for (int coordIdx = 0; coordIdx < knightMoveMask.length; coordIdx++) {
+            ChessCoordinate coordinate = getChessCoordinate(coordIdx);
+            long mask = 0x0;
+
+            if (coordinate.getFile() > 0 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 17);
+            if (coordinate.getFile() < 7 && coordinate.getRank() > 1) mask |= (coordinate.getBitMask() >>> 15);
+            if (coordinate.getFile() > 1 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 10);
+            if (coordinate.getFile() < 6 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 6);
+            if (coordinate.getFile() > 1 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 6);
+            if (coordinate.getFile() < 6 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 10);
+            if (coordinate.getFile() > 0 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 15);
+            if (coordinate.getFile() < 7 && coordinate.getRank() < 6) mask |= (coordinate.getBitMask() << 17);
+
+            knightMoveMask[coordIdx] = mask;
+        }
+
+        return knightMoveMask;
+    }
+
+    private static long[] createKingMoveMasks() {
+        long[] kingMoveMasks = new long[64];
+
+        for (int coordIdx = 0; coordIdx < kingMoveMasks.length; coordIdx++) {
+            ChessCoordinate coordinate = getChessCoordinate(coordIdx);
+            long mask = 0x0;
+
+            if (coordinate.getFile() > 0) mask |= (coordinate.getBitMask() >>> 1);
+            if (coordinate.getFile() > 0 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask()) >>> 9;
+            if (coordinate.getFile() > 0 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask()) << 7;
+            if (coordinate.getFile() < 7) mask |= (coordinate.getBitMask() << 1);
+            if (coordinate.getFile() < 7 && coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >> 7);
+            if (coordinate.getFile() < 7 && coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 9);
+            if (coordinate.getRank() > 0) mask |= (coordinate.getBitMask() >>> 8);
+            if (coordinate.getRank() < 7) mask |= (coordinate.getBitMask() << 8);
+
+            kingMoveMasks[coordIdx] = mask;
+        }
+
+        return kingMoveMasks;
     }
 
     private static class BitIterator implements Iterator<ChessCoordinate> {
@@ -845,4 +736,4 @@ public class MoveGenerator {
             return nextCoordinate;
         }
     }
-        }
+}

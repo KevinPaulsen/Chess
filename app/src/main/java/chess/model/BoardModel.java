@@ -343,19 +343,23 @@ public class BoardModel {
         return color == WHITE ? white.getMap() : black.getMap();
     }
 
-    public long getBishops(Piece friendlyBishop) {
-        return pieceMaps[friendlyBishop.getUniqueIdx() % 12].getMap();
+    public long getBishops(Piece bishop) {
+        return pieceMaps[bishop.getUniqueIdx() % 12].getMap();
     }
 
-    public long getRooks(Piece friendlyRook) {
-        return pieceMaps[friendlyRook.getUniqueIdx() % 12].getMap();
+    public long getRooks(Piece rook) {
+        return pieceMaps[rook.getUniqueIdx() % 12].getMap();
     }
 
-    public long getQueens(Piece friendlyQueen) {
-        return pieceMaps[friendlyQueen.getUniqueIdx() % 12].getMap();
+    public long getQueens(Piece queen) {
+        return pieceMaps[queen.getUniqueIdx() % 12].getMap();
     }
 
-    public long getKnights(Piece friendlyKnight) {
-        return pieceMaps[friendlyKnight.getUniqueIdx() % 12].getMap();
+    public long getKnights(Piece knight) {
+        return pieceMaps[knight.getUniqueIdx() % 12].getMap();
+    }
+
+    public long getPawns(Piece pawn) {
+        return pieceMaps[pawn.getUniqueIdx() % 12].getMap();
     }
 }

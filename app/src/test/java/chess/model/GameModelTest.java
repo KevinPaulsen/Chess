@@ -7,8 +7,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static chess.ChessCoordinate.A2;
-import static chess.ChessCoordinate.A3;
+import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {
@@ -50,14 +49,14 @@ public class GameModelTest {
     @Test
     public void testComplexPositionDepth() {
         GameModel game = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
-        int[] expectedNumPositions = {1, 44, 1_486, 62_379, 2_103_487/*, 89_941_194/**/};
+        int[] expectedNumPositions = {1, 44, 1_486, 62_379, 2_103_487, 89_941_194/**/};
         runCountTest(game, expectedNumPositions);
     }
 
     @Test
     public void testPawnBoardDepth() {
         GameModel game = new GameModel("2k5/1ppppp2/8/1K1P3q/8/8/2P1PP1P/8 w - - 0 1");
-        int[] expectedNumPositions = {1, 13, 314, 3_598, 92_331, 1_001_929/*, 25_685_493/**/};
+        int[] expectedNumPositions = {1, 13, 314, 3_598, 92_331, 1_001_929, 25_685_493/**/};
         runCountTest(game, expectedNumPositions);
     }
 

@@ -389,7 +389,7 @@ public class GameModel {
         } else if (legalMoves.size() == 0) {
             // If this position has no legal moves, then the game is over
             ChessCoordinate kingToMove = getTurn() == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
-            if (moveGenerator.getOpponentAttackMap().isMarked(kingToMove.getOndDimIndex())) {
+            if ((moveGenerator.getOpponentAttackMap() & kingToMove.getBitMask()) != 0) {
                 currentState.mergeMask(LOSER_MASK);
             } else {
                 currentState.mergeMask(DRAW_MASK);
