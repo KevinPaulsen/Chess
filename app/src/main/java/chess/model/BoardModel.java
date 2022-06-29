@@ -145,7 +145,6 @@ public class BoardModel {
     public void undoMove(Move move) {
         if (move != null) {
             if (move.doesPromote()) {
-                // TODO test logic
                 removePiece(move.getPromotedPiece(), move.getEndingCoordinate(), false);
                 addPiece(move.getStartingCoordinate());
             } else {
@@ -196,7 +195,9 @@ public class BoardModel {
     }
 
     private void addPiece(ChessCoordinate coordinate) {
-        if (takenPieces.size() == 0) throw new IllegalStateException();
+        if (takenPieces.size() == 0) {
+            throw new IllegalStateException();
+        }
 
         addPiece(takenPieces.pop(), coordinate);
     }
@@ -343,23 +344,7 @@ public class BoardModel {
         return color == WHITE ? white.getMap() : black.getMap();
     }
 
-    public long getBishops(Piece bishop) {
-        return pieceMaps[bishop.getUniqueIdx() % 12].getMap();
-    }
-
-    public long getRooks(Piece rook) {
-        return pieceMaps[rook.getUniqueIdx() % 12].getMap();
-    }
-
-    public long getQueens(Piece queen) {
-        return pieceMaps[queen.getUniqueIdx() % 12].getMap();
-    }
-
-    public long getKnights(Piece knight) {
-        return pieceMaps[knight.getUniqueIdx() % 12].getMap();
-    }
-
-    public long getPawns(Piece pawn) {
-        return pieceMaps[pawn.getUniqueIdx() % 12].getMap();
+    public long getPieceMap(Piece piece) {
+        return pieceMaps[piece.getUniqueIdx() % 12].getMap();
     }
 }

@@ -5,7 +5,9 @@ import chess.Move;
 import chess.model.BoardModel;
 import chess.model.GameModel;
 import chess.model.pieces.Piece;
+import org.checkerframework.checker.units.qual.A;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -40,7 +42,9 @@ public class PieceValueEvaluator implements Evaluator {
 
     @Override
     public List<Move> getSortedMoves(GameModel game, Move hashMove) {
-        return game.getLegalMoves();
+        List<Move> legalMoves = new ArrayList<>();
+        game.getLegalMoves().forEach(legalMoves::add);
+        return legalMoves;
     }
 
     private Comparator<Move> getMoveComparator(BoardModel board) {

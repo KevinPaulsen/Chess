@@ -2,11 +2,11 @@ package chess.model.chessai;
 
 import chess.ChessCoordinate;
 import chess.Move;
-import chess.model.BoardModel;
 import chess.model.GameModel;
-import chess.model.MoveGenerator;
+import chess.model.MoveList;
 import chess.model.pieces.Piece;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -92,7 +92,10 @@ public class PositionEvaluator implements Evaluator {
      */
     @Override
     public List<Move> getSortedMoves(GameModel game, Move hashMove) {
-        List<Move> legalMoves = game.getLegalMoves();
+        MoveList moveList = game.getLegalMoves();
+        List<Move> legalMoves = new ArrayList<>(moveList.numMoves());
+        moveList.forEach(legalMoves::add);
+
         legalMoves.sort(new MoveComparator(game));
         if (hashMove != null) {
             if (legalMoves.remove(hashMove)) {

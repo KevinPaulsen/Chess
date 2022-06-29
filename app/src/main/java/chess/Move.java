@@ -5,6 +5,7 @@ import chess.model.pieces.Piece;
 
 import java.util.Objects;
 
+import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.BLACK_PAWN;
 import static chess.model.pieces.Piece.WHITE_PAWN;
 
@@ -12,6 +13,11 @@ import static chess.model.pieces.Piece.WHITE_PAWN;
  * This class contains all the information needed to make a move.
  */
 public class Move {
+
+    public static final Move WHITE_CASTLE_KING_SIDE = new Move(E1, G1, H1, F1);
+    public static final Move WHITE_CASTLE_QUEEN_SIDE = new Move(E1, C1, A1, D1);
+    public static final Move BLACK_CASTLE_KING_SIDE = new Move(E8, G8, H8, F8);
+    public static final Move BLACK_CASTLE_QUEEN_SIDE = new Move(E8, C8, A8, D8);
 
     private static int currentMove = 0;
 

@@ -53,10 +53,14 @@ public enum Direction {
      * @return the coordinate after the given coordinate and in this Direction.
      */
     public ChessCoordinate next(ChessCoordinate coordinate) {
+        return next(coordinate, 1);
+    }
+
+    public ChessCoordinate next(ChessCoordinate coordinate, int length) {
         ChessCoordinate next = null;
         if (coordinate != null) {
-            int file = coordinate.getFile() + run;
-            int rank = coordinate.getRank() + rise;
+            int file = coordinate.getFile() + length * run;
+            int rank = coordinate.getRank() + length * rise;
             if (ChessCoordinate.isInBounds(file, rank)) {
                 next = ChessCoordinate.getChessCoordinate(file, rank);
             }

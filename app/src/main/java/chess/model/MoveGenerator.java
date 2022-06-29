@@ -1,17 +1,13 @@
 package chess.model;
 
 import chess.ChessCoordinate;
-import chess.Move;
 import chess.model.pieces.Direction;
 import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
+import chess.util.BitIterator;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.BLACK;
@@ -26,8 +22,13 @@ import static chess.model.pieces.Piece.*;
  */
 public class MoveGenerator {
 
-    private static final long ONES = 0xFFFFFFFFFFFFFFFFL;
     private static final int BITS_IN_BYTE = 8;
+
+    private static final long ONES = 0xFFFFFFFFFFFFFFFFL;
+    private static final long WHITE_KING_CASTLE_MASK  = 0x0000000000000070L;
+    private static final long WHITE_QUEEN_CASTLE_MASK = 0x000000000000001EL;
+    private static final long BLACK_KING_CASTLE_MASK  = 0x7000000000000000L;
+    private static final long BLACK_QUEEN_CASTLE_MASK = 0x1E00000000000000L;
 
     private static final long[] FILE_MASKS = {
             0x0101010101010101L,
@@ -67,8 +68,8 @@ public class MoveGenerator {
     private long hvPinRayMap;
     private long d12PinRayMap;
     private long opponentAttackMap;
-    private final Map<Long, List<Move>> cachedPositions;
-    private List<Move> moves;
+    private long epTarget;
+    private MoveList moves;
     private boolean inCheck;
     private boolean inDoubleCheck;
     private Piece friendlyPawn;
@@ -90,27 +91,10 @@ public class MoveGenerator {
     public MoveGenerator(GameModel game) {
         this.game = game;
         this.board = game.getBoard();
-        this.moves = new ArrayList<>(150);
-        this.inCheck = false;
-        this.inDoubleCheck = false;
-
-        this.cachedPositions = new MoveLRUCache(11_000);
-
-        this.checkRayMask = 0;
-        this.hvPinRayMap = 0;
-        this.d12PinRayMap = 0;
-        this.opponentAttackMap = 0x0;
-    }
-
-    private static boolean areAligned(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
-                                      ChessCoordinate coordinate3) {
-        float product1 = (coordinate1.getRank() - coordinate2.getRank()) * (coordinate1.getFile() - coordinate3.getFile());
-        float product2 = (coordinate1.getFile() - coordinate2.getFile()) * (coordinate1.getRank() - coordinate3.getRank());
-        return product1 == product2;
     }
 
     private void resetState() {
-        this.moves = new ArrayList<>(150);
+        this.moves = new MoveList(board);
         this.inCheck = false;
         this.inDoubleCheck = false;
 
@@ -118,6 +102,7 @@ public class MoveGenerator {
         this.hvPinRayMap = 0;
         this.d12PinRayMap = 0;
         this.opponentAttackMap = 0;
+        this.epTarget = 0x0L;
 
         this.friendlyColor = game.getTurn();
         this.attackingColor = friendlyColor == WHITE ? BLACK : WHITE;
@@ -155,27 +140,22 @@ public class MoveGenerator {
         }
     }
 
-    public List<Move> generateMoves() {
-        if (cachedPositions.containsKey(game.getZobristHash())) {
-            moves = new ArrayList<>(cachedPositions.get(game.getZobristHash()));
-        } else {
-            resetState();
-            calculateAttackData();
+    public MoveList generateMoves() {
+        resetState();
+        calculateAttackData();
 
-            generateKingMoves();
+        generateKingMoves();
 
-            if (!inDoubleCheck) {
-                long queens = board.getQueens(friendlyQueen);
-                long rooks = board.getRooks(friendlyRook);
-                long bishops = board.getBishops(friendlyBishop);
-                generateRookAndBishopMoves((queens | rooks) & ~d12PinRayMap, queens, hvPinRayMap, friendlyRook);
-                generateRookAndBishopMoves((queens | bishops) & ~hvPinRayMap, queens, d12PinRayMap, friendlyBishop);
-                generateKnightMoves();
-                generatePawnMoves();
-            }
-
-            cachedPositions.put(game.getZobristHash(), moves);
+        if (!inDoubleCheck) {
+            long queens = board.getPieceMap(friendlyQueen);
+            long rooks = board.getPieceMap(friendlyRook);
+            long bishops = board.getPieceMap(friendlyBishop);
+            generateRookAndBishopMoves((queens | rooks) & ~d12PinRayMap, queens, hvPinRayMap, friendlyRook);
+            generateRookAndBishopMoves((queens | bishops) & ~hvPinRayMap, queens, d12PinRayMap, friendlyBishop);
+            generateKnightMoves();
+            generatePawnMoves();
         }
+
         return moves;
     }
 
@@ -184,8 +164,8 @@ public class MoveGenerator {
 
         // Calculate the pin and check rays
 
-        long rookAndQueen = board.getRooks(attackingRook) | board.getQueens(attackingQueen);
-        long bishopAndQueen = board.getBishops(attackingBishop) | board.getQueens(attackingQueen);
+        long rookAndQueen = board.getPieceMap(attackingRook) | board.getPieceMap(attackingQueen);
+        long bishopAndQueen = board.getPieceMap(attackingBishop) | board.getPieceMap(attackingQueen);
         if (rookAndQueen != 0) {
             calculatePinsAndCheckRays(rookAndQueen, false);
         }
@@ -195,7 +175,7 @@ public class MoveGenerator {
 
         // Calculate Knight Attacks
         long friendlyKingMask = friendlyKingCoord.getBitMask();
-        BitIterator bitIterator = new BitIterator(board.getKnights(attackingKnight));
+        BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingKnight));
         while (bitIterator.hasNext()) {
             ChessCoordinate knightCoord = bitIterator.next();
             long attackMask = KNIGHT_MOVE_MASKS[knightCoord.getOndDimIndex()];
@@ -208,7 +188,8 @@ public class MoveGenerator {
             }
         }
 
-        long pawns = board.getPawns(attackingPawn);
+        // Calculate Pawn Attacks
+        long pawns = board.getPieceMap(attackingPawn);
         long pawnAttackSquares;
         if (friendlyColor == BLACK) {
             pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) << 7) | ((pawns & ~FILE_MASKS[7]) << 9);
@@ -216,15 +197,46 @@ public class MoveGenerator {
             pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) >>> 9) | ((pawns & ~FILE_MASKS[7]) >>> 7);
         }
 
+        // Set Pawn Check data
         opponentAttackMap |= pawnAttackSquares;
         if ((pawnAttackSquares & friendlyKingMask) != 0) {
             inDoubleCheck = inCheck;
             inCheck = true;
             int kingFile = friendlyKingCoord.getFile();
-            long attackingPieceMask = ROW_MASKS[friendlyKingCoord.getRank() + ((friendlyColor == WHITE) ? 1 : -1)]
+            long attackingPieceBit = ROW_MASKS[friendlyKingCoord.getRank() + ((friendlyColor == WHITE) ? 1 : -1)]
                     & ((kingFile > 0 ? FILE_MASKS[friendlyKingCoord.getFile() - 1] : 0)
                     | (kingFile < 7 ? FILE_MASKS[friendlyKingCoord.getFile() + 1] : 0));
-            checkRayMask |= pawns & attackingPieceMask;
+            checkRayMask |= pawns & attackingPieceBit;
+        }
+
+        // Set Pawn ep bit
+        pawns = board.getPieceMap(friendlyPawn);
+        if (game.hasEPTarget() && (epTarget = game.getEnPassantTarget().getBitMask()) != 0) {
+            long eplPawn, eprPawn, epRank, epTargetPawn;
+            if (friendlyColor == WHITE) {
+                epRank = ROW_MASKS[4];
+                eplPawn = pawns & (epTarget >>> 7);
+                eprPawn = pawns & (epTarget >>> 9);
+                epTargetPawn = epTarget >>> 8;
+            } else {
+                epRank = ROW_MASKS[3];
+                eplPawn = pawns & (epTarget << 9);
+                eprPawn = pawns & (epTarget << 7);
+                epTargetPawn = epTarget << 8;
+            }
+
+            if (!((epRank & friendlyKingMask) == 0 || (epRank & rookAndQueen) == 0 || (epRank & pawns) == 0)) {
+                if (eplPawn != 0) {
+                    long afterEP = board.getOccupancyMap() ^ eplPawn ^ epTargetPawn;
+                    long moveMask = getMoveMask(friendlyKingCoord, LEFT, afterEP) | getMoveMask(friendlyKingCoord, RIGHT, afterEP);
+                    if ((moveMask & rookAndQueen) != 0) epTarget = 0;
+                }
+                if (eprPawn != 0) {
+                    long afterEP = board.getOccupancyMap() ^ eprPawn ^ epTargetPawn;
+                    long moveMask = getMoveMask(friendlyKingCoord, LEFT, afterEP) | getMoveMask(friendlyKingCoord, RIGHT, afterEP);
+                    if ((moveMask & rookAndQueen) != 0) epTarget = 0;
+                }
+            }
         }
 
         // Calculate King Attacks
@@ -270,19 +282,19 @@ public class MoveGenerator {
         long board = this.board.getOccupancyMap() ^ friendlyKingCoord.getBitMask();
 
         Piece piece = friendlyColor == WHITE ? BLACK_QUEEN : WHITE_QUEEN;
-        BitIterator bitIterator = new BitIterator(this.board.getQueens(piece));
+        BitIterator bitIterator = new BitIterator(this.board.getPieceMap(piece));
         while (bitIterator.hasNext()) {
             slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
 
         piece = friendlyColor == WHITE ? BLACK_ROOK : WHITE_ROOK;
-        bitIterator = new BitIterator(this.board.getQueens(piece));
+        bitIterator = new BitIterator(this.board.getPieceMap(piece));
         while (bitIterator.hasNext()) {
             slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
 
         piece = friendlyColor == WHITE ? BLACK_BISHOP : WHITE_BISHOP;
-        bitIterator = new BitIterator(this.board.getQueens(piece));
+        bitIterator = new BitIterator(this.board.getPieceMap(piece));
         while (bitIterator.hasNext()) {
             slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
         }
@@ -292,64 +304,28 @@ public class MoveGenerator {
 
     private void generateKingMoves() {
         Piece movingKing = friendlyColor == WHITE ? WHITE_KING : BLACK_KING;
-        List<List<ChessCoordinate>> possibleEndCoordinates = movingKing.getReachableCoordinateMapFrom(friendlyKingCoord);
 
         // Add moves for the regular king moves
         long kingMoveMask = KING_MOVE_MASKS[friendlyKingCoord.getOndDimIndex()]
                 & ~(board.getOccupancyMap(friendlyColor) | opponentAttackMap);
-        addMoves(movingKing, friendlyKingCoord, kingMoveMask);
+        addMoves(movingKing, friendlyKingCoord, kingMoveMask, MoveList.Status.NORMAL);
 
         // Add castling moves
-        for (int endCoordIdx = 8; endCoordIdx <= 9; endCoordIdx++) {
-            List<ChessCoordinate> targetCoords = possibleEndCoordinates.get(endCoordIdx);
-            for (int targetCoordIdx = 0; targetCoordIdx < targetCoords.size(); targetCoordIdx++) {
-                ChessCoordinate targetCoord = targetCoords.get(targetCoordIdx);
-
-                if (board.isOccupied(targetCoord)) continue;
-
-                boolean canCastle = true;
-                if (targetCoord.getFile() == 6) {
-                    if (game.canKingSideCastle(movingKing.getColor())) {
-                        ChessCoordinate searchCoord = friendlyKingCoord;
-                        for (int numChecked = 0; numChecked < 3;
-                             numChecked++, searchCoord = RIGHT.next(searchCoord)) {
-                            if (numChecked > 0 && board.isOccupied(searchCoord)
-                                    || ((opponentAttackMap >>> searchCoord.getOndDimIndex()) & 1) == 1) {
-                                canCastle = false;
-                                break;
-                            }
-                        }
-                        if (canCastle) {
-                            makeCastleMove(friendlyKingCoord, targetCoord, H1, H8, F1, F8);
-                        }
-                    }
-                } else {
-                    if (game.canQueenSideCastle(movingKing.getColor())) {
-                        ChessCoordinate searchCoord = friendlyKingCoord;
-                        for (int numChecked = 0; numChecked < 3;
-                             numChecked++, searchCoord = LEFT.next(searchCoord)) {
-                            if (numChecked > 0 && board.isOccupied(searchCoord)
-                                    || ((opponentAttackMap >>> searchCoord.getOndDimIndex()) & 1) == 1) {
-                                canCastle = false;
-                                break;
-                            }
-                        }
-                        canCastle = canCastle && !board.isOccupied(searchCoord);
-                        if (canCastle) {
-                            makeCastleMove(friendlyKingCoord, targetCoord, A1, A8, D1, D8);
-                        }
-                    }
-                }
-            }
+        kingMoveMask = 0x0L;
+        long occupancy = (board.getOccupancyMap() ^ friendlyKingCoord.getBitMask()) | opponentAttackMap;
+        if (friendlyColor == WHITE) {
+            if (game.canKingSideCastle(WHITE) && (occupancy & WHITE_KING_CASTLE_MASK) == 0)
+                kingMoveMask |= G1.getBitMask();
+            if (game.canQueenSideCastle(WHITE) && (occupancy & WHITE_QUEEN_CASTLE_MASK) == 0)
+                kingMoveMask |= C1.getBitMask();
+        } else {
+            if (game.canKingSideCastle(BLACK) && (occupancy & BLACK_KING_CASTLE_MASK) == 0)
+                kingMoveMask |= G8.getBitMask();
+            if (game.canQueenSideCastle(BLACK) && (occupancy & BLACK_QUEEN_CASTLE_MASK) == 0)
+                kingMoveMask |= C1.getBitMask();
         }
-    }
 
-    private void makeCastleMove(ChessCoordinate movingKingCoord, ChessCoordinate kingEndCoord,
-                                ChessCoordinate whiteRookStart, ChessCoordinate blackRookStart,
-                                ChessCoordinate whiteRookEnd, ChessCoordinate blackRookEnd) {
-        ChessCoordinate rookStart = kingEndCoord.getRank() == 0 ? whiteRookStart : blackRookStart;
-        ChessCoordinate endRookCoord = kingEndCoord.getRank() == 0 ? whiteRookEnd : blackRookEnd;
-        moves.add(new Move(movingKingCoord, kingEndCoord, rookStart, endRookCoord));
+        addMoves(movingKing, friendlyKingCoord, kingMoveMask, MoveList.Status.CASTLING);//*/
     }
 
     private void generateRookAndBishopMoves(long slidingPieceMask, long queenMask, long pinMask, Piece friendlyPiece) {
@@ -363,9 +339,9 @@ public class MoveGenerator {
                     & pinMask & checkRayMask & ~board.getOccupancyMap(friendlyColor);
 
             if ((coordinate.getBitMask() & queenMask) != 0) {
-                addMoves(friendlyQueen, coordinate, legalMoveMap);
+                addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
             } else {
-                addMoves(friendlyPiece, coordinate, legalMoveMap);
+                addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
             }
         }
 
@@ -374,7 +350,7 @@ public class MoveGenerator {
             ChessCoordinate coordinate = bitIterator.next();
             long legalMoveMap = generateSlidingPieceMoves(friendlyPiece, coordinate, board.getOccupancyMap())
                     & ONES & checkRayMask & ~board.getOccupancyMap(friendlyColor);
-            addMoves(friendlyPiece, coordinate, legalMoveMap);
+            addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
         }
     }
 
@@ -387,23 +363,10 @@ public class MoveGenerator {
         return moveMask;
     }
 
-    private void addMoves(Piece piece, ChessCoordinate startingCoordinate, long moveMask) {
-        int movesStart = moves.size();
-        int numBits = Long.bitCount(moveMask);
-        BitIterator bitIterator = new BitIterator(moveMask);
-        while (bitIterator.hasNext()) {
-            ChessCoordinate endingCoordinate = bitIterator.next();
-
-            if (board.getPieceOn(endingCoordinate) != null) {
-                moves.add(new Move(startingCoordinate, endingCoordinate, endingCoordinate, null));
-            } else {
-                moves.add(new Move(startingCoordinate, endingCoordinate));
-            }
-        }
-        if (numBits != moves.size() - movesStart) {
-            System.out.println(moveMask);
-        }
+    private void addMoves(Piece piece, ChessCoordinate startingCoordinate, long moveMask, MoveList.Status status) {
+        moves.add(piece, startingCoordinate, moveMask, status);
     }
+
 
     private long getMoveMask(ChessCoordinate coordinate, Direction direction, long board) {
         long moveMask = 0;
@@ -428,141 +391,101 @@ public class MoveGenerator {
     }
 
     private void generateKnightMoves() {
-        long knights = board.getKnights(friendlyKnight) & ~(hvPinRayMap | d12PinRayMap);
+        long knights = board.getPieceMap(friendlyKnight) & ~(hvPinRayMap | d12PinRayMap);
         BitIterator bitIterator = new BitIterator(knights);
         while (bitIterator.hasNext()) {
             ChessCoordinate coordinate = bitIterator.next();
             long moveMask = KNIGHT_MOVE_MASKS[coordinate.getOndDimIndex()] & ~board.getOccupancyMap(friendlyColor) & checkRayMask;
-            addMoves(friendlyKnight, coordinate, moveMask);
+            addMoves(friendlyKnight, coordinate, moveMask, MoveList.Status.NORMAL);
         }
     }
 
     private void generatePawnMoves() {
-        BitIterator bitIterator = new BitIterator(board.getPawns(friendlyPawn));
-        while (bitIterator.hasNext()) {
-            ChessCoordinate coordinate = bitIterator.next();
-            List<List<ChessCoordinate>> finalCoordinates = friendlyPawn.getReachableCoordinateMapFrom(coordinate);
-            boolean isPinned = isPinned(coordinate);
 
-            List<ChessCoordinate> targetCoords = finalCoordinates.get(0);
-            for (int targetCoordIdx = 0; targetCoordIdx < targetCoords.size(); targetCoordIdx++) {
-                ChessCoordinate targetCoord = targetCoords.get(targetCoordIdx);
-                if (!isPinned || areAligned(coordinate, friendlyKingCoord, targetCoord)) {
-                    if (!board.isOccupied(targetCoord)) {
-                        if (!inCheck || ((checkRayMask & targetCoord.getBitMask()) != 0)) {
-                            if ((friendlyPawn == WHITE_PAWN && targetCoord.getRank() == 7)
-                                    || (friendlyPawn == BLACK_PAWN && targetCoord.getRank() == 0)) {
-                                // Promotion square
-                                if (friendlyPawn.getColor() == WHITE) {
-                                    makePromotionMoves(coordinate, targetCoord, null,
-                                            WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
-                                } else {
-                                    makePromotionMoves(coordinate, targetCoord, null,
-                                            BLACK_QUEEN, BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT);
-                                }
-                            } else {
-                                moves.add(new Move(coordinate, targetCoord));
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            }
+        long pawns = board.getPieceMap(friendlyPawn);
+        long enemy = board.getOccupancyMap(attackingColor);
+        long empty = ~board.getOccupancyMap();
 
-            targetCoords = finalCoordinates.get(1);
-            for (int targetCoordIdx = 0; targetCoordIdx < targetCoords.size(); targetCoordIdx++) {
-                ChessCoordinate captureRight = targetCoords.get(targetCoordIdx);
-                addAttackingPawnMoves(coordinate, isPinned, captureRight, RIGHT);
-            }
+        long pawnsLR = pawns & ~hvPinRayMap;
+        long pawnsHV = pruneStraight(pawns & ~d12PinRayMap);
+        long promotion = (ROW_MASKS[0] | ROW_MASKS[7]);
+        long notPromotion = ~promotion & checkRayMask;
+        promotion &= checkRayMask;
 
-            targetCoords = finalCoordinates.get(2);
-            for (int targetCoordIdx = 0; targetCoordIdx < targetCoords.size(); targetCoordIdx++) {
-                ChessCoordinate captureLeft = targetCoords.get(targetCoordIdx);
-                addAttackingPawnMoves(coordinate, isPinned, captureLeft, LEFT);
-            }
-        }
-    }
+        long lPawns = pruneLeft(pawnsLR & ~FILE_MASKS[0]);
+        long rPawns = pruneRight(pawnsLR & ~FILE_MASKS[7]);
+        long fPawns;
+        long pPawns;
+        long eplTargetBit = 0;
+        long eprTargetBit = 0;
 
-    private void addAttackingPawnMoves(ChessCoordinate coordinate, boolean isPinned,
-                                       ChessCoordinate captureCoord, Direction direction) {
-        Piece pawn = friendlyColor == WHITE ? WHITE_PAWN : BLACK_PAWN;
-
-        if (isPinned && !areAligned(coordinate, friendlyKingCoord, captureCoord)) {
-            return;
-        }
-
-        if (!board.isOccupied(captureCoord)) {
-            // Must try for enPassant
-            ChessCoordinate enPassantTarget = game.getEnPassantTarget();
-            if (Objects.equals(enPassantTarget, captureCoord)) {
-                ChessCoordinate targetCoord = direction.next(coordinate);
-
-                if ((!inCheck // Proceed if not in check
-                        || (checkRayMask & captureCoord.getBitMask()) != 0    // Proceed if move blocks check
-                        || (checkRayMask & targetCoord.getBitMask()) != 0)     // Proceed if move captures attacker
-                        && (board.isOccupied(targetCoord) // Ensure that the targetPiece is a pawn
-                        && (!areAligned(coordinate, friendlyKingCoord, targetCoord) // Proceed if not aligned with king
-                        || !longRangeAttacker(coordinate, targetCoord)))) { // Proceed if not attacker
-                    moves.add(new Move(coordinate, captureCoord, targetCoord, null));
-                }
-            }
+        if (friendlyColor == WHITE) {
+            lPawns = lPawns << 7;
+            rPawns = rPawns << 9;
+            fPawns = (pawnsHV << 8) & empty;
+            pPawns = ((fPawns & ROW_MASKS[2]) << 8) & empty & checkRayMask;
         } else {
-            if (!inCheck || (checkRayMask & captureCoord.getBitMask()) != 0) {
-                if (board.isOccupiedByColor(captureCoord, attackingColor)) {
-                    if (pawn == WHITE_PAWN && captureCoord.getRank() == 7) {
-                        makePromotionMoves(coordinate, captureCoord, captureCoord, WHITE_QUEEN, WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT);
-                    } else if (pawn == BLACK_PAWN && captureCoord.getRank() == 0) {
-                        makePromotionMoves(coordinate, captureCoord, captureCoord, BLACK_QUEEN, BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT);
-                    } else {
-                        moves.add(new Move(coordinate, captureCoord, captureCoord, null));
-                    }
-                }
-            }
-        }
-    }
-
-    private void makePromotionMoves(ChessCoordinate coordinate, ChessCoordinate targetCoord,
-                                    ChessCoordinate interactingPieceStart,
-                                    Piece queen, Piece rook, Piece bishop, Piece knight) {
-        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, queen));
-        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, rook));
-        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, bishop));
-        moves.add(new Move(coordinate, targetCoord, interactingPieceStart, null, knight));
-    }
-
-    private boolean longRangeAttacker(ChessCoordinate coordinate, ChessCoordinate capturedCoord) {
-        int xDiff = coordinate.getFile() - friendlyKingCoord.getFile();
-        Direction kingToPawn = xDiff > 0 ? RIGHT : LEFT;
-        boolean longRangeAttackerExists = false;
-
-        for (ChessCoordinate searchCoord = kingToPawn.next(friendlyKingCoord);
-             searchCoord != null;
-             searchCoord = kingToPawn.next(searchCoord)) {
-
-            if (!board.isOccupied(searchCoord) || searchCoord == coordinate || searchCoord == capturedCoord) {
-                continue;
-            }
-
-            if (board.isOccupiedByColor(searchCoord, attackingColor) &&
-                    (board.isQueen(searchCoord) || board.isRook(searchCoord))) {
-                longRangeAttackerExists = true;
-            }
-            break;
+            lPawns = lPawns >>> 9;
+            rPawns = rPawns >>> 7;
+            fPawns = (pawnsHV >>> 8) & empty;
+            pPawns = ((fPawns & ROW_MASKS[5]) >>> 8) & empty & checkRayMask;
         }
 
-        return longRangeAttackerExists;
+        if (epTarget != 0) {
+            long shiftedCheckMask = friendlyColor == WHITE ? checkRayMask << 8 : checkRayMask >>> 8;
+            eplTargetBit = lPawns & epTarget & shiftedCheckMask;
+            eprTargetBit = rPawns & epTarget & shiftedCheckMask;
+        }
+
+        lPawns &= enemy;
+        rPawns &= enemy;
+
+        addMoves(friendlyPawn, null, lPawns & notPromotion, MoveList.Status.PAWN_TAKE_LEFT);
+        addMoves(friendlyPawn, null, rPawns & notPromotion, MoveList.Status.PAWN_TAKE_RIGHT);
+        addMoves(friendlyPawn, null, fPawns & notPromotion, MoveList.Status.PAWN_FORWARD);
+        addMoves(friendlyPawn, null, pPawns, MoveList.Status.PAWN_PUSH);
+        addMoves(friendlyPawn, null, lPawns & promotion, MoveList.Status.PAWN_PROMOTE_LEFT);
+        addMoves(friendlyPawn, null, rPawns & promotion, MoveList.Status.PAWN_PROMOTE_RIGHT);
+        addMoves(friendlyPawn, null, fPawns & promotion, MoveList.Status.PAWN_PROMOTE);
+        addMoves(friendlyPawn, null, eplTargetBit, MoveList.Status.EN_PASSANT_LEFT);
+        addMoves(friendlyPawn, null, eprTargetBit, MoveList.Status.EN_PASSANT_RIGHT);
     }
 
-    private boolean isPinned(ChessCoordinate coordinate) {
-        return (hvPinRayMap & coordinate.getBitMask()) != 0 || (d12PinRayMap & coordinate.getBitMask()) != 0;
+    private long pruneStraight(long mask) {
+        long pinned = mask & hvPinRayMap;
+        long unpinned = mask ^ pinned;
+
+        if (friendlyColor == WHITE) pinned &= (hvPinRayMap & ~ROW_MASKS[0]) >>> 8;
+        else pinned &= (hvPinRayMap & ~FILE_MASKS[7] << 8);
+
+        return pinned | unpinned;
+    }
+
+    private long pruneRight(long mask) {
+        long pinned = mask & d12PinRayMap;
+        long unpinned = mask ^ pinned;
+
+        if (friendlyColor == WHITE) pinned &= (d12PinRayMap & ~FILE_MASKS[0]) >>> 9;
+        else pinned &= (d12PinRayMap & ~FILE_MASKS[0]) << 7;
+
+        return pinned | unpinned;
+    }
+
+    private long pruneLeft(long mask) {
+        long pinned = mask & d12PinRayMap;
+        long unpinned = mask ^ pinned;
+
+        if (friendlyColor == WHITE) pinned &= (d12PinRayMap & ~FILE_MASKS[7]) >>> 7;
+        else pinned &= (d12PinRayMap & ~FILE_MASKS[7]) << 9;
+
+        return pinned | unpinned;
     }
 
     public long getOpponentAttackMap() {
         return opponentAttackMap;
     }
 
-    private static class MoveLRUCache extends LinkedHashMap<Long, List<Move>> {
+    private static class MoveLRUCache extends LinkedHashMap<Long, MoveList> {
         private final int max_entries;
 
         public MoveLRUCache(int max_entries) {
@@ -571,7 +494,7 @@ public class MoveGenerator {
         }
 
         @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, List<Move>> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<Long, MoveList> eldest) {
             return size() > max_entries;
         }
     }
@@ -639,30 +562,5 @@ public class MoveGenerator {
         }
 
         return kingMoveMasks;
-    }
-
-    private static class BitIterator implements Iterator<ChessCoordinate> {
-
-        private long bits;
-        private int index;
-
-        public BitIterator(long bits) {
-            this.index = Long.numberOfTrailingZeros(bits) + 1;
-            this.bits = bits >>> index;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return index < 65;
-        }
-
-        @Override
-        public ChessCoordinate next() {
-            ChessCoordinate nextCoordinate = ChessCoordinate.getChessCoordinate(index - 1);
-            int difference = Long.numberOfTrailingZeros(bits) + 1;
-            index += difference;
-            bits >>>= difference;
-            return nextCoordinate;
-        }
     }
 }

@@ -3,6 +3,7 @@ package dataextractor;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.GameModel;
+import chess.model.MoveList;
 import chess.model.pieces.Piece;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class GameProcessor {
     }
 
     private static Move getMove(GameModel game, String stringMove) {
-        List<Move> legalMoves = game.getLegalMoves();
+        MoveList legalMoves = game.getLegalMoves();
 
         boolean isCastleMove = stringMove.contains("-");
         char[] charRep = isCastleMove ? new char[0] : makeCharRep(stringMove);

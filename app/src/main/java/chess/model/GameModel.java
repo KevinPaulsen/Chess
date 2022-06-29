@@ -117,7 +117,7 @@ public class GameModel {
      * The list of previous legal moves. This is here so the moves don't have
      * to be recalculated on move undo.
      */
-    private final List<List<Move>> previousLegalMoves;
+    private final List<MoveList> previousLegalMoves;
 
     /**
      * The move generator for this game.
@@ -158,8 +158,8 @@ public class GameModel {
         }
 
         previousLegalMoves.clear();
-        for (List<Move> moves : gameModel.previousLegalMoves) {
-            previousLegalMoves.add(new ArrayList<>(moves));
+        for (MoveList moves : gameModel.previousLegalMoves) {
+            previousLegalMoves.add(new MoveList(moves));
         }
 
         this.moveHistory.addAll(gameModel.moveHistory);
@@ -380,13 +380,13 @@ public class GameModel {
      */
     private void checkGameOver() {
         long hash = getZobristHash();
-        List<Move> legalMoves = getLegalMoves();
+        MoveList legalMoves = getLegalMoves();
         FastMap currentState = getGameState();
 
         if (threeFold && positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
             // If this position has been reached 3 times, the game is a draw
             currentState.mergeMask(DRAW_MASK);
-        } else if (legalMoves.size() == 0) {
+        } else if (legalMoves.numMoves() == 0) {
             // If this position has no legal moves, then the game is over
             ChessCoordinate kingToMove = getTurn() == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
             if ((moveGenerator.getOpponentAttackMap() & kingToMove.getBitMask()) != 0) {
@@ -467,7 +467,7 @@ public class GameModel {
     /**
      * @return the legal moves in the current position.
      */
-    public List<Move> getLegalMoves() {
+    public MoveList getLegalMoves() {
         return previousLegalMoves.get(previousLegalMoves.size() - 1);
     }
 
@@ -529,9 +529,7 @@ public class GameModel {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof GameModel)) return false;
-
-        GameModel gameModel = (GameModel) o;
+        if (!(o instanceof GameModel gameModel)) return false;
 
         if (!getBoard().equals(gameModel.getBoard())) return false;
         if (!moveHistory.equals(gameModel.moveHistory)) return false;
@@ -750,5 +748,9 @@ public class GameModel {
 
     public int moveNum() {
         return moveHistory.size();
+    }
+
+    public boolean hasEPTarget() {
+        return getGameState().getMap() >> 7 != 0;
     }
 }
