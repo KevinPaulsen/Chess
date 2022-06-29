@@ -1,19 +1,11 @@
 package chess.model;
 
 import chess.Move;
-import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {
@@ -53,20 +45,6 @@ public class GameModelTest {
     }
 
     @Test
-    public void testComplexPositionDepth() {
-        GameModel game = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
-        int[] expectedNumPositions = {1, 44, 1_486, 62_379, 2_103_487, 89_941_194/**/};
-        runCountTest(game, expectedNumPositions);
-    }
-
-    @Test
-    public void testPawnBoardDepth() {
-        GameModel game = new GameModel("2k5/1ppppp2/8/1K1P3q/8/8/2P1PP1P/8 w - - 0 1");
-        int[] expectedNumPositions = {1, 13, 314, 3_598, 92_331, 1_001_929, 25_685_493/**/};
-        runCountTest(game, expectedNumPositions);
-    }
-
-    @Test
     public void testHashDiffersByMove() {
         GameModel testGame1 = new GameModel("r6k/5prp/3R4/4B3/8/8/7P/7K w q - 2 2");
         GameModel testGame2 = new GameModel("r6k/5prp/3R4/4B3/8/8/7P/7K b q - 3 2");
@@ -75,6 +53,37 @@ public class GameModelTest {
                 testGame1.getZobristHash(), testGame2.getZobristHash());
         Assert.assertNotEquals("Same position but different moves evaluated to same hash.",
                 testGame1.getZobristWithTimesMoved(), testGame2.getZobristWithTimesMoved());
+    }
+
+    @Test
+    public void testMiddleWithFourCastle() {
+        GameModel game = new GameModel("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+        int[] expectedNumPositions = {1, 48, 2_039, 97_862, 4_085_603, 193_690_690/**/};
+        runCountTest(game, expectedNumPositions);
+    }
+    @Test
+    public void testPawnEnPassantTest() {
+        GameModel game = new GameModel("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+        int[] expectedNumPositions = {1, 14, 191, 2_812, 43_238, 674_624, 11_030_083};
+        runCountTest(game, expectedNumPositions);
+    }
+    @Test
+    public void testMiddlePromotionAndChecks() {
+        GameModel game = new GameModel("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+        int[] expectedNumPositions = {1, 6, 264, 9_467, 422_333, 15_833_292};
+        runCountTest(game, expectedNumPositions);
+    }
+    @Test
+    public void testComplexMiddle1() {
+        GameModel game = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
+        int[] expectedNumPositions = {1, 44, 1_486, 62_379, 2_103_487, 89_941_194};
+        runCountTest(game, expectedNumPositions);
+    }
+    @Test
+    public void testComplexMiddle2() {
+        GameModel game = new GameModel("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+        int[] expectedNumPositions = {1, 46, 2_079, 89_890, 3_894_594, 164_075_551/**/};
+        runCountTest(game, expectedNumPositions);
     }
 
     @Test

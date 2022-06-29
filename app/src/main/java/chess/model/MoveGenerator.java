@@ -7,6 +7,7 @@ import chess.model.pieces.Piece;
 import chess.util.BitIterator;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static chess.ChessCoordinate.*;
@@ -29,6 +30,8 @@ public class MoveGenerator {
     private static final long WHITE_QUEEN_CASTLE_MASK = 0x000000000000001EL;
     private static final long BLACK_KING_CASTLE_MASK  = 0x7000000000000000L;
     private static final long BLACK_QUEEN_CASTLE_MASK = 0x1E00000000000000L;
+    private static final long WHITE_QUEEN_ATTACK_CASTLE_MASK = 0x000000000000001CL;
+    private static final long BLACK_QUEEN_ATTACK_CASTLE_MASK = 0x1C00000000000000L;
 
     private static final long[] FILE_MASKS = {
             0x0101010101010101L,
@@ -281,22 +284,16 @@ public class MoveGenerator {
         long slidingAttackMap = 0x0;
         long board = this.board.getOccupancyMap() ^ friendlyKingCoord.getBitMask();
 
-        Piece piece = friendlyColor == WHITE ? BLACK_QUEEN : WHITE_QUEEN;
-        BitIterator bitIterator = new BitIterator(this.board.getPieceMap(piece));
+        long queens = this.board.getPieceMap(attackingQueen);
+
+        BitIterator bitIterator = new BitIterator(this.board.getPieceMap(attackingRook) | queens);
         while (bitIterator.hasNext()) {
-            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
+            slidingAttackMap |= generateSlidingPieceMoves(attackingRook, bitIterator.next(), board);
         }
 
-        piece = friendlyColor == WHITE ? BLACK_ROOK : WHITE_ROOK;
-        bitIterator = new BitIterator(this.board.getPieceMap(piece));
+        bitIterator = new BitIterator(this.board.getPieceMap(attackingBishop) | queens);
         while (bitIterator.hasNext()) {
-            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
-        }
-
-        piece = friendlyColor == WHITE ? BLACK_BISHOP : WHITE_BISHOP;
-        bitIterator = new BitIterator(this.board.getPieceMap(piece));
-        while (bitIterator.hasNext()) {
-            slidingAttackMap |= generateSlidingPieceMoves(piece, bitIterator.next(), board);
+            slidingAttackMap |= generateSlidingPieceMoves(attackingBishop, bitIterator.next(), board);
         }
 
         return slidingAttackMap;
@@ -312,17 +309,17 @@ public class MoveGenerator {
 
         // Add castling moves
         kingMoveMask = 0x0L;
-        long occupancy = (board.getOccupancyMap() ^ friendlyKingCoord.getBitMask()) | opponentAttackMap;
+        long occupancy = (board.getOccupancyMap() ^ friendlyKingCoord.getBitMask());
         if (friendlyColor == WHITE) {
-            if (game.canKingSideCastle(WHITE) && (occupancy & WHITE_KING_CASTLE_MASK) == 0)
+            if (game.canKingSideCastle(WHITE) && (occupancy & WHITE_KING_CASTLE_MASK) == 0 && (opponentAttackMap & WHITE_KING_CASTLE_MASK) == 0)
                 kingMoveMask |= G1.getBitMask();
-            if (game.canQueenSideCastle(WHITE) && (occupancy & WHITE_QUEEN_CASTLE_MASK) == 0)
+            if (game.canQueenSideCastle(WHITE) && (occupancy & WHITE_QUEEN_CASTLE_MASK) == 0 && (opponentAttackMap & WHITE_QUEEN_ATTACK_CASTLE_MASK) == 0)
                 kingMoveMask |= C1.getBitMask();
         } else {
-            if (game.canKingSideCastle(BLACK) && (occupancy & BLACK_KING_CASTLE_MASK) == 0)
+            if (game.canKingSideCastle(BLACK) && (occupancy & BLACK_KING_CASTLE_MASK) == 0 && ((opponentAttackMap & BLACK_KING_CASTLE_MASK) == 0))
                 kingMoveMask |= G8.getBitMask();
-            if (game.canQueenSideCastle(BLACK) && (occupancy & BLACK_QUEEN_CASTLE_MASK) == 0)
-                kingMoveMask |= C1.getBitMask();
+            if (game.canQueenSideCastle(BLACK) && (occupancy & BLACK_QUEEN_CASTLE_MASK) == 0 && ((opponentAttackMap & BLACK_QUEEN_ATTACK_CASTLE_MASK) == 0))
+                kingMoveMask |= C8.getBitMask();
         }
 
         addMoves(movingKing, friendlyKingCoord, kingMoveMask, MoveList.Status.CASTLING);//*/
@@ -456,7 +453,7 @@ public class MoveGenerator {
         long unpinned = mask ^ pinned;
 
         if (friendlyColor == WHITE) pinned &= (hvPinRayMap & ~ROW_MASKS[0]) >>> 8;
-        else pinned &= (hvPinRayMap & ~FILE_MASKS[7] << 8);
+        else pinned &= ((hvPinRayMap & ~FILE_MASKS[7]) << 8);
 
         return pinned | unpinned;
     }

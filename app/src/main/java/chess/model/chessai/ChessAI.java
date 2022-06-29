@@ -3,17 +3,14 @@ package chess.model.chessai;
 import chess.Move;
 import chess.model.GameModel;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static chess.model.GameModel.IN_PROGRESS;
 import static chess.model.GameModel.WHITE;
@@ -45,7 +42,6 @@ public class ChessAI {
      */
     private final GameModel game;
 
-    private final ExecutorService executorService;
     private final boolean useTranspositionTable;
     private final boolean useIterativeDeepening;
 
@@ -62,7 +58,6 @@ public class ChessAI {
         this.useIterativeDeepening = useIterativeDeepening;
         this.useTranspositionTable = useTranspositionTable;
         this.transpositionTable = new ConcurrentHashMap<>();
-        this.executorService = Executors.newFixedThreadPool(4);
     }
 
     /**
@@ -84,12 +79,14 @@ public class ChessAI {
      */
     public Move getBestMove(int minDepth, int timeCutoff) {
         GameModel currentGame = new GameModel(this.game);
+        long nanoTimeCutoff = NANOSECONDS.convert(timeCutoff, MILLISECONDS);
 
         Evaluation bestEvalToLatestDepth = null;
 
         if (!useIterativeDeepening) {
             bestEvalToLatestDepth = miniMax(currentGame, new AlphaBeta(), minDepth);
         } else {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
             // Do minimax iteratively up to minDepth
             long start = System.nanoTime();
             for (int depth = 1; depth <= minDepth; depth++) {
@@ -99,14 +96,17 @@ public class ChessAI {
 
             // Continue search starting at minDepth + 1, until timeout
             IterativeDeepener deepener = new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
-            CompletableFuture<Void> future = CompletableFuture.runAsync(deepener, executorService);
+            Future<?> future = executor.submit(deepener);
 
             try {
-                future.get(NANOSECONDS.convert(timeCutoff, MILLISECONDS) - end + start, NANOSECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
-                future.cancel(true);
+                future.get(nanoTimeCutoff - end + start, NANOSECONDS);
+            } catch (TimeoutException ignored) {
+            } catch (InterruptedException | ExecutionException ex) {
+                ex.printStackTrace();
             }
+            future.cancel(true);
             deepener.kill();
+            executor.shutdown();
             bestEvalToLatestDepth = deepener.bestEval;
         }
         System.out.println(bestEvalToLatestDepth);

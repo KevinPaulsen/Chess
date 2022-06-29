@@ -99,8 +99,8 @@ public class ChessBoardView extends JPanel {
                     swap(move.getInteractingPieceStart(), move.getInteractingPieceEnd());
                 }
             }
-            ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()))).capture();
             if (move.doesPromote()) {
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()))).capture();
                 ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).setImage(move.getPromotedPiece());
             } else {
                 swap(move.getStartingCoordinate(), move.getEndingCoordinate());
