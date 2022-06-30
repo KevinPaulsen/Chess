@@ -386,7 +386,7 @@ public class GameModel {
         if (threeFold && positionTracker.containsKey(hash) && positionTracker.get(hash) >= 3) {
             // If this position has been reached 3 times, the game is a draw
             currentState.mergeMask(DRAW_MASK);
-        } else if (legalMoves.numMoves() == 0) {
+        } else if (legalMoves.isEmpty()) {
             // If this position has no legal moves, then the game is over
             ChessCoordinate kingToMove = getTurn() == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
             if ((moveGenerator.getOpponentAttackMap() & kingToMove.getBitMask()) != 0) {

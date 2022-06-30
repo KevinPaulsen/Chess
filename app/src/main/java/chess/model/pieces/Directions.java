@@ -1,25 +1,34 @@
 package chess.model.pieces;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import static chess.model.pieces.Direction.*;
 
 public enum Directions implements Iterable<Direction> {
 
-    DIAGONALS(Set.of(
+    DIAGONALS(List.of(
             UP_LEFT,
             UP_RIGHT,
             DOWN_LEFT,
             DOWN_RIGHT
     )),
-    STRAIGHTS(Set.of(
+    DIAGONAL_COMPLEMENTS(List.of(
+            UP_LEFT,
+            UP_RIGHT
+    )),
+    STRAIGHT_COMPLEMENTS(List.of(
+            UP,
+            RIGHT
+    )),
+    STRAIGHTS(List.of(
             LEFT,
             RIGHT,
             UP,
             DOWN
     )),
-    KNIGHTS(Set.of(
+    KNIGHTS(List.of(
             UP_UP_RIGHT,
             UP_UP_LEFT,
             UP_LEFT_LEFT,
@@ -29,15 +38,15 @@ public enum Directions implements Iterable<Direction> {
             DOWN_RIGHT_RIGHT,
             UP_RIGHT_RIGHT
     )),
-    VERTICAL(Set.of(
+    VERTICAL(List.of(
             UP,
             DOWN
     )),
-    LATERAL(Set.of(
+    LATERAL(List.of(
             RIGHT,
             LEFT
     )),
-    ALL_DIRECTIONS(Set.of(
+    ALL_DIRECTIONS(List.of(
             UP,
             UP_LEFT,
             LEFT,
@@ -48,9 +57,9 @@ public enum Directions implements Iterable<Direction> {
             UP_RIGHT
     ));
 
-    public final Set<Direction> directions;
+    public final List<Direction> directions;
 
-    Directions(Set<Direction> directions) {
+    Directions(List<Direction> directions) {
         this.directions = directions;
     }
 

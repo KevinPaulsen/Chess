@@ -14,21 +14,21 @@ import static chess.model.pieces.Directions.*;
  * color, and where it is on the board.
  */
 public enum Piece {
-    EMPTY(null, null, 'w', "", 0),
+    EMPTY(null, 'w', "", 0),
 
-    WHITE_KING(Piece::generateKingReachableCoordsAt, ALL_DIRECTIONS, 'w', "K", 1),
-    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, ALL_DIRECTIONS, 'w', "Q", 2),
-    WHITE_ROOK(Piece::generateRookReachableCoordsAt, STRAIGHTS, 'w', "R", 3),
-    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, DIAGONALS, 'w', "B", 4),
-    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, KNIGHTS, 'w', "N", 5),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, VERTICAL, 'w', "P", 6),
+    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1),
+    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 2),
+    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 3),
+    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 4),
+    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 5),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, ALL_DIRECTIONS, 'b', "k", 7),
-    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, ALL_DIRECTIONS, 'b', "q", 8),
-    BLACK_ROOK(Piece::generateRookReachableCoordsAt, STRAIGHTS, 'b', "r", 9),
-    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, DIAGONALS, 'b', "b", 10),
-    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, KNIGHTS, 'b', "n", 11),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, VERTICAL, 'b', "p", 12);
+    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7),
+    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 8),
+    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 9),
+    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 10),
+    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 11),
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
 
     /**
      * The map of reachable coordinates
@@ -50,19 +50,16 @@ public enum Piece {
      */
     private final int uniqueIdx;
 
-    private final Directions directions;
-
     /**
      * Construct a new piece with the given reachableCoordinate map.
      *
      * @param mapMaker the mapMaker for this piece.
      */
-    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, Directions directions, char color, String stringRep, int uniqueIdx) {
+    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, String stringRep, int uniqueIdx) {
         this.reachableCoordinateMap = new ReachableCoordinatesMap(mapMaker);
         this.color = color;
         this.stringRep = stringRep;
         this.uniqueIdx = uniqueIdx;
-        this.directions = directions;
     }
 
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
@@ -261,10 +258,6 @@ public enum Piece {
      */
     public List<List<ChessCoordinate>> getReachableCoordinateMapFrom(ChessCoordinate coordinate) {
         return reachableCoordinateMap.getReachableCoordinatesFrom(coordinate);
-    }
-
-    public Directions getDirections() {
-        return directions;
     }
 
     /**

@@ -67,5 +67,26 @@ public enum Direction {
         }
         return next;
     }
+
+    public Direction complement() {
+        return switch (this) {
+            case UP -> DOWN;
+            case DOWN -> UP;
+            case LEFT -> RIGHT;
+            case RIGHT -> LEFT;
+            case UP_RIGHT -> DOWN_LEFT;
+            case UP_LEFT -> DOWN_RIGHT;
+            case DOWN_RIGHT -> UP_LEFT;
+            case DOWN_LEFT -> UP_RIGHT;
+            case UP_UP_RIGHT -> DOWN_DOWN_LEFT;
+            case UP_UP_LEFT -> DOWN_DOWN_RIGHT;
+            case UP_LEFT_LEFT -> DOWN_RIGHT_RIGHT;
+            case UP_RIGHT_RIGHT -> DOWN_LEFT_LEFT;
+            case DOWN_LEFT_LEFT -> UP_RIGHT_RIGHT;
+            case DOWN_RIGHT_RIGHT -> UP_LEFT_LEFT;
+            case DOWN_DOWN_LEFT -> UP_UP_RIGHT;
+            case DOWN_DOWN_RIGHT -> UP_UP_LEFT;
+        };
+    }
 }
 

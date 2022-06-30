@@ -44,20 +44,17 @@ public class PositionEvaluator implements Evaluator {
             return new Evaluation(null, 0, Evaluation.TIE, 0, EXACT, null);
         }
 
-        for (int rank = 0; rank < 8; rank++) {
-            for (int file = 0; file < 8; file++) {
-                ChessCoordinate coordinate = ChessCoordinate.getChessCoordinate(file, rank);
-                Piece piece = game.getBoard().getPieceOn(coordinate);
+        for (ChessCoordinate coordinate : ChessCoordinate.values()) {
+            Piece piece = game.getBoard().getPieceOn(coordinate);
 
-                if (piece != null) {
-                    double value = Evaluator.getValue(piece);
-                    value += readTable(piece, coordinate);
+            if (piece != null) {
+                double value = Evaluator.getValue(piece);
+                value += readTable(piece, coordinate);
 
-                    if (piece.getColor() == 'w') {
-                        whiteScore += value;
-                    } else {
-                        blackScore += value;
-                    }
+                if (piece.getColor() == 'w') {
+                    whiteScore += value;
+                } else {
+                    blackScore += value;
                 }
             }
         }
@@ -93,7 +90,7 @@ public class PositionEvaluator implements Evaluator {
     @Override
     public List<Move> getSortedMoves(GameModel game, Move hashMove) {
         MoveList moveList = game.getLegalMoves();
-        List<Move> legalMoves = new ArrayList<>(moveList.numMoves());
+        List<Move> legalMoves = new ArrayList<>();
         moveList.forEach(legalMoves::add);
 
         legalMoves.sort(new MoveComparator(game));

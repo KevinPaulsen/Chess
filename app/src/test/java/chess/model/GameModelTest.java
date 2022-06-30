@@ -1,11 +1,13 @@
 package chess.model;
 
+import chess.ChessCoordinate;
 import chess.Move;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {
@@ -61,10 +63,20 @@ public class GameModelTest {
         int[] expectedNumPositions = {1, 48, 2_039, 97_862, 4_085_603, 193_690_690/**/};
         runCountTest(game, expectedNumPositions);
     }
+
+    private void debug(GameModel game, int i) {
+        game.move(new Move(A5, A4));
+        game.move(new Move(H5, H8));
+        game.move(new Move(G2, G4));
+        System.out.println(game.getFEN());
+        System.out.println(countNumPositions(game, i - game.moveNum(), true));
+    }
+
     @Test
     public void testPawnEnPassantTest() {
         GameModel game = new GameModel("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
         int[] expectedNumPositions = {1, 14, 191, 2_812, 43_238, 674_624, 11_030_083};
+        //debug(game, 4);
         runCountTest(game, expectedNumPositions);
     }
     @Test

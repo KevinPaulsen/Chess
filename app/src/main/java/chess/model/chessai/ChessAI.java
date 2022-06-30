@@ -2,6 +2,7 @@ package chess.model.chessai;
 
 import chess.Move;
 import chess.model.GameModel;
+import chess.util.MaxSizeLRUCache;
 
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,8 @@ public class ChessAI {
     private final boolean useTranspositionTable;
     private final boolean useIterativeDeepening;
 
+    private long positionsEvaluated;
+
     /**
      * Simple constructor that makes a new ChessAI with the given
      * evaluator and game.
@@ -57,7 +60,8 @@ public class ChessAI {
         this.game = game;
         this.useIterativeDeepening = useIterativeDeepening;
         this.useTranspositionTable = useTranspositionTable;
-        this.transpositionTable = new ConcurrentHashMap<>();
+        this.transpositionTable = new MaxSizeLRUCache<>(500_000);
+        positionsEvaluated = 0;
     }
 
     /**
@@ -96,6 +100,7 @@ public class ChessAI {
 
             // Continue search starting at minDepth + 1, until timeout
             IterativeDeepener deepener = new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
+            positionsEvaluated = 0;
             Future<?> future = executor.submit(deepener);
 
             try {
@@ -109,7 +114,9 @@ public class ChessAI {
             executor.shutdown();
             bestEvalToLatestDepth = deepener.bestEval;
         }
-        System.out.println(bestEvalToLatestDepth);
+        synchronized (transpositionTable) {
+            System.out.printf("%10d\t|\t%6d\t|\t%s\n", positionsEvaluated, transpositionTable.size(), bestEvalToLatestDepth);
+        }
         return bestEvalToLatestDepth == null ? null : bestEvalToLatestDepth.getMove();
     }
 
@@ -124,6 +131,7 @@ public class ChessAI {
      */
     private Evaluation miniMax(GameModel game, AlphaBeta alphaBeta, int depth) {
         if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
+            positionsEvaluated++;
             return evaluator.evaluate(game);
         }
 
@@ -132,7 +140,10 @@ public class ChessAI {
         Evaluation bestEval = maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
         Move bestMove = null;
 
-        Evaluation tableEval = transpositionTable.get(hash);
+        Evaluation tableEval;
+        synchronized (transpositionTable) {
+            tableEval = transpositionTable.get(hash);
+        }
         // Search table for current position hash
         if (tableEval != null) {
             // If tableDepth is >= current depth use value
@@ -190,7 +201,9 @@ public class ChessAI {
         // Add best Eval to transposition table.
         if (useTranspositionTable && bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
             if (bestEval.isExact()) {
-                transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
+                synchronized (transpositionTable) {
+                    transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
+                }
             }
         }
 

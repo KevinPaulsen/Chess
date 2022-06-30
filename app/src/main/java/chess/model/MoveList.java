@@ -22,7 +22,6 @@ public class MoveList implements Iterable<Move> {
     private final List<MoveData> moveData;
     private final BoardModel board;
     private final Deque<Move> potentialPromotions;
-    private int numMoves;
 
     public MoveList(BoardModel board) {
         this.moveData = new ArrayList<>();
@@ -39,7 +38,6 @@ public class MoveList implements Iterable<Move> {
     public void add(Piece movingPiece, ChessCoordinate coordinate, long moveMap, Status status) {
         if (moveMap != 0) {
             moveData.add(new MoveData(movingPiece, coordinate, moveMap, status));
-            numMoves += Long.bitCount(moveMap);
         }
     }
 
@@ -48,8 +46,8 @@ public class MoveList implements Iterable<Move> {
         return new MoveIterator();
     }
 
-    public int numMoves() {
-        return numMoves;
+    public boolean isEmpty() {
+        return moveData.isEmpty();
     }
 
     private class MoveIterator implements Iterator<Move> {
