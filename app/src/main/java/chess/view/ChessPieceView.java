@@ -4,6 +4,7 @@ import chess.model.pieces.Piece;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /**
  * This class is capable of making a JLabel that displays a
@@ -22,6 +23,7 @@ public class ChessPieceView extends JLabel {
      */
     public ChessPieceView(Piece piece) {
         super();
+        setHorizontalAlignment(JLabel.CENTER);
         ImageIcon imageIcon = getImage(piece);
         if (imageIcon.getDescription().length() == 7) {
             isOnBoard = false;

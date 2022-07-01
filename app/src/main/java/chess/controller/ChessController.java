@@ -1,6 +1,7 @@
 package chess.controller;
 
 import chess.ChessCoordinate;
+import chess.Move;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
@@ -15,6 +16,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -64,7 +66,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      */
     private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (gameModel.move(startCoordinate, endCoordinate, Piece.WHITE_QUEEN)) {
-            updateScreen(false);
+            updateScreen(false, false);
 
             if (AI_ON) {
                 makeAIMove();
@@ -80,16 +82,16 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
 
     private void undoMove() {
         gameModel.undoLastMove();
-        updateScreen(true);
+        updateScreen(true, false);
     }
 
-    private void updateScreen(boolean doSlowUpdate) {
+    private void updateScreen(boolean doSlowUpdate, boolean animate) {
         if (doSlowUpdate) {
             view.slowUpdate(gameModel.getBoard().getPieceArray(),
                     this, this, gameModel.getTurn());
         } else {
-            view.updateScreen(gameModel.getLastMove());
-            view.pack();
+            if (animate) view.animateMove(gameModel.getLastMove());
+            else view.updateScreen(gameModel.getLastMove());
         }
     }
 
@@ -106,7 +108,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     }
 
     private void printAndUpdate() {
-        updateScreen(false);
+        updateScreen(false, true);
         if (gameModel.getGameOverStatus() != IN_PROGRESS) {
             System.out.printf("GAME OVER (%s)\n", switch (gameModel.getGameOverStatus()) {
                 case DRAW -> "Draw";
@@ -140,6 +142,13 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
         Component component = e.getComponent();
         if (component instanceof ChessPieceView) {
             startCoordinate = view.getCoordinateOf(component, e.getX(), e.getY());
+
+            List<ChessCoordinate> endCoordinates = gameModel.getLegalMoves().toList().stream()
+                    .filter(move -> move.getStartingCoordinate().equals(startCoordinate))
+                    .map(Move::getEndingCoordinate)
+                    .toList();
+
+            view.markEnds(endCoordinates);
         }
     }
 
@@ -151,6 +160,7 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     @Override
     public void mouseReleased(MouseEvent e) {
         ChessCoordinate endCoordinate = view.getCoordinateOf(e.getComponent(), e.getX(), e.getY());
+        view.unMarkEnds();
         if (futureAIMove == null || futureAIMove.isDone()) {
             makeMove(startCoordinate, endCoordinate);
         } else {

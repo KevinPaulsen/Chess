@@ -5,12 +5,14 @@ import chess.Move;
 import chess.model.pieces.Piece;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
 
 /**
  * This Class is capable of displaying a Chess Game in a
@@ -35,9 +37,11 @@ public class ChessView extends JFrame {
      */
     public ChessView(Piece[] board, MouseListener mouseListener,
                      MouseMotionListener motionListener, KeyListener keyListener) {
+        JPanel panel = new JPanel();
         boardView = new ChessBoardView(board, mouseListener, motionListener);
         turnView = new ChessTurnView('w');
         init();
+        panel.add(boardView);
         this.add(boardView, BorderLayout.CENTER);
         this.add(turnView, BorderLayout.SOUTH);
         this.addKeyListener(keyListener);
@@ -78,10 +82,9 @@ public class ChessView extends JFrame {
 
     public void updateScreen(Move move) {
         if (move != null) {
-            boardView.updateBoard(move);
+            boardView.showMove(move);
             turnView.switchTurns();
         }
-        this.pack();
     }
 
     public ChessCoordinate getCoordinateOf(Component component, int mouseX, int mouseY) {
@@ -90,5 +93,17 @@ public class ChessView extends JFrame {
         int xCoordinate = (getXOnWindow(component) + mouseX) / (squareWidth);
         int yCoordinate = 7 - (getYOnWindow(component) + mouseY) / squareHeight;
         return ChessCoordinate.getChessCoordinate(xCoordinate, yCoordinate);
+    }
+
+    public void markEnds(List<ChessCoordinate> endCoordinates) {
+        boardView.markEnds(endCoordinates);
+    }
+
+    public void unMarkEnds() {
+        boardView.unmarkEnds();
+    }
+
+    public void animateMove(Move move) {
+        boardView.animateMove(move);
     }
 }

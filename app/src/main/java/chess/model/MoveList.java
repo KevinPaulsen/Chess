@@ -50,6 +50,12 @@ public class MoveList implements Iterable<Move> {
         return moveData.isEmpty();
     }
 
+    public List<Move> toList() {
+        List<Move> moves = new ArrayList<>();
+        this.forEach(moves::add);
+        return moves;
+    }
+
     private class MoveIterator implements Iterator<Move> {
 
         private int index;
