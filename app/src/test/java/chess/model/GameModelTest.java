@@ -65,9 +65,6 @@ public class GameModelTest {
     }
 
     private void debug(GameModel game, int i) {
-        game.move(new Move(A5, A4));
-        game.move(new Move(H5, H8));
-        game.move(new Move(G2, G4));
         System.out.println(game.getFEN());
         System.out.println(countNumPositions(game, i - game.moveNum(), true));
     }
@@ -76,7 +73,6 @@ public class GameModelTest {
     public void testPawnEnPassantTest() {
         GameModel game = new GameModel("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
         int[] expectedNumPositions = {1, 14, 191, 2_812, 43_238, 674_624, 11_030_083};
-        //debug(game, 4);
         runCountTest(game, expectedNumPositions);
     }
     @Test

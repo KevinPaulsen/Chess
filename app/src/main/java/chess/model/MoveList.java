@@ -99,8 +99,8 @@ public class MoveList implements Iterable<Move> {
 
             return switch (status) {
                 case NORMAL -> {
-                    if (board.getPieceOn(end) == null) yield new Move(start, end, null, null);
-                    else yield new Move(start, end, end, null);
+                    if (board.getPieceOn(end) == null) yield new Move(start, end, board);
+                    else yield new Move(start, end, end, null, board);
                 }
                 case CASTLING -> switch (end) {
                     case G1 -> WHITE_CASTLE_KING_SIDE;
@@ -110,23 +110,23 @@ public class MoveList implements Iterable<Move> {
                     default -> throw new IllegalArgumentException("Ending coordinate is not castling end coordinate");
                 };
                 case PAWN_TAKE_LEFT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, end, null);
-                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, end, null);
+                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, end, null, board);
+                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, end, null, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_TAKE_LEFT");
                 };
                 case PAWN_TAKE_RIGHT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, end, null);
-                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, end, null);
+                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, end, null, board);
+                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, end, null, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_TAKE_RIGHT");
                 };
                 case PAWN_FORWARD -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN.next(end), end);
-                    case BLACK_PAWN -> new Move(UP.next(end), end);
+                    case WHITE_PAWN -> new Move(DOWN.next(end), end, board);
+                    case BLACK_PAWN -> new Move(UP.next(end), end, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_FORWARD");
                 };
                 case PAWN_PUSH -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN.next(end, 2), end);
-                    case BLACK_PAWN -> new Move(UP.next(end, 2), end);
+                    case WHITE_PAWN -> new Move(DOWN.next(end, 2), end, board);
+                    case BLACK_PAWN -> new Move(UP.next(end, 2), end, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PUSH");
                 };
                 case PAWN_PROMOTE_LEFT -> switch (moving) {
@@ -145,13 +145,13 @@ public class MoveList implements Iterable<Move> {
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PROMOTE");
                 };
                 case EN_PASSANT_LEFT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, DOWN.next(end), null);
-                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, UP.next(end), null);
+                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, DOWN.next(end), null, board);
+                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, UP.next(end), null, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status EN_PASSANT_LEFT");
                 };
                 case EN_PASSANT_RIGHT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, DOWN.next(end), null);
-                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, UP.next(end), null);
+                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, DOWN.next(end), null, board);
+                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, UP.next(end), null, board);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status EN_PASSANT_RIGHT");
                 };
             };
@@ -159,10 +159,10 @@ public class MoveList implements Iterable<Move> {
 
         private Move makePromotions(ChessCoordinate start, ChessCoordinate end, ChessCoordinate captureStart, Piece knight,
                                     Piece bishop, Piece rook, Piece queen) {
-            potentialPromotions.offer(new Move(start, end, captureStart, null, knight));
-            potentialPromotions.offer(new Move(start, end, captureStart, null, bishop));
-            potentialPromotions.offer(new Move(start, end, captureStart, null, rook));
-            return new Move(start, end, captureStart, null, queen);
+            potentialPromotions.offer(new Move(start, end, captureStart, null, knight, board));
+            potentialPromotions.offer(new Move(start, end, captureStart, null, bishop, board));
+            potentialPromotions.offer(new Move(start, end, captureStart, null, rook, board));
+            return new Move(start, end, captureStart, null, queen, board);
         }
     }
 

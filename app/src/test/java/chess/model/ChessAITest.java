@@ -18,7 +18,7 @@ public class ChessAITest {
         GameModel testGame = new GameModel("r1bqkbnr/p1pp1ppp/1pn5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true,true);
 
-        Move expectedMove = new Move(F3, F7, F7, null);
+        Move expectedMove = new Move(F3, F7, F7, null, testGame.getBoard());
         Move actualMove = testAI.getBestMove(1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
@@ -29,7 +29,7 @@ public class ChessAITest {
         GameModel testGame = new GameModel("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2");
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
-        Move expectedMove = new Move(D8, H4);
+        Move expectedMove = new Move(D8, H4, testGame.getBoard());
         Move actualMove = testAI.getBestMove(1);
 
         Assert.assertEquals("Mate in 1 was not found", expectedMove, actualMove);
@@ -41,9 +41,9 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(F8, A8));
-        expectedMoves.add(new Move(C3, A4));
-        expectedMoves.add(new Move(A8, A4, A4, null));
+        expectedMoves.add(new Move(F8, A8, testGame.getBoard()));
+        expectedMoves.add(new Move(C3, A4, testGame.getBoard()));
+        expectedMoves.add(new Move(A8, A4, A4, null, testGame.getBoard()));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(3);
@@ -58,8 +58,8 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(F3, F7, F7, null));
-        expectedMoves.add(new Move(E8, F7, F7, null));
+        expectedMoves.add(new Move(F3, F7, F7, null, testGame.getBoard()));
+        expectedMoves.add(new Move(E8, F7, F7, null, testGame.getBoard()));
         expectedMoves.add(new Move(G4, H5, null, null, null));
 
         for (Move expectedMove : expectedMoves) {
@@ -75,11 +75,11 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(F6, A6));
-        expectedMoves.add(new Move(F7, F6));
-        expectedMoves.add(new Move(E5, F6, F6, null));
-        expectedMoves.add(new Move(G8, G7));
-        expectedMoves.add(new Move(A6, A8, A8, null));
+        expectedMoves.add(new Move(F6, A6, testGame.getBoard()));
+        expectedMoves.add(new Move(F7, F6, testGame.getBoard()));
+        expectedMoves.add(new Move(E5, F6, F6, null, testGame.getBoard()));
+        expectedMoves.add(new Move(G8, G7, testGame.getBoard()));
+        expectedMoves.add(new Move(A6, A8, A8, null, testGame.getBoard()));
 
         for (Move expectedMove : expectedMoves) {
             Move actualMove = testAI.getBestMove(5);
@@ -94,17 +94,17 @@ public class ChessAITest {
         ChessAI testAI = new ChessAI(new PositionEvaluator(testGame), testGame, true, true);
 
         List<Move> expectedMoves = new ArrayList<>();
-        expectedMoves.add(new Move(E2, G2));
+        expectedMoves.add(new Move(E2, G2, testGame.getBoard()));
 
-        expectedMoves.add(new Move(G1, H1));
-        expectedMoves.add(new Move(G2, H2));
-        expectedMoves.add(new Move(H1, G1));
-        expectedMoves.add(new Move(H2, G2));
+        expectedMoves.add(new Move(G1, H1, testGame.getBoard()));
+        expectedMoves.add(new Move(G2, H2, testGame.getBoard()));
+        expectedMoves.add(new Move(H1, G1, testGame.getBoard()));
+        expectedMoves.add(new Move(H2, G2, testGame.getBoard()));
 
-        expectedMoves.add(new Move(G1, H1));
-        expectedMoves.add(new Move(G2, H2));
-        expectedMoves.add(new Move(H1, G1));
-        expectedMoves.add(new Move(H2, G2));
+        expectedMoves.add(new Move(G1, H1, testGame.getBoard()));
+        expectedMoves.add(new Move(G2, H2, testGame.getBoard()));
+        expectedMoves.add(new Move(H1, G1, testGame.getBoard()));
+        expectedMoves.add(new Move(H2, G2, testGame.getBoard()));
 
         int startDepth = 5;
         for (Move expectedMove : expectedMoves) {

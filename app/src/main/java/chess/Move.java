@@ -1,25 +1,24 @@
 package chess;
 
 import chess.model.BoardModel;
+import chess.model.Zobrist;
 import chess.model.pieces.Piece;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static chess.ChessCoordinate.*;
-import static chess.model.pieces.Piece.BLACK_PAWN;
-import static chess.model.pieces.Piece.WHITE_PAWN;
 
 /**
  * This class contains all the information needed to make a move.
  */
 public class Move {
 
-    public static final Move WHITE_CASTLE_KING_SIDE = new Move(E1, G1, H1, F1);
-    public static final Move WHITE_CASTLE_QUEEN_SIDE = new Move(E1, C1, A1, D1);
-    public static final Move BLACK_CASTLE_KING_SIDE = new Move(E8, G8, H8, F8);
-    public static final Move BLACK_CASTLE_QUEEN_SIDE = new Move(E8, C8, A8, D8);
-
-    private static int currentMove = 0;
+    public static final Move WHITE_CASTLE_KING_SIDE = new Move(E1, G1, H1, F1, new BoardModel("", new Zobrist()));
+    public static final Move WHITE_CASTLE_QUEEN_SIDE = new Move(E1, C1, A1, D1, new BoardModel("", new Zobrist()));
+    public static final Move BLACK_CASTLE_KING_SIDE = new Move(E8, G8, H8, F8, new BoardModel("", new Zobrist()));
+    public static final Move BLACK_CASTLE_QUEEN_SIDE = new Move(E8, C8, A8, D8, new BoardModel("", new Zobrist()));
 
     /**
      * The coordinate the piece starts on.
@@ -46,7 +45,8 @@ public class Move {
      */
     private final Piece promotedPiece;
 
-    private final int moveNumber;
+    private final List<PieceChangeData> moveInstructions;
+    private final long occupancyChange;
 
     /**
      * Creates a move that does not capture or do anything special.
@@ -54,8 +54,8 @@ public class Move {
      * @param startingCoordinate    the coordinate the moving piece starts on.
      * @param endingCoordinate the ending coordinate.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate) {
-        this(startingCoordinate, endingCoordinate, null, null, null);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, BoardModel board) {
+        this(startingCoordinate, endingCoordinate, null, null, null, board);
     }
 
     /**
@@ -68,8 +68,8 @@ public class Move {
      * @param interactingPieceEnd   the coordinate the interacting piece moves to.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate,
-                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd) {
-        this(startingCoordinate, endingCoordinate, interactingPieceStart, interactingPieceEnd, null);
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, BoardModel board) {
+        this(startingCoordinate, endingCoordinate, interactingPieceStart, interactingPieceEnd, null, board);
     }
 
     /**
@@ -79,8 +79,8 @@ public class Move {
      * @param endingCoordinate the coordinate the moving piece moves to.
      * @param promotedPiece    the piece the moving piece promotes to.
      */
-    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece promotedPiece) {
-        this(startingCoordinate, endingCoordinate, null, null, promotedPiece);
+    public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate, Piece promotedPiece, BoardModel board) {
+        this(startingCoordinate, endingCoordinate, null, null, promotedPiece, board);
     }
 
     /**
@@ -93,14 +93,39 @@ public class Move {
      * @param promotedPiece       the piece the moving piece promotes to.
      */
     public Move(ChessCoordinate startingCoordinate, ChessCoordinate endingCoordinate,
-                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece promotedPiece) {
+                ChessCoordinate interactingPieceStart, ChessCoordinate interactingPieceEnd, Piece promotedPiece,
+                BoardModel board) {
+        this.moveInstructions = new ArrayList<>();
+
+        Piece movingPiece = board.getPieceOn(startingCoordinate);
+        Piece interactingPiece = board.getPieceOn(endingCoordinate);
+
+        long movingChangeMask = startingCoordinate.getBitMask();
+        if (promotedPiece == null) {
+            movingChangeMask |= endingCoordinate.getBitMask();
+        } else {
+            moveInstructions.add(new PieceChangeData(promotedPiece, endingCoordinate.getBitMask()));
+        }
+        moveInstructions.add(new PieceChangeData(movingPiece, movingChangeMask));
+        long occupancyChange = movingChangeMask;
+
+        if (interactingPiece != null) {
+            long interactingChangeMask = interactingPieceStart.getBitMask();
+
+            if (interactingPieceEnd != null) {
+                interactingChangeMask |= interactingPieceEnd.getBitMask();
+            }
+            moveInstructions.add(new PieceChangeData(interactingPiece, interactingChangeMask));
+            occupancyChange ^= interactingChangeMask;
+        }
+
+        this.occupancyChange = occupancyChange;
+
         this.startingCoordinate = startingCoordinate;
         this.endingCoordinate = endingCoordinate;
         this.interactingPieceStart = interactingPieceStart;
         this.interactingPieceEnd = interactingPieceEnd;
         this.promotedPiece = promotedPiece;
-        this.moveNumber = currentMove;
-        currentMove++;
     }
 
     /**
@@ -201,6 +226,8 @@ public class Move {
     @Override
     public int hashCode() {
         return Objects.hash(startingCoordinate, endingCoordinate, interactingPieceStart,
-                interactingPieceEnd, promotedPiece, moveNumber);
+                interactingPieceEnd, promotedPiece);
     }
+
+    public record PieceChangeData(Piece piece, long changeData) {}
 }
