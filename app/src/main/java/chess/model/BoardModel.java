@@ -20,8 +20,6 @@ public class BoardModel {
     // The array that holds all the pieces. They are stored in the format [file][rank]
     private final Piece[] pieces;
     private final FastMap[] pieceMaps;
-    private final FastMap[] whiteMaps;
-    private final FastMap[] blackMaps;
 
     private final FastMap black;
     private final FastMap white;
@@ -49,25 +47,8 @@ public class BoardModel {
                 new FastMap(),
                 new FastMap(),
         };
-        whiteMaps = new FastMap[]{
-                pieceMaps[6],
-                pieceMaps[1],
-                pieceMaps[2],
-                pieceMaps[3],
-                pieceMaps[4],
-                pieceMaps[5]
-        };
-        blackMaps = new FastMap[]{
-                pieceMaps[0],
-                pieceMaps[7],
-                pieceMaps[8],
-                pieceMaps[9],
-                pieceMaps[10],
-                pieceMaps[11],
-        };
 
         takenPieces = new ArrayDeque<>();
-
 
         black = new FastMap();
         white = new FastMap();
@@ -299,41 +280,9 @@ public class BoardModel {
         return pieceArray;
     }
 
-    public boolean isOccupiedByColor(ChessCoordinate potentialCoordinate, char color) {
-        if (color == WHITE) {
-            return white.isMarked(potentialCoordinate.getOndDimIndex());
-        } else {
-            return black.isMarked(potentialCoordinate.getOndDimIndex());
-        }
-    }
-
-    public boolean isKing(ChessCoordinate coordinate) {
-        return pieceMaps[WHITE_KING.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
-                || pieceMaps[BLACK_KING.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
-    }
-
-    public boolean isQueen(ChessCoordinate coordinate) {
-        return pieceMaps[WHITE_QUEEN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
-                || pieceMaps[BLACK_QUEEN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
-    }
-
-    public boolean isBishop(ChessCoordinate coordinate) {
-        return pieceMaps[WHITE_BISHOP.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
-                || pieceMaps[BLACK_BISHOP.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
-    }
-
-    public boolean isRook(ChessCoordinate coordinate) {
-        return pieceMaps[WHITE_ROOK.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
-                || pieceMaps[BLACK_ROOK.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
-    }
-
     public boolean isPawn(ChessCoordinate coordinate) {
         return pieceMaps[WHITE_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
                 || pieceMaps[BLACK_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
-    }
-
-    public boolean isOccupied(ChessCoordinate coordinate) {
-        return occupied.isMarked(coordinate.getOndDimIndex());
     }
 
     public long getOccupancyMap() {

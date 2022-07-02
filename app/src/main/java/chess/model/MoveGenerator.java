@@ -233,7 +233,7 @@ public class MoveGenerator {
             long rookAndQueen = board.getPieceMap(attackingRook) | board.getPieceMap(attackingQueen);
             if (!((epRank & friendlyKingMask) == 0 || (epRank & rookAndQueen) == 0 || (epRank & pawns) == 0)) {
                 long upperMask = coordinateToMask[friendlyKingCoord.getOndDimIndex()][RIGHT.ordinal()];
-                long lowerMask = coordinateToMask[friendlyKingCoord.getOndDimIndex()][LEFT.complement().ordinal()];
+                long lowerMask = coordinateToMask[friendlyKingCoord.getOndDimIndex()][LEFT.ordinal()];
                 if (eplPawn != 0) {
                     long afterEP = board.getOccupancyMap() ^ eplPawn ^ epTargetPawn;
                     long moveMask = getMoveMask(lowerMask, upperMask, afterEP);
