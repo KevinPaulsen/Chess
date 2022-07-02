@@ -188,6 +188,14 @@ public class Move {
         return promotedPiece;
     }
 
+    public List<PieceChangeData> getMoveInstructions() {
+        return moveInstructions;
+    }
+
+    public long getOccupancyChange() {
+        return occupancyChange;
+    }
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
