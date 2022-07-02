@@ -61,10 +61,12 @@ public class GameModelTest {
     public void testMiddleWithFourCastle() {
         GameModel game = new GameModel("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
         int[] expectedNumPositions = {1, 48, 2_039, 97_862, 4_085_603, 193_690_690/**/};
+        //debug(game, 2);
         runCountTest(game, expectedNumPositions);
     }
 
     private void debug(GameModel game, int i) {
+        game.move(new Move(A2, A4, game.getBoard()));
         System.out.println(game.getFEN());
         System.out.println(countNumPositions(game, i - game.moveNum(), true));
     }

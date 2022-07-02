@@ -3,12 +3,12 @@ package chess.model;
 import chess.ChessCoordinate;
 import chess.Move;
 import chess.model.pieces.Piece;
+import chess.util.BitIterator;
 import chess.util.FastMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class BoardModel {
 
     // The array that holds all the pieces. They are stored in the format [file][rank]
     private final Piece[] pieces;
-    private final FastMap[] pieceMaps;
+    private final long[] pieceMaps;
 
     private final FastMap black;
     private final FastMap white;
@@ -33,20 +33,7 @@ public class BoardModel {
 
         pieces = new Piece[64];
 
-        pieceMaps = new FastMap[]{
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-                new FastMap(),
-        };
+        pieceMaps = new long[Piece.values().length];
 
         takenPieces = new ArrayDeque<>();
 
@@ -84,7 +71,7 @@ public class BoardModel {
                 default -> throw new IllegalStateException("Unexpected value: " + c);
             };
 
-            pieceMaps[piece.getUniqueIdx() % 12].mark(squareIdx);
+            pieceMaps[piece.ordinal()] |= ChessCoordinate.getChessCoordinate(squareIdx).getBitMask();
             pieces[squareIdx] = piece;
 
             if (c < 'a') {
@@ -163,7 +150,7 @@ public class BoardModel {
         if (piece != null && coordinate != null) {
             byte oneDimIdx = (byte) coordinate.getOndDimIndex();
 
-            pieceMaps[piece.getUniqueIdx() % 12].mark(oneDimIdx);
+            pieceMaps[piece.ordinal()] |= coordinate.getBitMask();
             pieces[oneDimIdx] = piece;
 
             occupied.mark(oneDimIdx);
@@ -193,7 +180,7 @@ public class BoardModel {
         if (piece != null) {
             byte oneDimIdx = (byte) coordinate.getOndDimIndex();
 
-            pieceMaps[piece.getUniqueIdx() % 12].unmark(oneDimIdx);
+            pieceMaps[piece.ordinal()] ^= coordinate.getBitMask();
             pieces[oneDimIdx] = null;
 
             occupied.unmark(oneDimIdx);
@@ -226,14 +213,9 @@ public class BoardModel {
     }
 
     public List<ChessCoordinate> getLocations(Piece piece) {
-        FastMap map = pieceMaps[piece.getUniqueIdx() % 12];
-
-        Collection<Byte> markedIndices = map.markedIndices();
+        BitIterator iterator = new BitIterator(pieceMaps[piece.ordinal()]);
         List<ChessCoordinate> locations = new ArrayList<>(8);
-
-        for (byte coordIdx : markedIndices) {
-            locations.add(ChessCoordinate.getChessCoordinate(coordIdx));
-        }
+        iterator.forEachRemaining(locations::add);
 
         return locations;
     }
@@ -242,14 +224,14 @@ public class BoardModel {
      * @return the reference to the white king.
      */
     public ChessCoordinate getWhiteKingCoord() {
-        return ChessCoordinate.getChessCoordinate(pieceMaps[WHITE_KING.getUniqueIdx() % 12].getLowestSet());
+        return ChessCoordinate.getChessCoordinate(Long.numberOfTrailingZeros(pieceMaps[WHITE_KING.ordinal()]));
     }
 
     /**
      * @return the reference to the black king.
      */
     public ChessCoordinate getBlackKingCoord() {
-        return ChessCoordinate.getChessCoordinate(pieceMaps[BLACK_KING.getUniqueIdx() % 12].getLowestSet());
+        return ChessCoordinate.getChessCoordinate(Long.numberOfTrailingZeros(pieceMaps[BLACK_KING.ordinal()]));
     }
 
     @Override
@@ -281,8 +263,8 @@ public class BoardModel {
     }
 
     public boolean isPawn(ChessCoordinate coordinate) {
-        return pieceMaps[WHITE_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex())
-                || pieceMaps[BLACK_PAWN.getUniqueIdx() % 12].isMarked(coordinate.getOndDimIndex());
+        return (pieceMaps[WHITE_PAWN.ordinal()] & coordinate.getBitMask()) != 0 ||
+                (pieceMaps[BLACK_PAWN.ordinal()] & coordinate.getBitMask()) != 0;
     }
 
     public long getOccupancyMap() {
@@ -294,6 +276,6 @@ public class BoardModel {
     }
 
     public long getPieceMap(Piece piece) {
-        return pieceMaps[piece.getUniqueIdx() % 12].getMap();
+        return pieceMaps[piece.ordinal()];
     }
 }
