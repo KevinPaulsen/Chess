@@ -1,10 +1,12 @@
 package chess.model;
 
 import chess.ChessCoordinate;
-import chess.Move;
+import chess.model.moves.EnPassantMove;
+import chess.model.moves.Movable;
+import chess.model.moves.NormalMove;
+import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 import chess.util.BitIterator;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,15 +15,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static chess.Move.*;
+import static chess.model.moves.CastlingMove.*;
 import static chess.model.pieces.Direction.*;
 import static chess.model.pieces.Piece.*;
 
-public class MoveList implements Iterable<Move> {
+public class MoveList implements Iterable<Movable> {
 
     private final List<MoveData> moveData;
     private final BoardModel board;
-    private final Deque<Move> potentialPromotions;
+    private final Deque<PromotionMove> potentialPromotions;
 
     public MoveList(BoardModel board) {
         this.moveData = new ArrayList<>();
@@ -42,7 +44,7 @@ public class MoveList implements Iterable<Move> {
     }
 
     @Override
-    public Iterator<Move> iterator() {
+    public Iterator<Movable> iterator() {
         return new MoveIterator();
     }
 
@@ -50,13 +52,13 @@ public class MoveList implements Iterable<Move> {
         return moveData.isEmpty();
     }
 
-    public List<Move> toList() {
-        List<Move> moves = new ArrayList<>();
+    public List<Movable> toList() {
+        List<Movable> moves = new ArrayList<>();
         this.forEach(moves::add);
         return moves;
     }
 
-    private class MoveIterator implements Iterator<Move> {
+    private class MoveIterator implements Iterator<Movable> {
 
         private int index;
         private MoveData currentMoveData;
@@ -76,11 +78,11 @@ public class MoveList implements Iterable<Move> {
         }
 
         @Override
-        public Move next() {
+        public Movable next() {
             if (!hasNext()) throw new NoSuchElementException();
 
             if (potentialPromotions.isEmpty()) {
-                Move move = createMove(bitIterator.next());
+                Movable move = createMove(bitIterator.next());
 
                 if (!bitIterator.hasNext() && index < moveData.size()) {
                     currentMoveData = moveData.get(index++);
@@ -92,77 +94,74 @@ public class MoveList implements Iterable<Move> {
             }
         }
 
-        private Move createMove(ChessCoordinate end) {
+        private Movable createMove(ChessCoordinate end) {
             Piece moving = currentMoveData.movingPiece;
             ChessCoordinate start = currentMoveData.coordinate;
             Status status = currentMoveData.status;
 
             return switch (status) {
-                case NORMAL -> {
-                    if (board.getPieceOn(end) == null) yield new Move(start, end, board);
-                    else yield new Move(start, end, end, null, board);
-                }
+                case NORMAL -> new NormalMove(moving, start, end);
                 case CASTLING -> switch (end) {
-                    case G1 -> WHITE_CASTLE_KING_SIDE;
-                    case G8 -> BLACK_CASTLE_KING_SIDE;
-                    case C1 -> WHITE_CASTLE_QUEEN_SIDE;
-                    case C8 -> BLACK_CASTLE_QUEEN_SIDE;
+                    case G1 -> WHITE_KING_SIDE_CASTLE;
+                    case G8 -> BLACK_KING_SIDE_CASTLE;
+                    case C1 -> WHITE_QUEEN_SIDE_CASTLE;
+                    case C8 -> BLACK_QUEEN_SIDE_CASTLE;
                     default -> throw new IllegalArgumentException("Ending coordinate is not castling end coordinate");
                 };
                 case PAWN_TAKE_LEFT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, end, null, board);
-                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, end, null, board);
+                    case WHITE_PAWN -> new NormalMove(WHITE_PAWN, DOWN_RIGHT.next(end), end);
+                    case BLACK_PAWN -> new NormalMove(BLACK_PAWN, UP_RIGHT.next(end), end);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_TAKE_LEFT");
                 };
                 case PAWN_TAKE_RIGHT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, end, null, board);
-                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, end, null, board);
+                    case WHITE_PAWN -> new NormalMove(WHITE_PAWN, DOWN_LEFT.next(end), end);
+                    case BLACK_PAWN -> new NormalMove(BLACK_PAWN, UP_LEFT.next(end), end);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_TAKE_RIGHT");
                 };
                 case PAWN_FORWARD -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN.next(end), end, board);
-                    case BLACK_PAWN -> new Move(UP.next(end), end, board);
+                    case WHITE_PAWN -> new NormalMove(WHITE_PAWN, DOWN.next(end), end);
+                    case BLACK_PAWN -> new NormalMove(BLACK_PAWN, UP.next(end), end);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_FORWARD");
                 };
                 case PAWN_PUSH -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN.next(end, 2), end, board);
-                    case BLACK_PAWN -> new Move(UP.next(end, 2), end, board);
+                    case WHITE_PAWN -> new NormalMove(WHITE_PAWN, DOWN.next(end, 2), end);
+                    case BLACK_PAWN -> new NormalMove(BLACK_PAWN, UP.next(end, 2), end);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PUSH");
                 };
                 case PAWN_PROMOTE_LEFT -> switch (moving) {
-                    case WHITE_PAWN -> makePromotions(DOWN_RIGHT.next(end), end, end, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
-                    case BLACK_PAWN -> makePromotions(UP_RIGHT.next(end), end, end, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
+                    case WHITE_PAWN -> makePromotions(DOWN_RIGHT.next(end), end, WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
+                    case BLACK_PAWN -> makePromotions(UP_RIGHT.next(end), end, BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PROMOTE_LEFT");
                 };
                 case PAWN_PROMOTE_RIGHT -> switch (moving) {
-                    case WHITE_PAWN -> makePromotions(DOWN_LEFT.next(end), end, end, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
-                    case BLACK_PAWN -> makePromotions(UP_LEFT.next(end), end, end, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
+                    case WHITE_PAWN -> makePromotions(DOWN_LEFT.next(end), end, WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
+                    case BLACK_PAWN -> makePromotions(UP_LEFT.next(end), end, BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PROMOTE_RIGHT");
                 };
                 case PAWN_PROMOTE -> switch (moving) {
-                    case WHITE_PAWN -> makePromotions(DOWN.next(end), end, null, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
-                    case BLACK_PAWN -> makePromotions(UP.next(end), end, null, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
+                    case WHITE_PAWN -> makePromotions(DOWN.next(end), end, WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN);
+                    case BLACK_PAWN -> makePromotions(UP.next(end), end, BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN);
                     default -> throw new IllegalArgumentException("Pawn not passed in with status PAWN_PROMOTE");
                 };
                 case EN_PASSANT_LEFT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_RIGHT.next(end), end, DOWN.next(end), null, board);
-                    case BLACK_PAWN -> new Move(UP_RIGHT.next(end), end, UP.next(end), null, board);
+                    case WHITE_PAWN -> new EnPassantMove(WHITE_PAWN, BLACK_PAWN, DOWN_RIGHT.next(end), end, DOWN.next(end));
+                    case BLACK_PAWN -> new EnPassantMove(BLACK_PAWN, WHITE_PAWN, UP_RIGHT.next(end), end, UP.next(end));
                     default -> throw new IllegalArgumentException("Pawn not passed in with status EN_PASSANT_LEFT");
                 };
                 case EN_PASSANT_RIGHT -> switch (moving) {
-                    case WHITE_PAWN -> new Move(DOWN_LEFT.next(end), end, DOWN.next(end), null, board);
-                    case BLACK_PAWN -> new Move(UP_LEFT.next(end), end, UP.next(end), null, board);
+                    case WHITE_PAWN -> new EnPassantMove(WHITE_PAWN, BLACK_PAWN, DOWN_LEFT.next(end), end, DOWN.next(end));
+                    case BLACK_PAWN -> new EnPassantMove(BLACK_PAWN, WHITE_PAWN, UP_LEFT.next(end), end, UP.next(end));
                     default -> throw new IllegalArgumentException("Pawn not passed in with status EN_PASSANT_RIGHT");
                 };
             };
         }
 
-        private Move makePromotions(ChessCoordinate start, ChessCoordinate end, ChessCoordinate captureStart, Piece knight,
-                                    Piece bishop, Piece rook, Piece queen) {
-            potentialPromotions.offer(new Move(start, end, captureStart, null, knight, board));
-            potentialPromotions.offer(new Move(start, end, captureStart, null, bishop, board));
-            potentialPromotions.offer(new Move(start, end, captureStart, null, rook, board));
-            return new Move(start, end, captureStart, null, queen, board);
+        private PromotionMove makePromotions(ChessCoordinate start, ChessCoordinate end, Piece pawn,
+                                             Piece knight, Piece bishop, Piece rook, Piece queen) {
+            potentialPromotions.offer(new PromotionMove(pawn, knight, start, end));
+            potentialPromotions.offer(new PromotionMove(pawn, bishop, start, end));
+            potentialPromotions.offer(new PromotionMove(pawn, rook, start, end));
+            return new PromotionMove(pawn, queen, start, end);
         }
     }
 

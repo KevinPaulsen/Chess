@@ -183,6 +183,10 @@ public enum ChessCoordinate {
         };
     }
 
+    public static ChessCoordinate getChessCoordinate(long bitMask) {
+        return getChessCoordinate(Long.numberOfTrailingZeros(bitMask));
+    }
+
     public char getCharFile() {
         return charFile;
     }

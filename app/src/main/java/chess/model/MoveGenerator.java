@@ -329,7 +329,12 @@ public class MoveGenerator {
             ChessCoordinate coordinate = bitIterator.next();
             long legalMoveMap = generateSlidingPieceMoves(directions, coordinate, board.getOccupancyMap(), PinCheckStatus.NONE)
                     & checkRayMask & ~board.getOccupancyMap(friendlyColor);
-            addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+
+            if ((coordinate.getBitMask() & queenMask) != 0) {
+                addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+            } else {
+                addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+            }
         }
     }
 

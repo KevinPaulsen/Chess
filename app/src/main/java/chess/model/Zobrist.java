@@ -6,37 +6,18 @@ import chess.util.FastMap;
 
 import java.util.Random;
 
+import static chess.ChessCoordinate.A1;
 import static chess.model.GameModel.WHITE;
 
-public class Zobrist {
+public abstract class Zobrist {
 
     private static final Random RANDOM = new Random(0);
 
     private static final long[][] zobristHashTable = makeHashTable();
-    private static final long[] enPassantCoordTable = makeTable(9);
+    private static final long[] enPassantCoordTable = makeTable(17);
     private static final long[] castlingHashTable = makeTable(16);
     private static final long[] numTimesReachedTable = makeTable(3);
     private static final long[] sideToMove = makeTable(2);
-
-    private int addedEnPassantTarget;
-    private int addedCastlingData;
-    private int addedSideToMove;
-    private long hashValue;
-
-    public Zobrist(Zobrist zobrist) {
-        this(zobrist.addedEnPassantTarget, zobrist.addedCastlingData, zobrist.addedSideToMove, zobrist.hashValue);
-    }
-
-    public Zobrist() {
-        this(0, 0, 0, 0);
-    }
-
-    public Zobrist(int addedEnPassantTarget, int addedCastlingData, int addedSideToMove, long hashValue) {
-        this.addedEnPassantTarget = addedEnPassantTarget;
-        this.addedCastlingData = addedCastlingData;
-        this.addedSideToMove = addedSideToMove;
-        this.hashValue = hashValue;
-    }
 
     private static long[][] makeHashTable() {
         long[][] result = new long[64][13];
@@ -70,7 +51,8 @@ public class Zobrist {
         return hash;
     }
 
-    public void slowZobrist(GameModel game) {
+    public static long slowZobrist(GameModel game) {
+        long hashValue = 0x0L;
         BoardModel board = game.getBoard();
 
         for (int coordIdx = 0; coordIdx < 64; coordIdx++) {
@@ -80,55 +62,41 @@ public class Zobrist {
             }
         }
 
+        long stateHashValue = 0x0L;
+
         ChessCoordinate enPassant = game.getEnPassantTarget();
-        addedEnPassantTarget = enPassant == null ? 0 : enPassant.getFile();
+        int addedEnPassantTarget = enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
+        stateHashValue ^= enPassantCoordTable[addedEnPassantTarget];
+        int addedCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
+        stateHashValue ^= castlingHashTable[addedCastlingData];
+        int addedSideToMove = game.getTurn() == WHITE ? 0 : 1;
+        stateHashValue ^= sideToMove[addedSideToMove];
+
+        return hashValue ^ stateHashValue;
+    }
+
+    public static long flipPiece(Piece piece, ChessCoordinate coordinate, long hashValue) {
+        return hashValue ^ zobristHashTable[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
+    }
+
+    public static long getGameStateHash(FastMap gameState) {
+        long hashValue = 0x0L;
+
+        int currentCastlingData = (int) (gameState.getMap() & 0b1111L);
+        hashValue ^= castlingHashTable[currentCastlingData];
+
+        ChessCoordinate enPassant = ChessCoordinate.getChessCoordinate((int) gameState.getMap() >> 7);
+        enPassant = enPassant == A1 ? null : enPassant;
+        int addedEnPassantTarget = enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
         hashValue ^= enPassantCoordTable[addedEnPassantTarget];
-        addedCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
-        hashValue ^= castlingHashTable[addedCastlingData];
-        addedSideToMove = game.getTurn() == WHITE ? 0 : 1;
-        hashValue ^= sideToMove[addedSideToMove];
-    }
 
-    public void addPiece(Piece piece, ChessCoordinate coordinate) {
-        hashValue ^= zobristHashTable[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
-    }
+        int currentSideToMove = gameState.isMarked(4) ? 0 : 1;
+        hashValue ^= sideToMove[currentSideToMove];
 
-    public void removePiece(Piece piece, ChessCoordinate coordinate) {
-        hashValue ^= zobristHashTable[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
-    }
-
-    public void updateGameData(FastMap newState) {
-        int currentCastlingData = (int) (newState.getMap() & 0b1111L);
-
-        if (addedCastlingData != currentCastlingData) {
-            hashValue ^= castlingHashTable[addedCastlingData];
-            addedCastlingData = currentCastlingData;
-            hashValue ^= castlingHashTable[addedCastlingData];
-        }
-
-        int currentEnPassantTarget = (int) newState.getMap() >> 7;
-        currentEnPassantTarget = currentEnPassantTarget == 0 ? 0 : 1 + currentEnPassantTarget % 8;
-
-        if (addedEnPassantTarget != currentEnPassantTarget) {
-            hashValue ^= enPassantCoordTable[addedEnPassantTarget];
-            addedEnPassantTarget = currentEnPassantTarget;
-            hashValue ^= enPassantCoordTable[addedEnPassantTarget];
-        }
-
-        int currentSideToMove = newState.isMarked(4) ? 0 : 1;
-
-        if (addedSideToMove != currentSideToMove) {
-            hashValue ^= sideToMove[addedSideToMove];
-            addedSideToMove = currentSideToMove;
-            hashValue ^= sideToMove[addedSideToMove];
-        }
-    }
-
-    public long getHashValue() {
         return hashValue;
     }
 
-    public long getHashValueWithTimesMoved(int numTimesReached) {
+    public static long getHashValueWithTimesMoved(long hashValue, int numTimesReached) {
         if (3 < numTimesReached || numTimesReached < 0) {
             throw new IllegalStateException("Times moved must be between 0 and 3 (inclusive). " +
                     "Passed in: " + numTimesReached);

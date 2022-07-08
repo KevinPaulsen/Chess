@@ -1,7 +1,9 @@
 package chess.view;
 
 import chess.ChessCoordinate;
-import chess.Move;
+import chess.model.moves.CastlingMove;
+import chess.model.moves.Movable;
+import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 
 import javax.swing.JLayeredPane;
@@ -91,9 +93,9 @@ public class ChessBoardView extends JLayeredPane {
         return pieceView;
     }
 
-    public void animateMove(Move move) {
-        Component start = piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()));
-        Component end = piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()));
+    public void animateMove(Movable move) {
+        Component start = piecesPanel.getComponent(getZOrder(move.getStartCoordinate()));
+        Component end = piecesPanel.getComponent(getZOrder(move.getStartCoordinate()));
         new Animate(start, start.getLocation(), end.getLocation(), () -> showMove(move)).start();
     }
 
@@ -102,22 +104,18 @@ public class ChessBoardView extends JLayeredPane {
      *
      * @param move the last move made.
      */
-    public void showMove(Move move) {
+    public void showMove(Movable move) {
         if (move != null) {
-            if (move.getInteractingPieceStart() != null) {
-                if (move.getInteractingPieceEnd() == null) {
-                    // Capture
-                    ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getInteractingPieceStart()))).capture();
-                } else {
-                    // Castle
-                    swap(move.getInteractingPieceStart(), move.getInteractingPieceEnd());
-                }
+            if (move instanceof CastlingMove castlingMove) {
+                swap(castlingMove.getRookStart(), castlingMove.getRookEnd());
             }
-            if (move.doesPromote()) {
-                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartingCoordinate()))).capture();
-                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndingCoordinate()))).setImage(move.getPromotedPiece());
+            // Capture
+            ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndCoordinate()))).capture();
+            if (move instanceof PromotionMove) {
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getStartCoordinate()))).capture();
+                ((ChessPieceView) piecesPanel.getComponent(getZOrder(move.getEndCoordinate()))).setImage(((PromotionMove) move).getPromotedPiece());
             } else {
-                swap(move.getStartingCoordinate(), move.getEndingCoordinate());
+                swap(move.getStartCoordinate(), move.getEndCoordinate());
             }
         }
         piecesPanel.revalidate();

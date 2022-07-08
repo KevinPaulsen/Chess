@@ -1,10 +1,10 @@
 package chess.controller;
 
 import chess.ChessCoordinate;
-import chess.Move;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
+import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
 import chess.view.ChessPieceView;
 import chess.view.ChessView;
@@ -144,8 +144,8 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
             startCoordinate = view.getCoordinateOf(component, e.getX(), e.getY());
 
             List<ChessCoordinate> endCoordinates = gameModel.getLegalMoves().toList().stream()
-                    .filter(move -> move.getStartingCoordinate().equals(startCoordinate))
-                    .map(Move::getEndingCoordinate)
+                    .filter(move -> move.getStartCoordinate().equals(startCoordinate))
+                    .map(Movable::getEndCoordinate)
                     .toList();
 
             view.markEnds(endCoordinates);

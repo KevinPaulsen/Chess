@@ -1,9 +1,10 @@
 package chess.model.chessai;
 
 import chess.ChessCoordinate;
-import chess.Move;
 import chess.model.GameModel;
 import chess.model.MoveList;
+import chess.model.moves.Movable;
+import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 
 import java.util.ArrayList;
@@ -88,9 +89,9 @@ public class PositionEvaluator implements Evaluator {
      * @return the list of sorted legal moves.
      */
     @Override
-    public List<Move> getSortedMoves(GameModel game, Move hashMove) {
+    public List<Movable> getSortedMoves(GameModel game, Movable hashMove) {
         MoveList moveList = game.getLegalMoves();
-        List<Move> legalMoves = new ArrayList<>();
+        List<Movable> legalMoves = new ArrayList<>();
         moveList.forEach(legalMoves::add);
 
         legalMoves.sort(new MoveComparator(game));
@@ -104,25 +105,27 @@ public class PositionEvaluator implements Evaluator {
         return legalMoves;
     }
 
-    private record MoveComparator(GameModel game) implements Comparator<Move> {
+    private record MoveComparator(GameModel game) implements Comparator<Movable> {
 
         @Override
-            public int compare(Move o1, Move o2) {
+            public int compare(Movable o1, Movable o2) {
                 return Integer.compare(evaluateMove(o1), evaluateMove(o2));
             }
 
-        private int evaluateMove(Move move) {
+        private int evaluateMove(Movable move) {
                 int score = 0;
 
-                Piece movingPiece = move.getMovingPiece(game.getBoard());
+                Piece movingPiece = move.getMovingPiece();
+
+                Piece capturedPiece = game.getBoard().getPieceOn(move.getEndCoordinate());
+
                 // If the move captures weight moves that capture with lower value pieces higher
-                if (move.getInteractingPiece(game.getBoard()) != null && move.getInteractingPieceEnd() == null) {
-                    score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(move.getInteractingPiece(game.getBoard()))
-                            - Evaluator.getValue(movingPiece));
+                if (capturedPiece != null) {
+                    score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(capturedPiece)) - Evaluator.getValue(movingPiece);
                 }
 
-                if (move.doesPromote()) {
-                    switch (move.getPromotedPiece()) {
+                if (move instanceof PromotionMove) {
+                    switch (((PromotionMove) move).getPromotedPiece()) {
                         case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
                         case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
                         case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
@@ -130,8 +133,8 @@ public class PositionEvaluator implements Evaluator {
                     }
                 }
 
-                score += readTable(movingPiece, move.getEndingCoordinate())
-                        - readTable(movingPiece, move.getStartingCoordinate());
+                score += readTable(movingPiece, move.getEndCoordinate())
+                        - readTable(movingPiece, move.getStartCoordinate());
 
                 return score;
             }

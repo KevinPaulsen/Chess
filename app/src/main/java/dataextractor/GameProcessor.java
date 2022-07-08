@@ -1,12 +1,13 @@
 package dataextractor;
 
 import chess.ChessCoordinate;
-import chess.Move;
+import chess.model.moves.CastlingMove;
+import chess.model.moves.Movable;
 import chess.model.GameModel;
 import chess.model.MoveList;
+import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 
-import java.util.List;
 import java.util.Map;
 
 public class GameProcessor {
@@ -50,18 +51,18 @@ public class GameProcessor {
         }
     }
 
-    private static Move getMove(GameModel game, String stringMove) {
+    private static Movable getMove(GameModel game, String stringMove) {
         MoveList legalMoves = game.getLegalMoves();
 
         boolean isCastleMove = stringMove.contains("-");
         char[] charRep = isCastleMove ? new char[0] : makeCharRep(stringMove);
 
-        for (Move move : legalMoves) {
-            ChessCoordinate endCoord = move.getEndingCoordinate();
-            Piece movingPiece = move.getMovingPiece(game.getBoard());
+        for (Movable move : legalMoves) {
+            ChessCoordinate endCoord = move.getEndCoordinate();
+            Piece movingPiece = move.getMovingPiece();
 
             if (isCastleMove) {
-                if (move.doesCastle()
+                if ((move instanceof CastlingMove)
                         && ((endCoord.getFile() == 6 && stringMove.length() < 5)
                         || (endCoord.getFile() == 2 && stringMove.length() >= 5))) {
                     return move;
@@ -79,7 +80,7 @@ public class GameProcessor {
                 continue;
             }
 
-            ChessCoordinate startingCoordinate = move.getStartingCoordinate();
+            ChessCoordinate startingCoordinate = move.getStartCoordinate();
 
             if (charRep[START_FILE] != 0 && charRep[START_FILE] != startingCoordinate.getCharFile()) {
                 continue;
@@ -89,7 +90,7 @@ public class GameProcessor {
                 continue;
             }
 
-            if (charRep[EQUALS] == '=' && move.getPromotedPiece().getStringRep().toUpperCase().charAt(0) != charRep[PROMOTION]) {
+            if (charRep[EQUALS] == '=' && ((PromotionMove) move).getPromotedPiece().getStringRep().toUpperCase().charAt(0) != charRep[PROMOTION]) {
                 continue;
             }
 

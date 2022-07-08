@@ -1,6 +1,6 @@
 package chess.model.chessai;
 
-import chess.Move;
+import chess.model.moves.Movable;
 import chess.model.GameModel;
 import chess.model.pieces.Piece;
 
@@ -39,5 +39,5 @@ public interface Evaluator {
      * @param hashMove A previous found best move, null if none exists.
      * @return the list of sorted legal moves.
      */
-    List<Move> getSortedMoves(GameModel game, Move hashMove);
+    List<Movable> getSortedMoves(GameModel game, Movable hashMove);
 }

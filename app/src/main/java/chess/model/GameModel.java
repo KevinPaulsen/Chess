@@ -1,7 +1,8 @@
 package chess.model;
 
 import chess.ChessCoordinate;
-import chess.Move;
+import chess.model.moves.Movable;
+import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
@@ -94,7 +95,7 @@ public class GameModel {
     /**
      * The list of past moves that have occurred in this chess game.
      */
-    private final List<Move> moveHistory;
+    private final List<Movable> moveHistory;
 
     /**
      * The list of each state the board was in before each move. This List
@@ -124,10 +125,7 @@ public class GameModel {
      */
     private final MoveGenerator moveGenerator;
 
-    /**
-     * The zobrist hash object for this game. This controls our hashing function.
-     */
-    private final Zobrist zobrist;
+    private long hashValue;
 
     private final boolean threeFold;
 
@@ -185,8 +183,7 @@ public class GameModel {
         String[] fenSections = FEN.split(" ");
 
         // Instantiate each of the fields of this GameModel.
-        this.zobrist = new Zobrist();
-        this.board = new BoardModel(fenSections[0], this.zobrist);
+        this.board = new BoardModel(fenSections[0]);
         this.moveHistory = new ArrayList<>();
         this.stateHistory = new ArrayList<>();
         this.positionTracker = new HashMap<>();
@@ -211,14 +208,14 @@ public class GameModel {
         // Create and add the initial state
         addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn, enPassantTarget);
 
-        // Initialize the zobrist with the initial value
-        zobrist.slowZobrist(this);
+        // Initialize the deltaHash with the initial value
+        this.hashValue = Zobrist.slowZobrist(this);
 
         // Generate the legal moves in this current position
         previousLegalMoves.add(this.moveGenerator.generateMoves());
 
         // Set the current position tracker to 1
-        positionTracker.put(zobrist.getHashValue(), 1);
+        positionTracker.put(hashValue, 1);
     }
 
     /**
@@ -227,15 +224,15 @@ public class GameModel {
      * @param state    the state to update
      * @param lastMove the last move made
      */
-    private static void checkEnPassant(FastMap state, Move lastMove, boolean isPawn) {
+    private static void checkEnPassant(FastMap state, Movable lastMove, boolean isPawn) {
         if (lastMove == null) {
             throw new IllegalArgumentException("lastMove cannot be null");
         }
         ChessCoordinate enPassantTarget = null;
         if (isPawn
-                && Math.abs(lastMove.getStartingCoordinate().getRank() - lastMove.getEndingCoordinate().getRank()) == 2) {
-            int rank = lastMove.getStartingCoordinate().getRank() == 1 ? 2 : 5;
-            enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndingCoordinate().getFile(), rank);
+                && Math.abs(lastMove.getStartCoordinate().getRank() - lastMove.getEndCoordinate().getRank()) == 2) {
+            int rank = lastMove.getStartCoordinate().getRank() == 1 ? 2 : 5;
+            enPassantTarget = ChessCoordinate.getChessCoordinate(lastMove.getEndCoordinate().getFile(), rank);
         }
 
         state.clearMask(EN_PASSANT_MASK);
@@ -281,13 +278,13 @@ public class GameModel {
 
         // Check that moves are both on screen.
         if (startCoordinate != null && endCoordinate != null) {
-            Move currentMove = null;
+            Movable currentMove = null;
             Piece movingPiece = board.getPieceOn(startCoordinate);
             if (movingPiece != null) {
-                for (Move move : new MoveGenerator(this).generateMoves()) {
-                    if (startCoordinate.equals(move.getStartingCoordinate())
-                            && endCoordinate.equals(move.getEndingCoordinate())) {
-                        if (!move.doesPromote() || move.getPromotedPiece() == promoPiece) {
+                for (Movable move : new MoveGenerator(this).generateMoves()) {
+                    if (startCoordinate.equals(move.getStartCoordinate())
+                            && endCoordinate.equals(move.getEndCoordinate())) {
+                        if (!(move instanceof PromotionMove) || ((PromotionMove) move).getPromotedPiece() == promoPiece) {
                             currentMove = move;
                             break;
                         }
@@ -307,11 +304,11 @@ public class GameModel {
      * @param move a non-null move.
      * @return true if the move is successful, false otherwise.
      */
-    public boolean move(Move move) {
+    public boolean move(Movable move) {
         boolean didMove = false;
 
         if (getGameOverStatus() == IN_PROGRESS) {
-            board.move(move);
+            hashValue = board.move(move);
             moveHistory.add(move);
             stateHistory.add(makeState());
             positionTracker.merge(getZobristHash(), 1, Integer::sum);
@@ -330,18 +327,17 @@ public class GameModel {
      * nothing happens.
      */
     public void undoLastMove() {
-        Move move = getLastMove();
-        if (moveHistory.size() > 0) {
+        if (!moveHistory.isEmpty()) {
             long hash = getZobristHash();
 
             // Decrement the position tracker of the current position by 1
+            if (!positionTracker.containsKey(hash)) {
+                System.out.println("oof");
+            }
             positionTracker.merge(hash, -1, Integer::sum);
             if (positionTracker.get(hash) == 0) {
                 positionTracker.remove(hash);
             }
-
-            // Undo the move on the board
-            board.undoMove(move);
 
             // remove the current move from move history.
             moveHistory.remove(moveHistory.size() - 1);
@@ -352,26 +348,29 @@ public class GameModel {
             // Remove the current legal moves
             previousLegalMoves.remove(previousLegalMoves.size() - 1);
 
-            // Update zobrist
-            zobrist.updateGameData(getGameState());
+            // Update deltaHash
+            hashValue = Zobrist.getGameStateHash(getGameState());
+
+            // Undo the move on the board
+            hashValue ^= board.undoMove();
         }
     }
 
     /**
      * Create and return the current state. This method also
-     * updates zobrist.
+     * updates deltaHash.
      */
     private FastMap makeState() {
-        FastMap currentState = new FastMap();
-        currentState.merge(getGameState());
+        FastMap newState = new FastMap();
+        newState.merge(getGameState());
 
-        checkCastling(currentState, board.getWhiteKingCoord(), board.getBlackKingCoord());
-        Move lastMove = getLastMove();
-        checkEnPassant(currentState, lastMove, board.isPawn(lastMove.getEndingCoordinate()));
-        currentState.flip(WHITE_TO_MOVE_MASK);
+        checkCastling(newState, board.getWhiteKingCoord(), board.getBlackKingCoord());
+        Movable lastMove = getLastMove();
+        checkEnPassant(newState, lastMove, board.isPawn(lastMove.getEndCoordinate()));
+        newState.flip(WHITE_TO_MOVE_MASK);
 
-        zobrist.updateGameData(currentState);
-        return currentState;
+        hashValue ^= Zobrist.getGameStateHash(newState);
+        return newState;
     }
 
     /**
@@ -474,7 +473,7 @@ public class GameModel {
     /**
      * @return the last move made.
      */
-    public Move getLastMove() {
+    public Movable getLastMove() {
         return moveHistory.size() > 0 ? moveHistory.get(moveHistory.size() - 1) : null;
     }
 
@@ -506,17 +505,17 @@ public class GameModel {
     }
 
     /**
-     * @return the zobrist hash of the current position
+     * @return the deltaHash hash of the current position
      */
     public long getZobristHash() {
-        return zobrist.getHashValue();
+        return hashValue;
     }
 
     /**
      * @return the zobristHash with times reached of the current position
      */
     public long getZobristWithTimesMoved() {
-        return zobrist.getHashValueWithTimesMoved(getNumTimesReached());
+        return Zobrist.getHashValueWithTimesMoved(hashValue, getNumTimesReached());
     }
 
     /**
@@ -536,8 +535,7 @@ public class GameModel {
         if (!stateHistory.equals(gameModel.stateHistory)) return false;
         if (!positionTracker.equals(gameModel.positionTracker)) return false;
         if (!previousLegalMoves.equals(gameModel.previousLegalMoves)) return false;
-        if (!moveGenerator.equals(gameModel.moveGenerator)) return false;
-        return zobrist.equals(gameModel.zobrist);
+        return moveGenerator.equals(gameModel.moveGenerator);
     }
 
     @Override
@@ -605,7 +603,7 @@ public class GameModel {
             builder.append(enPassantTarget);
         }
 
-        // TODO: Half-Move info
+        // TODO: Half-NormalMove info
         builder.append(" ");
         builder.append(0);
 
@@ -634,7 +632,7 @@ public class GameModel {
      *     <li>Black Pawn data</li>
      *     <li>EnPassant Data</li>
      *     <li>Castling Data</li>
-     *     <li>Turn to Move Data</li>
+     *     <li>Turn to NormalMove Data</li>
      * </ul>
      *
      * Note that piece data is stored in the following format:

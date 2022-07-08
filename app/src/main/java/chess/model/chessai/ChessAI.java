@@ -1,12 +1,11 @@
 package chess.model.chessai;
 
-import chess.Move;
 import chess.model.GameModel;
+import chess.model.moves.Movable;
 import chess.util.MaxSizeLRUCache;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,7 +69,7 @@ public class ChessAI {
      * @param depth the depth to search to
      * @return the best move in the position
      */
-    public Move getBestMove(int depth) {
+    public Movable getBestMove(int depth) {
         return getBestMove(depth, 0);
     }
 
@@ -81,7 +80,7 @@ public class ChessAI {
      * @param timeCutoff the max time to search for.
      * @return the best move to DEPTH, according to the evaluator.
      */
-    public Move getBestMove(int minDepth, int timeCutoff) {
+    public Movable getBestMove(int minDepth, int timeCutoff) {
         GameModel currentGame = new GameModel(this.game);
         long nanoTimeCutoff = NANOSECONDS.convert(timeCutoff, MILLISECONDS);
 
@@ -138,7 +137,7 @@ public class ChessAI {
         long hash = game.getZobristWithTimesMoved();
         boolean maximizingPlayer = game.getTurn() == WHITE;
         Evaluation bestEval = maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
-        Move bestMove = null;
+        Movable bestMove = null;
 
         Evaluation tableEval;
         synchronized (transpositionTable) {
@@ -161,9 +160,9 @@ public class ChessAI {
         }
 
         // Search through all the sorted moves
-        List<Move> sortedMoves = evaluator.getSortedMoves(game, bestMove);
+        List<Movable> sortedMoves = evaluator.getSortedMoves(game, bestMove);
         boolean didBreak = false;
-        for (Move move : sortedMoves) {
+        for (Movable move : sortedMoves) {
 
             // If we found a better path already, break.
             if (alphaBeta.betaLessThanAlpha()) {

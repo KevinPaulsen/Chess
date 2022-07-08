@@ -1,6 +1,7 @@
 package chess.model.chessai;
 
-import chess.Move;
+import chess.model.moves.Movable;
+import chess.model.moves.NormalMove;
 
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
@@ -18,7 +19,7 @@ public class Evaluation implements Comparable<Evaluation> {
     private static final byte LESS_THAN = -1;
     private static final byte EQUAL = 0;
     private static final byte GREATER_THAN = 1;
-    private final Move move;
+    private final Movable move;
     private final int evaluation;
     private final char loser;
     private final int depth;
@@ -30,7 +31,7 @@ public class Evaluation implements Comparable<Evaluation> {
         this(null, evaluation, NO_LOSER, depth, EXACT, null);
     }
 
-    public Evaluation(Evaluation evaluation, Move move, byte bound) {
+    public Evaluation(Evaluation evaluation, Movable move, byte bound) {
         /*
         == == -> ==
         >= >= -> >=
@@ -58,12 +59,12 @@ public class Evaluation implements Comparable<Evaluation> {
         this.next = evaluation;
     }
 
-    public Evaluation(Move move, Evaluation evaluation, byte bound) {
+    public Evaluation(NormalMove move, Evaluation evaluation, byte bound) {
         this(move, evaluation.evaluation + Integer.compare(0, evaluation.evaluation),
                 evaluation.loser, evaluation.depth + 1, bound, evaluation);
     }
 
-    public Evaluation(Move currentMove, int evaluation, char loser, int depth, byte bound, Evaluation next) {
+    public Evaluation(NormalMove currentMove, int evaluation, char loser, int depth, byte bound, Evaluation next) {
         this.move = currentMove;
         this.evaluation = evaluation;
         this.loser = loser;
@@ -80,7 +81,7 @@ public class Evaluation implements Comparable<Evaluation> {
         return evaluation1.compareTo(evaluation2) < 0 ? evaluation2 : evaluation1;
     }
 
-    public Move getMove() {
+    public Movable getMove() {
         return move;
     }
 

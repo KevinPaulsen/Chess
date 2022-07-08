@@ -1,7 +1,7 @@
 package chess.view;
 
 import chess.ChessCoordinate;
-import chess.Move;
+import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
 
 import javax.swing.JFrame;
@@ -80,7 +80,7 @@ public class ChessView extends JFrame {
         pack();
     }
 
-    public void updateScreen(Move move) {
+    public void updateScreen(Movable move) {
         if (move != null) {
             boardView.showMove(move);
             turnView.switchTurns();
@@ -103,7 +103,7 @@ public class ChessView extends JFrame {
         boardView.unmarkEnds();
     }
 
-    public void animateMove(Move move) {
+    public void animateMove(Movable move) {
         boardView.animateMove(move);
     }
 }
