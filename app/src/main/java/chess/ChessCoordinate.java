@@ -179,6 +179,7 @@ public enum ChessCoordinate {
             case 61 -> F8;
             case 62 -> G8;
             case 63 -> H8;
+            case 64 -> null;
             default -> throw new IllegalStateException("Unexpected value: " + oneDimIdx);
         };
     }

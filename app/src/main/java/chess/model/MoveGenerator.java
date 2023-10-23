@@ -2,12 +2,8 @@ package chess.model;
 
 import chess.ChessCoordinate;
 import chess.model.pieces.Direction;
-import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 import chess.util.BitIterator;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.BLACK;
@@ -144,9 +140,11 @@ public class MoveGenerator {
 
     public MoveList generateMoves() {
         resetState();
-        calculateAttackData();
 
-        generateKingMoves();
+        if (friendlyKingCoord != null) {
+            calculateAttackData();
+            generateKingMoves();
+        }
 
         if (!inDoubleCheck) {
             long queens = board.getPieceMap(friendlyQueen);
