@@ -8,6 +8,11 @@ import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static chess.ChessCoordinate.*;
@@ -113,7 +118,6 @@ public class GameModelTest {
         Bitmap test v3: 2605
         Bitmap test v3: 2671 / 2678 / 2542
          */
-        /*
         GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
 

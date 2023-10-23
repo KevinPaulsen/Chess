@@ -38,9 +38,7 @@ public class MoveList implements Iterable<Movable> {
     }
 
     public void add(Piece movingPiece, ChessCoordinate coordinate, long moveMap, Status status) {
-        if (moveMap != 0) {
-            moveData.add(new MoveData(movingPiece, coordinate, moveMap, status));
-        }
+        moveData.add(new MoveData(movingPiece, coordinate, moveMap, status));
     }
 
     @Override

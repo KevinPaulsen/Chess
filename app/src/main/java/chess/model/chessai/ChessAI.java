@@ -147,23 +147,30 @@ public class ChessAI {
         if (tableEval != null) {
             // If tableDepth is >= current depth use value
             bestMove = tableEval.getMove();
-            if (tableEval.getDepth() == depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
+            if (tableEval.getDepth() >= depth || tableEval.getLoser() != Evaluation.NO_LOSER) {
                 bestEval = tableEval;
                 if (tableEval.isExact()) {
                     return bestEval;
-                } else if (maximizingPlayer) {
-                    alphaBeta.alphaMax(bestEval.getEvaluation());
+                } else if (tableEval.isUpper()) {
+                    alphaBeta.betaMin(tableEval.getEvaluation());
                 } else {
-                    alphaBeta.betaMin(bestEval.getEvaluation());
+                    alphaBeta.alphaMax(tableEval.getEvaluation());
                 }
             }
         }
 
         // Search through all the sorted moves
-        List<Movable> sortedMoves = evaluator.getSortedMoves(game, bestMove);
+        List<Movable> sortedMoves = game.getLegalMoves().toList();
+
+        if (bestMove != null) {
+            int bestIdx = sortedMoves.indexOf(bestMove);
+            if (bestIdx == -1) System.out.println("oof");
+            sortedMoves.set(bestIdx, sortedMoves.get(0));
+            sortedMoves.set(0, bestMove);
+        }
+
         boolean didBreak = false;
         for (Movable move : sortedMoves) {
-
             // If we found a better path already, break.
             if (alphaBeta.betaLessThanAlpha()) {
                 didBreak = true;
@@ -193,16 +200,15 @@ public class ChessAI {
                 alphaBeta.betaMin(bestEval.getEvaluation());
             }
         }
+
         if (bestEval != tableEval) {
             bestEval = new Evaluation(bestEval, bestMove, didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
         }
 
         // Add best Eval to transposition table.
         if (useTranspositionTable && bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
-            if (bestEval.isExact()) {
-                synchronized (transpositionTable) {
-                    transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
-                }
+            synchronized (transpositionTable) {
+                transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
             }
         }
 
@@ -247,7 +253,7 @@ public class ChessAI {
     private class IterativeDeepener implements Runnable {
 
         private volatile boolean killed;
-        private Evaluation bestEval;
+        private volatile Evaluation bestEval;
         private final GameModel game;
         private final int startDepth;
 

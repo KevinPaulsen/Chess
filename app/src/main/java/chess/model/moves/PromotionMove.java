@@ -76,6 +76,26 @@ public class PromotionMove implements Movable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PromotionMove that)) return false;
+
+        if (start != that.start) return false;
+        if (end != that.end) return false;
+        if (pawn != that.pawn) return false;
+        return getPromotedPiece() == that.getPromotedPiece();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pawn.hashCode();
+        result = 31 * result + getPromotedPiece().hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + (int) (end ^ (end >>> 32));
+        return result;
+    }
+
+    @Override
     public String toString() {
         return ChessCoordinate.getChessCoordinate(start).toString()
                 + ChessCoordinate.getChessCoordinate(end).toString() + "=" + promotedPiece.getStringRep();

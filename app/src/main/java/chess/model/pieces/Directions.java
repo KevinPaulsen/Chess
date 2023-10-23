@@ -1,34 +1,30 @@
 package chess.model.pieces;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import static chess.model.pieces.Direction.*;
 
-public enum Directions implements Iterable<Direction> {
+public class Directions {
 
-    DIAGONALS(List.of(
+    public static final Direction[] DIAGONALS = new Direction[]{
             UP_LEFT,
             UP_RIGHT,
             DOWN_LEFT,
             DOWN_RIGHT
-    )),
-    DIAGONAL_COMPLEMENTS(List.of(
+    };
+    public static final Direction[] DIAGONAL_COMPLEMENTS = new Direction[]{
             UP_LEFT,
             UP_RIGHT
-    )),
-    STRAIGHT_COMPLEMENTS(List.of(
+    };
+    public static final Direction[] STRAIGHT_COMPLEMENTS = new Direction[]{
             UP,
             RIGHT
-    )),
-    STRAIGHTS(List.of(
+    };
+    public static final Direction[] STRAIGHTS = new Direction[]{
             LEFT,
             RIGHT,
             UP,
             DOWN
-    )),
-    KNIGHTS(List.of(
+    };
+    public static final Direction[] KNIGHTS = new Direction[]{
             UP_UP_RIGHT,
             UP_UP_LEFT,
             UP_LEFT_LEFT,
@@ -37,16 +33,16 @@ public enum Directions implements Iterable<Direction> {
             DOWN_DOWN_RIGHT,
             DOWN_RIGHT_RIGHT,
             UP_RIGHT_RIGHT
-    )),
-    VERTICAL(List.of(
+    };
+    public static final Direction[] VERTICAL = new Direction[]{
             UP,
             DOWN
-    )),
-    LATERAL(List.of(
+    };
+    public static final Direction[] LATERAL = new Direction[]{
             RIGHT,
             LEFT
-    )),
-    ALL_DIRECTIONS(List.of(
+    };
+    public static final Direction[] ALL_DIRECTIONS = new Direction[]{
             UP,
             UP_LEFT,
             LEFT,
@@ -55,16 +51,5 @@ public enum Directions implements Iterable<Direction> {
             DOWN_RIGHT,
             RIGHT,
             UP_RIGHT
-    ));
-
-    public final List<Direction> directions;
-
-    Directions(List<Direction> directions) {
-        this.directions = directions;
-    }
-
-    @Override
-    public Iterator<Direction> iterator() {
-        return directions.iterator();
-    }
+    };
 }

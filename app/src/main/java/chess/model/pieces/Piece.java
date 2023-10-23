@@ -65,7 +65,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : ALL_DIRECTIONS.directions) {
+        for (Direction direction : ALL_DIRECTIONS) {
             List<ChessCoordinate> ray = new ArrayList<>();
             for (ChessCoordinate currentCoord = direction.next(coordinate);
                  currentCoord != null;
@@ -108,7 +108,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateKingReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : ALL_DIRECTIONS.directions) {
+        for (Direction direction : ALL_DIRECTIONS) {
             ChessCoordinate nextCoord = direction.next(coordinate);
             result.add(nextCoord == null ? List.of() : List.of(nextCoord));
         }
@@ -128,7 +128,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateRookReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : Directions.STRAIGHTS.directions) {
+        for (Direction direction : Directions.STRAIGHTS) {
             List<ChessCoordinate> ray = new ArrayList<>();
             for (ChessCoordinate currentCoord = direction.next(coordinate);
                  currentCoord != null;
@@ -144,7 +144,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateBishopReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : Directions.DIAGONALS.directions) {
+        for (Direction direction : Directions.DIAGONALS) {
             List<ChessCoordinate> ray = new ArrayList<>();
             for (ChessCoordinate currentCoord = direction.next(coordinate);
                  currentCoord != null;
@@ -160,7 +160,7 @@ public enum Piece {
     private static List<List<ChessCoordinate>> generateKnightReachableCoordsAt(ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
-        for (Direction direction : Directions.KNIGHTS.directions) {
+        for (Direction direction : Directions.KNIGHTS) {
             ChessCoordinate nextCoord = direction.next(coordinate);
             result.add(nextCoord == null ? List.of() : List.of(nextCoord));
         }

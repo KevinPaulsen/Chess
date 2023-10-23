@@ -203,7 +203,7 @@ public class ChessBoardView extends JLayeredPane {
     }
 
     private static class Animate {
-        private static final int RUN_TIME = 100;
+        private static final int RUN_TIME = 500;
 
         private final Component component;
         private final Point start;

@@ -64,6 +64,28 @@ public class EnPassantMove implements Movable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EnPassantMove that)) return false;
+
+        if (start != that.start) return false;
+        if (end != that.end) return false;
+        if (captureStart != that.captureStart) return false;
+        if (moving != that.moving) return false;
+        return captured == that.captured;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = moving.hashCode();
+        result = 31 * result + captured.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + (int) (end ^ (end >>> 32));
+        result = 31 * result + (int) (captureStart ^ (captureStart >>> 32));
+        return result;
+    }
+
+    @Override
     public String toString() {
         return ChessCoordinate.getChessCoordinate(start).toString()
                 + ChessCoordinate.getChessCoordinate(end).toString();
