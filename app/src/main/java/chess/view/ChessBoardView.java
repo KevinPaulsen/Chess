@@ -23,7 +23,7 @@ public class ChessBoardView extends Region {
     private final GridPane board;
     private final ChessView.MoveController controller;
 
-    public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller) {
+    public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller, ChessView.GameDataRetriever dataRetriever) {
         this.board = createBoard();
         this.controller = controller;
 
@@ -82,7 +82,13 @@ public class ChessBoardView extends Region {
         });
 
         square.setOnMouseReleased(event -> {
-            Objects.requireNonNull(square.getPieceView()).opacityProperty().set(1);
+            ChessPieceView piece = square.getPieceView();
+
+            if (piece == null) {
+                return;
+            }
+
+            square.getPieceView().opacityProperty().set(1);
             this.getChildren().remove(movingPiece);
             movingPiece = null;
 
@@ -94,8 +100,7 @@ public class ChessBoardView extends Region {
             ChessSquare targetSquare = getSquareAt(event.getSceneX(), event.getSceneY());
 
             if (targetSquare != null) {
-                Movable move = controller.makeMove(square.getCoordinate(), targetSquare.getCoordinate());
-                displayMove(move);
+                controller.makeMove(square.getCoordinate(), targetSquare.getCoordinate());
             }
 
             event.consume();
@@ -158,5 +163,13 @@ public class ChessBoardView extends Region {
         } else {
             return null;
         }
+    }
+
+    public double getMinimumWidth() {
+        return numCols * ChessSquare.MIN_SIZE;
+    }
+
+    public double getMinimumHeight() {
+        return numRows * ChessSquare.MIN_SIZE;
     }
 }

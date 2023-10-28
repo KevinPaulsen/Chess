@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 
 public class ChessSquare extends StackPane {
 
-    private static final double MIN_SIZE = 30.0;
+    public static final double MIN_SIZE = 30.0;
     private static final String LIGHT_COLOR = "-fx-background-color: rgb(240, 217, 181);";
     private static final String DARK_COLOR = "-fx-background-color: rgb(180, 136, 99);";
 

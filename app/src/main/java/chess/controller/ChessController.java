@@ -9,11 +9,9 @@ import chess.model.pieces.Piece;
 import chess.view.ChessView;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,7 +46,18 @@ public class ChessController extends Application {
         super.init();
 
         gameModel = new GameModel();
-        view = new ChessView(gameModel.getBoard().getPieceArray(), this::makeMove);
+        view = new ChessView(gameModel.getBoard().getPieceArray(),
+                this::makeMove, new ChessView.GameDataRetriever() {
+            @Override
+            public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
+                return null;
+            }
+
+            @Override
+            public char getTurn() {
+                return gameModel.getTurn();
+            }
+        });
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
@@ -62,6 +71,11 @@ public class ChessController extends Application {
         primaryStage.requestFocus();
         primaryStage.setAlwaysOnTop(true);
         primaryStage.show();
+
+        final double titleBarHeight = primaryStage.getHeight() - view.getScene().getHeight();
+
+        primaryStage.setMinHeight(view.getMinimumHeight() + titleBarHeight);
+        primaryStage.setMinWidth(view.getMinimumWidth());
     }
 
     @Override
@@ -78,21 +92,18 @@ public class ChessController extends Application {
      * @param startCoordinate the starting coordinate
      * @param endCoordinate   the ending coordinate
      */
-    private Movable makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
-        if (gameModel.move(startCoordinate, endCoordinate, Piece.WHITE_QUEEN)) {
-
-            if (AI_ON) {
-                makeAIMove();
-            } else {
-                if (gameModel.getGameOverStatus() != IN_PROGRESS) {
-                    System.out.println("GAME OVER");
-                }
-            }
-
-            return gameModel.getLastMove();
+    private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+        if (!gameModel.move(startCoordinate, endCoordinate, Piece.WHITE_QUEEN)) {
+            return;
         }
 
-        return null;
+        if (AI_ON) {
+            makeAIMove();
+        } else if (gameModel.getGameOverStatus() != IN_PROGRESS) {
+            System.out.println("GAME OVER");
+        }
+
+        view.displayMove(gameModel.getLastMove());
     }
 
     private void undoMove() {
