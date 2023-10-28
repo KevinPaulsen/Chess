@@ -6,20 +6,16 @@ import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
 import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
-import chess.view.ChessPieceView;
 import chess.view.ChessView;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 
-import java.awt.Component;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static chess.model.GameModel.*;
@@ -28,34 +24,70 @@ import static chess.model.GameModel.*;
  * This class controls both the model and the view for the
  * Chess game.
  */
-public class ChessController implements MouseListener, MouseMotionListener, KeyListener {
+public class ChessController extends Application {
 
     private static final boolean AI_ON = true;
 
     private static final int MINIMUM_DEPTH = 1;
     private static final int SEARCH_TIME = 1_000;
 
-    private final GameModel gameModel;
-    private final ChessView view;
-    private final ChessAI chessAI;
+    private GameModel gameModel;
+    private ChessView view;
+    private ChessAI chessAI;
 
-    private final Executor aiExecutor;
-    private final Executor finishGameExecutor;
-    private final Set<Integer> pressedKeyCodes;
+    private ExecutorService aiExecutor;
+    private ExecutorService finishGameExecutor;
     private CompletableFuture<Void> futureAIMove;
-    private ChessCoordinate startCoordinate;
 
-    private ChessController() {
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    private static void adjustCenterSize(BorderPane borderPane) {
+        Region centerRegion = (Region) borderPane.getCenter();
+        double availableWidth = borderPane.getWidth() - borderPane.getPadding().getLeft() - borderPane.getPadding().getRight();
+        double availableHeight = borderPane.getHeight() - borderPane.getPadding().getTop() - borderPane.getPadding().getBottom();
+
+        double size = Math.min(availableWidth, availableHeight);
+
+        centerRegion.setMinSize(size, size);
+        centerRegion.setMaxSize(size, size);
+    }
+
+    @Override
+    public void init() throws Exception {
+        super.init();
+
         gameModel = new GameModel();
-        view = new ChessView(gameModel.getBoard().getPieceArray(), this, this, this);
+        view = new ChessView(gameModel.getBoard().getPieceArray(), this::makeMove);
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
-        pressedKeyCodes = new HashSet<>();
     }
 
-    public static void main(String[] args) {
-        new ChessController();
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        primaryStage.setTitle("Chess Program");
+
+        Scene scene = new Scene(view.getRoot(), 400, 400);
+
+        // Add a listener to the scene's width and height properties to adjust the center square
+        scene.widthProperty().addListener((observable, oldValue, newValue) -> adjustCenterSize(view.getBoarderPane()));
+
+        scene.heightProperty().addListener((observable, oldValue, newValue) -> adjustCenterSize(view.getBoarderPane()));
+
+        primaryStage.setScene(scene);
+        primaryStage.requestFocus();
+        primaryStage.setAlwaysOnTop(true);
+        primaryStage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+
+        aiExecutor.shutdownNow();
+        finishGameExecutor.shutdownNow();
     }
 
     /**
@@ -64,9 +96,8 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
      * @param startCoordinate the starting coordinate
      * @param endCoordinate   the ending coordinate
      */
-    private void makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
+    private Movable makeMove(ChessCoordinate startCoordinate, ChessCoordinate endCoordinate) {
         if (gameModel.move(startCoordinate, endCoordinate, Piece.WHITE_QUEEN)) {
-            updateScreen(false, false);
 
             if (AI_ON) {
                 makeAIMove();
@@ -75,40 +106,30 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
                     System.out.println("GAME OVER");
                 }
             }
-        } else {
-            view.pack();
+
+            return gameModel.getLastMove();
         }
+
+        return null;
     }
 
     private void undoMove() {
         gameModel.undoLastMove();
-        updateScreen(true, false);
-    }
-
-    private void updateScreen(boolean doSlowUpdate, boolean animate) {
-        if (doSlowUpdate) {
-            view.slowUpdate(gameModel.getBoard().getPieceArray(),
-                    this, this, gameModel.getTurn());
-        } else {
-            if (animate) view.animateMove(gameModel.getLastMove());
-            else view.updateScreen(gameModel.getLastMove());
-        }
     }
 
     private void makeAIMove() {
         if (futureAIMove == null || futureAIMove.isDone()) {
-            futureAIMove = CompletableFuture
-                    .runAsync(() -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
-                    .thenRun(this::printAndUpdate)
-                    .exceptionally((ex) -> {
-                        ex.printStackTrace();
-                        return null;
-                    });
+            futureAIMove = CompletableFuture.runAsync(() -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor).thenRun(this::printAndUpdate).exceptionally((ex) -> {
+                ex.printStackTrace();
+                return null;
+            });
         }
     }
 
     private void printAndUpdate() {
-        updateScreen(false, true);
+        Platform.runLater(() -> {
+            view.displayMove(gameModel.getLastMove());
+        });
         if (gameModel.getGameOverStatus() != IN_PROGRESS) {
             System.out.printf("GAME OVER (%s)\n", switch (gameModel.getGameOverStatus()) {
                 case DRAW -> "Draw";
@@ -119,157 +140,15 @@ public class ChessController implements MouseListener, MouseMotionListener, KeyL
     }
 
     private void letAIFinishGame() {
-        if (gameModel.getGameOverStatus() == IN_PROGRESS && !pressedKeyCodes.contains(KeyEvent.VK_S)) {
-            CompletableFuture.runAsync(this::makeAIMove, finishGameExecutor)
-                    .thenRunAsync(() -> {
-                        futureAIMove.join();
-                        letAIFinishGame();
-                    }, finishGameExecutor)
-                    .exceptionally((ex) -> {
-                        ex.printStackTrace();
-                        return null;
-                    });
+        if (gameModel.getGameOverStatus() == IN_PROGRESS) {
+            CompletableFuture.runAsync(this::makeAIMove, finishGameExecutor).thenRunAsync(() -> {
+                futureAIMove.join();
+                letAIFinishGame();
+            }, finishGameExecutor).exceptionally((ex) -> {
+                ex.printStackTrace();
+                return null;
+            });
         }
-    }
-
-    /**
-     * Invoked when a mouse button has been pressed on a component.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mousePressed(MouseEvent e) {
-        Component component = e.getComponent();
-        if (component instanceof ChessPieceView) {
-            startCoordinate = view.getCoordinateOf(component, e.getX(), e.getY());
-
-            List<ChessCoordinate> endCoordinates = gameModel.getLegalMoves().toList().stream()
-                    .filter(move -> move.getStartCoordinate().equals(startCoordinate))
-                    .map(Movable::getEndCoordinate)
-                    .toList();
-
-            view.markEnds(endCoordinates);
-        }
-    }
-
-    /**
-     * Invoked when a mouse button has been released on a component.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        ChessCoordinate endCoordinate = view.getCoordinateOf(e.getComponent(), e.getX(), e.getY());
-        view.unMarkEnds();
-        if (futureAIMove == null || futureAIMove.isDone()) {
-            makeMove(startCoordinate, endCoordinate);
-        } else {
-            view.pack();
-        }
-    }
-
-    /**
-     * Invoked when a mouse button is pressed on a component and then
-     * dragged.  {@code MOUSE_DRAGGED} events will continue to be
-     * delivered to the component where the drag originated until the
-     * mouse button is released (regardless of whether the mouse position
-     * is within the bounds of the component).
-     * <p>
-     * Due to platform-dependent Drag&amp;Drop implementations,
-     * {@code MOUSE_DRAGGED} events may not be delivered during a native
-     * Drag&amp;Drop operation.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        Component piece = e.getComponent();
-        int xOnWindow = e.getX() + e.getComponent().getX() - piece.getWidth() / 2;
-        int yOnWindow = e.getY() + e.getComponent().getY() - piece.getHeight() / 2;
-        e.getComponent().setLocation(xOnWindow, yOnWindow);
-    }
-
-    /**
-     * Invoked when a key has been pressed.
-     * See the class description for {@link KeyEvent} for a definition of
-     * a key pressed event.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void keyPressed(KeyEvent e) {
-        int keyCode = e.getExtendedKeyCode();
-        pressedKeyCodes.add(keyCode);
-    }
-
-    /**
-     * Invoked when a key has been released.
-     * See the class description for {@link KeyEvent} for a definition of
-     * a key released event.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void keyReleased(KeyEvent e) {
-        int keyCode = e.getExtendedKeyCode();
-        pressedKeyCodes.remove(keyCode);
-
-        switch (keyCode) {
-            case KeyEvent.VK_RIGHT -> makeAIMove();
-            case KeyEvent.VK_LEFT -> undoMove();
-            case KeyEvent.VK_F -> letAIFinishGame();
-            case KeyEvent.VK_P -> System.out.println(gameModel.getFEN());
-        }
-    }
-
-    /**
-     * Invoked when the mouse button has been clicked (pressed
-     * and released) on a component.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    /**
-     * Invoked when the mouse enters a component.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    /**
-     * Invoked when the mouse exits a component.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
-
-    /**
-     * Invoked when the mouse cursor has been moved onto a component
-     * but no buttons have been pushed.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void mouseMoved(MouseEvent e) {
-    }
-
-
-    /**
-     * Invoked when a key has been typed.
-     * See the class description for {@link KeyEvent} for a definition of
-     * a key typed event.
-     *
-     * @param e the event to be processed
-     */
-    @Override
-    public void keyTyped(KeyEvent e) {
     }
 }
 

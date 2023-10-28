@@ -1,36 +1,26 @@
 package chess.view;
 
 import chess.model.pieces.Piece;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+public class ChessPieceView extends ImageView {
 
-/**
- * This class is capable of making a JLabel that displays a
- * ChessPiece.
- */
-public class ChessPieceView extends JLabel {
+    private Piece piece;
 
-    private static final ImageIcon BLANK_IMAGE = new ImageIcon("");
+    public ChessPieceView(Piece piece, ReadOnlyDoubleProperty widthProperty) {
+        //Image image = new Image(new File("images/WPawn.png").toURI().toString());
+        Image image = getImage(piece);
+        this.setImage(image);
+        this.setPreserveRatio(true);
+        this.fitWidthProperty().bind(widthProperty);
 
-    private boolean isOnBoard;
+        this.piece = piece;
+    }
 
-    /**
-     * Constructs a PieceView from the given chessPiece.
-     *
-     * @param piece any ChessPiece or null for a blank JLabel.
-     */
-    public ChessPieceView(Piece piece) {
-        super();
-        setHorizontalAlignment(JLabel.CENTER);
-        ImageIcon imageIcon = getImage(piece);
-        if (imageIcon.getDescription().length() == 7) {
-            isOnBoard = false;
-        } else {
-            setIcon(imageIcon);
-            isOnBoard = true;
-        }
+    public Piece getPiece() {
+        return piece;
     }
 
     /**
@@ -40,11 +30,11 @@ public class ChessPieceView extends JLabel {
      * @param piece the piece to create an ImageIcon for.
      * @return the ImageIcon for the given piece.
      */
-    private static ImageIcon getImage(Piece piece) {
-        String path = "images/";
+    private static Image getImage(Piece piece) {
+        String path = "file:images/";
 
         if (piece == null) {
-            return BLANK_IMAGE;
+            return null;
         }
 
         switch (piece) {
@@ -61,19 +51,11 @@ public class ChessPieceView extends JLabel {
             case BLACK_PAWN -> path += "BPawn.png";
             case BLACK_KING -> path += "BKing.png";
         }
-        return new ImageIcon(path);
+        return new Image(path);
     }
 
-    public void setImage(Piece promotedPiece) {
-        setIcon(getImage(promotedPiece));
-    }
-
-    public boolean isOnBoard() {
-        return isOnBoard;
-    }
-
-    public void capture() {
-        setIcon(null);
-        isOnBoard = false;
+    public void promote(Piece promotedPiece) {
+        this.piece = promotedPiece;
+        this.setImage(getImage(piece));
     }
 }

@@ -53,6 +53,10 @@ public class EnPassantMove implements Movable {
         return moving;
     }
 
+    public ChessCoordinate getCaptureCoordinate() {
+        return ChessCoordinate.getChessCoordinate(captureStart);
+    }
+
     @Override
     public ChessCoordinate getStartCoordinate() {
         return ChessCoordinate.getChessCoordinate(start);
