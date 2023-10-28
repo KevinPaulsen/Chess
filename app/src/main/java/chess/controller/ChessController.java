@@ -43,17 +43,6 @@ public class ChessController extends Application {
         launch(args);
     }
 
-    private static void adjustCenterSize(BorderPane borderPane) {
-        Region centerRegion = (Region) borderPane.getCenter();
-        double availableWidth = borderPane.getWidth() - borderPane.getPadding().getLeft() - borderPane.getPadding().getRight();
-        double availableHeight = borderPane.getHeight() - borderPane.getPadding().getTop() - borderPane.getPadding().getBottom();
-
-        double size = Math.min(availableWidth, availableHeight);
-
-        centerRegion.setMinSize(size, size);
-        centerRegion.setMaxSize(size, size);
-    }
-
     @Override
     public void init() throws Exception {
         super.init();
@@ -69,14 +58,7 @@ public class ChessController extends Application {
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("Chess Program");
 
-        Scene scene = new Scene(view.getRoot(), 400, 400);
-
-        // Add a listener to the scene's width and height properties to adjust the center square
-        scene.widthProperty().addListener((observable, oldValue, newValue) -> adjustCenterSize(view.getBoarderPane()));
-
-        scene.heightProperty().addListener((observable, oldValue, newValue) -> adjustCenterSize(view.getBoarderPane()));
-
-        primaryStage.setScene(scene);
+        primaryStage.setScene(view.getScene());
         primaryStage.requestFocus();
         primaryStage.setAlwaysOnTop(true);
         primaryStage.show();
