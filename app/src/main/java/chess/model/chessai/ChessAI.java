@@ -54,7 +54,8 @@ public class ChessAI {
      * @param evaluator the evaluator this AI uses.
      * @param game      the game this AI is in.
      */
-    public ChessAI(Evaluator evaluator, GameModel game, boolean useIterativeDeepening, boolean useTranspositionTable) {
+    public ChessAI(Evaluator evaluator, GameModel game, boolean useIterativeDeepening,
+                   boolean useTranspositionTable) {
         this.evaluator = evaluator;
         this.game = game;
         this.useIterativeDeepening = useIterativeDeepening;
@@ -76,7 +77,7 @@ public class ChessAI {
     /**
      * Search and find the best move in the current position.
      *
-     * @param minDepth              the depth to search to (not used if using iterative deepening)
+     * @param minDepth   the depth to search to (not used if using iterative deepening)
      * @param timeCutoff the max time to search for.
      * @return the best move to DEPTH, according to the evaluator.
      */
@@ -98,7 +99,8 @@ public class ChessAI {
             long end = System.nanoTime();
 
             // Continue search starting at minDepth + 1, until timeout
-            IterativeDeepener deepener = new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
+            IterativeDeepener deepener =
+                    new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
             positionsEvaluated = 0;
             Future<?> future = executor.submit(deepener);
 
@@ -114,7 +116,8 @@ public class ChessAI {
             bestEvalToLatestDepth = deepener.bestEval;
         }
         synchronized (transpositionTable) {
-            System.out.printf("%10d\t|\t%6d\t|\t%s\n", positionsEvaluated, transpositionTable.size(), bestEvalToLatestDepth);
+            System.out.printf("%10d\t|\t%6d\t|\t%s\n", positionsEvaluated,
+                    transpositionTable.size(), bestEvalToLatestDepth);
         }
         return bestEvalToLatestDepth == null ? null : bestEvalToLatestDepth.getMove();
     }
@@ -136,7 +139,8 @@ public class ChessAI {
 
         long hash = game.getZobristWithTimesMoved();
         boolean maximizingPlayer = game.getTurn() == WHITE;
-        Evaluation bestEval = maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
+        Evaluation bestEval =
+                maximizingPlayer ? Evaluation.MIN_EVALUATION : Evaluation.MAX_EVALUATION;
         Movable bestMove = null;
 
         Evaluation tableEval;
@@ -164,7 +168,8 @@ public class ChessAI {
 
         if (bestMove != null) {
             int bestIdx = sortedMoves.indexOf(bestMove);
-            if (bestIdx == -1) System.out.println("oof");
+            if (bestIdx == -1)
+                System.out.println("oof");
             sortedMoves.set(bestIdx, sortedMoves.get(0));
             sortedMoves.set(0, bestMove);
         }
@@ -202,13 +207,16 @@ public class ChessAI {
         }
 
         if (bestEval != tableEval) {
-            bestEval = new Evaluation(bestEval, bestMove, didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
+            bestEval = new Evaluation(bestEval, bestMove,
+                    didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
         }
 
         // Add best Eval to transposition table.
-        if (useTranspositionTable && bestEval != Evaluation.MAX_EVALUATION && bestEval != Evaluation.MIN_EVALUATION) {
+        if (useTranspositionTable && bestEval != Evaluation.MAX_EVALUATION &&
+                bestEval != Evaluation.MIN_EVALUATION) {
             synchronized (transpositionTable) {
-                transpositionTable.merge(hash, bestEval, (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
+                transpositionTable.merge(hash, bestEval,
+                        (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
             }
         }
 
@@ -252,10 +260,10 @@ public class ChessAI {
 
     private class IterativeDeepener implements Runnable {
 
-        private volatile boolean killed;
-        private volatile Evaluation bestEval;
         private final GameModel game;
         private final int startDepth;
+        private volatile boolean killed;
+        private volatile Evaluation bestEval;
 
         public IterativeDeepener(Evaluation bestEval, GameModel game, int startDepth) {
             this.killed = false;

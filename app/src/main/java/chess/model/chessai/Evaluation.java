@@ -3,6 +3,8 @@ package chess.model.chessai;
 import chess.model.moves.Movable;
 import chess.model.moves.NormalMove;
 
+import java.util.Objects;
+
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
 
@@ -45,10 +47,12 @@ public class Evaluation implements Comparable<Evaluation> {
         >= <= -> error
         <= >= -> error
          */
-        if (bound == LESS_THAN && evaluation.bound == GREATER_THAN || bound == GREATER_THAN && evaluation.bound == LESS_THAN) {
+        if (bound == LESS_THAN && evaluation.bound == GREATER_THAN ||
+                bound == GREATER_THAN && evaluation.bound == LESS_THAN) {
             throw new IllegalArgumentException("Invalid bound selection");
         } else if (bound != evaluation.bound) {
-            if (bound == EXACT) bound = evaluation.bound;
+            if (bound == EXACT)
+                bound = evaluation.bound;
         }
 
         this.move = move;
@@ -64,7 +68,8 @@ public class Evaluation implements Comparable<Evaluation> {
                 evaluation.loser, evaluation.depth + 1, bound, evaluation);
     }
 
-    public Evaluation(NormalMove currentMove, int evaluation, char loser, int depth, byte bound, Evaluation next) {
+    public Evaluation(NormalMove currentMove, int evaluation, char loser, int depth, byte bound,
+                      Evaluation next) {
         this.move = currentMove;
         this.evaluation = evaluation;
         this.loser = loser;
@@ -107,26 +112,6 @@ public class Evaluation implements Comparable<Evaluation> {
 
     public boolean isUpper() {
         return bound == UPPER;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append("Evaluation ");
-        result.append(switch (bound) {
-            case LOWER -> ">=";
-            case GREATER_THAN -> "<=";
-            default -> "==";
-        });
-        result.append(String.format(" %-7d", evaluation));
-        result.append(String.format("Depth: %-2d ", depth));
-        result.append(String.format("Moves: %-6s", move));
-        Evaluation current = next;
-        while (current != null && current.move != null) {
-            result.append(String.format(" | %-6s", current.move));
-            current = current.next;
-        }
-        return result.toString();
     }
 
     /**
@@ -196,21 +181,6 @@ public class Evaluation implements Comparable<Evaluation> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Evaluation)) return false;
-
-        Evaluation that = (Evaluation) o;
-
-        if (getEvaluation() != that.getEvaluation()) return false;
-        if (getLoser() != that.getLoser()) return false;
-        if (getDepth() != that.getDepth()) return false;
-        if (bound != that.bound) return false;
-        if (getMove() != null ? !getMove().equals(that.getMove()) : that.getMove() != null) return false;
-        return next != null ? next.equals(that.next) : that.next == null;
-    }
-
-    @Override
     public int hashCode() {
         int result = getMove() != null ? getMove().hashCode() : 0;
         result = 31 * result + (int) getEvaluation();
@@ -219,5 +189,45 @@ public class Evaluation implements Comparable<Evaluation> {
         result = 31 * result + (int) bound;
         result = 31 * result + (next != null ? next.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Evaluation that))
+            return false;
+
+        if (getEvaluation() != that.getEvaluation())
+            return false;
+        if (getLoser() != that.getLoser())
+            return false;
+        if (getDepth() != that.getDepth())
+            return false;
+        if (bound != that.bound)
+            return false;
+        if (getMove() != null ? !getMove().equals(that.getMove()) : that.getMove() != null)
+            return false;
+        return Objects.equals(next, that.next);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        result.append("Evaluation ");
+        result.append(switch (bound) {
+            case LOWER -> ">=";
+            case GREATER_THAN -> "<=";
+            default -> "==";
+        });
+        result.append(String.format(" %-7d", evaluation));
+        result.append(String.format("Depth: %-2d ", depth));
+        result.append(String.format("Moves: %-6s", move));
+        Evaluation current = next;
+        while (current != null && current.move != null) {
+            result.append(String.format(" | %-6s", current.move));
+            current = current.next;
+        }
+        return result.toString();
     }
 }

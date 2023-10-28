@@ -10,19 +10,19 @@ import static chess.model.pieces.Piece.EMPTY;
 
 public class BoardRepFeature implements Feature {
 
-    private static final String EMPTY_REP =        ",0,0,0,0,0,0,0,0,0,0,0,0";
-    private static final String WHITE_PAWN_REP =   ",1,0,0,0,0,0,0,0,0,0,0,0";
+    private static final String EMPTY_REP = ",0,0,0,0,0,0,0,0,0,0,0,0";
+    private static final String WHITE_PAWN_REP = ",1,0,0,0,0,0,0,0,0,0,0,0";
     private static final String WHITE_KNIGHT_REP = ",0,1,0,0,0,0,0,0,0,0,0,0";
     private static final String WHITE_BISHOP_REP = ",0,0,1,0,0,0,0,0,0,0,0,0";
-    private static final String WHITE_ROOK_REP =   ",0,0,0,1,0,0,0,0,0,0,0,0";
-    private static final String WHITE_QUEEN_REP =  ",0,0,0,0,1,0,0,0,0,0,0,0";
-    private static final String WHITE_KING_REP =   ",0,0,0,0,0,1,0,0,0,0,0,0";
-    private static final String BLACK_PAWN_REP =   ",0,0,0,0,0,0,1,0,0,0,0,0";
+    private static final String WHITE_ROOK_REP = ",0,0,0,1,0,0,0,0,0,0,0,0";
+    private static final String WHITE_QUEEN_REP = ",0,0,0,0,1,0,0,0,0,0,0,0";
+    private static final String WHITE_KING_REP = ",0,0,0,0,0,1,0,0,0,0,0,0";
+    private static final String BLACK_PAWN_REP = ",0,0,0,0,0,0,1,0,0,0,0,0";
     private static final String BLACK_KNIGHT_REP = ",0,0,0,0,0,0,0,1,0,0,0,0";
     private static final String BLACK_BISHOP_REP = ",0,0,0,0,0,0,0,0,1,0,0,0";
-    private static final String BLACK_ROOK_REP =   ",0,0,0,0,0,0,0,0,0,1,0,0";
-    private static final String BLACK_QUEEN_REP =  ",0,0,0,0,0,0,0,0,0,0,1,0";
-    private static final String BLACK_KING_REP =   ",0,0,0,0,0,0,0,0,0,0,0,1";
+    private static final String BLACK_ROOK_REP = ",0,0,0,0,0,0,0,0,0,1,0,0";
+    private static final String BLACK_QUEEN_REP = ",0,0,0,0,0,0,0,0,0,0,1,0";
+    private static final String BLACK_KING_REP = ",0,0,0,0,0,0,0,0,0,0,0,1";
 
     @Override
     public String featureString(GameModel game) {
@@ -49,7 +49,8 @@ public class BoardRepFeature implements Feature {
     }
 
     private String getPieceString(Piece piece) {
-        if (piece == null) piece = EMPTY;
+        if (piece == null)
+            piece = EMPTY;
         return switch (piece) {
             case EMPTY -> EMPTY_REP;
             case WHITE_PAWN -> WHITE_PAWN_REP;

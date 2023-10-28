@@ -2,23 +2,14 @@ package chess.model.moves;
 
 import chess.ChessCoordinate;
 import chess.model.BoardModel;
-import chess.model.Zobrist;
 import chess.model.pieces.Piece;
 
 import static chess.model.pieces.Piece.*;
-import static chess.model.pieces.Piece.BLACK_KING;
 
 public interface Movable {
 
-    BoardModel.BoardState nextState(BoardModel.BoardState state);
-
-    Piece getMovingPiece();
-
-    ChessCoordinate getStartCoordinate();
-
-    ChessCoordinate getEndCoordinate();
-
-    static void pieceMapCopy(long[] pieceMaps, long[] nextPieceMaps, long remaining, boolean isWhite) {
+    static void pieceMapCopy(long[] pieceMaps, long[] nextPieceMaps, long remaining,
+                             boolean isWhite) {
         if (isWhite) {
             // Set remove ~end from black pieces
             nextPieceMaps[BLACK_PAWN.ordinal()] = pieceMaps[BLACK_PAWN.ordinal()] & remaining;
@@ -51,4 +42,12 @@ public interface Movable {
         nextPieceMaps[WHITE_KING.ordinal()] = pieceMaps[WHITE_KING.ordinal()];
         nextPieceMaps[BLACK_KING.ordinal()] = pieceMaps[BLACK_KING.ordinal()];
     }
+
+    BoardModel.BoardState nextState(BoardModel.BoardState state);
+
+    Piece getMovingPiece();
+
+    ChessCoordinate getStartCoordinate();
+
+    ChessCoordinate getEndCoordinate();
 }

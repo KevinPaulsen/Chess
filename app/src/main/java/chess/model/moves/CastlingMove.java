@@ -5,31 +5,13 @@ import chess.model.BoardModel;
 import chess.model.Zobrist;
 import chess.model.pieces.Piece;
 
-
-import static chess.ChessCoordinate.A1;
-import static chess.ChessCoordinate.A8;
-import static chess.ChessCoordinate.C1;
-import static chess.ChessCoordinate.C8;
-import static chess.ChessCoordinate.D1;
-import static chess.ChessCoordinate.D8;
-import static chess.ChessCoordinate.E1;
-import static chess.ChessCoordinate.E8;
-import static chess.ChessCoordinate.F1;
-import static chess.ChessCoordinate.F8;
-import static chess.ChessCoordinate.G1;
-import static chess.ChessCoordinate.G8;
-import static chess.ChessCoordinate.H1;
-import static chess.ChessCoordinate.H8;
-import static chess.model.pieces.Piece.WHITE_KING;
-import static chess.model.pieces.Piece.WHITE_ROOK;
-import static chess.model.pieces.Piece.BLACK_KING;
-import static chess.model.pieces.Piece.BLACK_ROOK;
+import static chess.ChessCoordinate.*;
+import static chess.model.pieces.Piece.*;
 
 public enum CastlingMove implements Movable {
-    WHITE_KING_SIDE_CASTLE(E1, G1, H1, F1, WHITE_KING, WHITE_ROOK),
-    WHITE_QUEEN_SIDE_CASTLE(E1, C1, A1, D1, WHITE_KING, WHITE_ROOK),
-    BLACK_KING_SIDE_CASTLE(E8, G8, H8, F8, BLACK_KING, BLACK_ROOK),
-    BLACK_QUEEN_SIDE_CASTLE(E8, C8, A8, D8, BLACK_KING, BLACK_ROOK);
+    WHITE_KING_SIDE_CASTLE(E1, G1, H1, F1, WHITE_KING, WHITE_ROOK), WHITE_QUEEN_SIDE_CASTLE(E1, C1,
+            A1, D1, WHITE_KING, WHITE_ROOK), BLACK_KING_SIDE_CASTLE(E8, G8, H8, F8, BLACK_KING,
+            BLACK_ROOK), BLACK_QUEEN_SIDE_CASTLE(E8, C8, A8, D8, BLACK_KING, BLACK_ROOK);
 
     private final Piece king;
     private final Piece rook;
@@ -75,7 +57,8 @@ public enum CastlingMove implements Movable {
             case BLACK_KING_SIDE_CASTLE, BLACK_QUEEN_SIDE_CASTLE -> black ^= occupancyMoveMask;
         }
 
-        return new BoardModel.BoardState(pieceMaps, white, black, occupied ^ occupancyMoveMask, deltaHash);
+        return new BoardModel.BoardState(pieceMaps, white, black, occupied ^ occupancyMoveMask,
+                deltaHash);
     }
 
     @Override

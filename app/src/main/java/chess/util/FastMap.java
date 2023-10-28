@@ -79,7 +79,8 @@ public class FastMap {
 
         byte count = 0;
 
-        for (int i = Long.numberOfTrailingZeros(mapCopy); mapCopy != 0; mapCopy = (mapCopy >>> i) >>> 1, i = Long.numberOfTrailingZeros(mapCopy), count++) {
+        for (int i = Long.numberOfTrailingZeros(mapCopy); mapCopy != 0;
+             mapCopy = (mapCopy >>> i) >>> 1, i = Long.numberOfTrailingZeros(mapCopy), count++) {
             indices.add(count += (byte) i);
         }
 
@@ -99,20 +100,22 @@ public class FastMap {
     }
 
     @Override
-    public String toString() {
-        return Long.toBinaryString(map);
+    public int hashCode() {
+        return Long.hashCode(map);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FastMap fastMap)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof FastMap fastMap))
+            return false;
         return map == fastMap.map;
     }
 
     @Override
-    public int hashCode() {
-        return Long.hashCode(map);
+    public String toString() {
+        return Long.toBinaryString(map);
     }
 
     public byte getLowestSet() {

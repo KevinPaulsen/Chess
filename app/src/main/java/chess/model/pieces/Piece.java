@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static chess.model.pieces.Direction.*;
-import static chess.model.pieces.Directions.*;
+import static chess.model.pieces.Directions.ALL_DIRECTIONS;
 
 /**
  * This class is an abstract representation of a Piece. Any piece can implement
@@ -16,19 +16,19 @@ import static chess.model.pieces.Directions.*;
 public enum Piece {
     EMPTY(null, 'w', "", 0),
 
-    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1),
-    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 2),
-    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 3),
-    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 4),
-    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 5),
-    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
+    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1), WHITE_QUEEN(
+            Piece::generateQueenReachableCoordsAt, 'w', "Q", 2), WHITE_ROOK(
+            Piece::generateRookReachableCoordsAt, 'w', "R", 3), WHITE_BISHOP(
+            Piece::generateBishopReachableCoordsAt, 'w', "B", 4), WHITE_KNIGHT(
+            Piece::generateKnightReachableCoordsAt, 'w', "N", 5), WHITE_PAWN(
+            Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7),
-    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 8),
-    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 9),
-    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 10),
-    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 11),
-    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
+    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7), BLACK_QUEEN(
+            Piece::generateQueenReachableCoordsAt, 'b', "q", 8), BLACK_ROOK(
+            Piece::generateRookReachableCoordsAt, 'b', "r", 9), BLACK_BISHOP(
+            Piece::generateBishopReachableCoordsAt, 'b', "b", 10), BLACK_KNIGHT(
+            Piece::generateKnightReachableCoordsAt, 'b', "n", 11), BLACK_PAWN(
+            Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
 
     /**
      * The map of reachable coordinates
@@ -55,20 +55,21 @@ public enum Piece {
      *
      * @param mapMaker the mapMaker for this piece.
      */
-    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, String stringRep, int uniqueIdx) {
+    Piece(ReachableCoordinatesMap.CoordinateMapMaker mapMaker, char color, String stringRep,
+          int uniqueIdx) {
         this.reachableCoordinateMap = new ReachableCoordinatesMap(mapMaker);
         this.color = color;
         this.stringRep = stringRep;
         this.uniqueIdx = uniqueIdx;
     }
 
-    private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateQueenReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         for (Direction direction : ALL_DIRECTIONS) {
             List<ChessCoordinate> ray = new ArrayList<>();
-            for (ChessCoordinate currentCoord = direction.next(coordinate);
-                 currentCoord != null;
+            for (ChessCoordinate currentCoord = direction.next(coordinate); currentCoord != null;
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
@@ -105,7 +106,8 @@ public enum Piece {
      * @param coordinate the coordinate the king is at.
      * @return list of lists of ChessCoordinates that represent the squares the king can move.
      */
-    private static List<List<ChessCoordinate>> generateKingReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateKingReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         for (Direction direction : ALL_DIRECTIONS) {
@@ -115,8 +117,10 @@ public enum Piece {
 
         // If on castling square
         if (coordinate.getFile() == 4 && coordinate.getRank() % 7 == 0) {
-            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() + 2, coordinate.getRank())));
-            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() - 2, coordinate.getRank())));
+            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() + 2,
+                    coordinate.getRank())));
+            result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() - 2,
+                    coordinate.getRank())));
         } else {
             result.add(List.of());
             result.add(List.of());
@@ -125,13 +129,13 @@ public enum Piece {
         return result;
     }
 
-    private static List<List<ChessCoordinate>> generateRookReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateRookReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         for (Direction direction : Directions.STRAIGHTS) {
             List<ChessCoordinate> ray = new ArrayList<>();
-            for (ChessCoordinate currentCoord = direction.next(coordinate);
-                 currentCoord != null;
+            for (ChessCoordinate currentCoord = direction.next(coordinate); currentCoord != null;
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
@@ -141,13 +145,13 @@ public enum Piece {
         return result;
     }
 
-    private static List<List<ChessCoordinate>> generateBishopReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateBishopReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         for (Direction direction : Directions.DIAGONALS) {
             List<ChessCoordinate> ray = new ArrayList<>();
-            for (ChessCoordinate currentCoord = direction.next(coordinate);
-                 currentCoord != null;
+            for (ChessCoordinate currentCoord = direction.next(coordinate); currentCoord != null;
                  currentCoord = direction.next(currentCoord)) {
                 ray.add(currentCoord);
             }
@@ -157,7 +161,8 @@ public enum Piece {
         return result;
     }
 
-    private static List<List<ChessCoordinate>> generateKnightReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateKnightReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         for (Direction direction : Directions.KNIGHTS) {
@@ -177,7 +182,8 @@ public enum Piece {
      * @param coordinate the coordinate the pawn is at.
      * @return list of lists of ChessCoordinates that represent the squares the pawn can move.
      */
-    private static List<List<ChessCoordinate>> generateWhitePawnReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateWhitePawnReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         List<ChessCoordinate> straightMoves = new ArrayList<>();
@@ -221,7 +227,8 @@ public enum Piece {
      * @return list of lists of ChessCoordinates that represent the squares the pawn can move.
      */
     @SuppressWarnings("unchecked")
-    private static List<List<ChessCoordinate>> generateBlackPawnReachableCoordsAt(ChessCoordinate coordinate) {
+    private static List<List<ChessCoordinate>> generateBlackPawnReachableCoordsAt(
+            ChessCoordinate coordinate) {
         List<List<ChessCoordinate>> result = new ArrayList<>();
 
         List<ChessCoordinate> straightMoves = new ArrayList<>();
@@ -248,7 +255,8 @@ public enum Piece {
         } else {
             result.add(List.of());
         }
-        result.add(0, List.of(straightMoves.toArray(straightMoves.toArray(ChessCoordinate[]::new))));
+        result.add(0,
+                List.of(straightMoves.toArray(straightMoves.toArray(ChessCoordinate[]::new))));
 
         return List.of(result.toArray(size -> (List<ChessCoordinate>[]) new List[size]));
     }

@@ -16,9 +16,10 @@ public class PieceCountFeature implements Feature {
 
         byte[] pieceCounts = new byte[6];
         for (Piece piece : Piece.values()) {
-            if (piece == EMPTY) continue;
-            pieceCounts[piece.getUniqueIdx() % 6] += (piece.getColor() == WHITE ? 1 : -1)
-                    * board.getLocations(piece).size();
+            if (piece == EMPTY)
+                continue;
+            pieceCounts[piece.getUniqueIdx() % 6] +=
+                    (piece.getColor() == WHITE ? 1 : -1) * board.getLocations(piece).size();
         }
 
         for (byte pieceCount : pieceCounts) {

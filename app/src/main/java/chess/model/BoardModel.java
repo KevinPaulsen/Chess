@@ -63,7 +63,8 @@ public class BoardModel {
                 black |= squareMask;
             }
 
-            hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx), hashValue);
+            hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx),
+                    hashValue);
 
             pieceIdx--;
         }
@@ -121,27 +122,31 @@ public class BoardModel {
      * @return the reference to the white king.
      */
     public ChessCoordinate getWhiteKingCoord() {
-        return ChessCoordinate.getChessCoordinate(Long.numberOfTrailingZeros(getState().pieceMaps[WHITE_KING.ordinal()]));
+        return ChessCoordinate.getChessCoordinate(
+                Long.numberOfTrailingZeros(getState().pieceMaps[WHITE_KING.ordinal()]));
     }
 
     /**
      * @return the reference to the black king.
      */
     public ChessCoordinate getBlackKingCoord() {
-        return ChessCoordinate.getChessCoordinate(Long.numberOfTrailingZeros(getState().pieceMaps[BLACK_KING.ordinal()]));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BoardModel that)) return false;
-
-        return getState().equals(that.getState());
+        return ChessCoordinate.getChessCoordinate(
+                Long.numberOfTrailingZeros(getState().pieceMaps[BLACK_KING.ordinal()]));
     }
 
     @Override
     public int hashCode() {
         return (int) hashValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof BoardModel that))
+            return false;
+
+        return getState().equals(that.getState());
     }
 
     /**
@@ -183,24 +188,37 @@ public class BoardModel {
         return hashValue;
     }
 
-    public record BoardState(long[] pieceMaps, long white, long black, long occupied, long deltaHash) {
+    public record BoardState(long[] pieceMaps, long white, long black, long occupied,
+                             long deltaHash) {
 
         public Piece getPieceOn(long coordinateMask) {
             if ((occupied & coordinateMask) != 0) {
                 if ((white & coordinateMask) != 0) {
-                    if ((pieceMaps[WHITE_PAWN.ordinal()] & coordinateMask) != 0) return WHITE_PAWN;
-                    if ((pieceMaps[WHITE_KNIGHT.ordinal()] & coordinateMask) != 0) return WHITE_KNIGHT;
-                    if ((pieceMaps[WHITE_BISHOP.ordinal()] & coordinateMask) != 0) return WHITE_BISHOP;
-                    if ((pieceMaps[WHITE_ROOK.ordinal()] & coordinateMask) != 0) return WHITE_ROOK;
-                    if ((pieceMaps[WHITE_QUEEN.ordinal()] & coordinateMask) != 0) return WHITE_QUEEN;
-                    if ((pieceMaps[WHITE_KING.ordinal()] & coordinateMask) != 0) return WHITE_KING;
+                    if ((pieceMaps[WHITE_PAWN.ordinal()] & coordinateMask) != 0)
+                        return WHITE_PAWN;
+                    if ((pieceMaps[WHITE_KNIGHT.ordinal()] & coordinateMask) != 0)
+                        return WHITE_KNIGHT;
+                    if ((pieceMaps[WHITE_BISHOP.ordinal()] & coordinateMask) != 0)
+                        return WHITE_BISHOP;
+                    if ((pieceMaps[WHITE_ROOK.ordinal()] & coordinateMask) != 0)
+                        return WHITE_ROOK;
+                    if ((pieceMaps[WHITE_QUEEN.ordinal()] & coordinateMask) != 0)
+                        return WHITE_QUEEN;
+                    if ((pieceMaps[WHITE_KING.ordinal()] & coordinateMask) != 0)
+                        return WHITE_KING;
                 } else {
-                    if ((pieceMaps[BLACK_PAWN.ordinal()] & coordinateMask) != 0) return BLACK_PAWN;
-                    if ((pieceMaps[BLACK_KNIGHT.ordinal()] & coordinateMask) != 0) return BLACK_KNIGHT;
-                    if ((pieceMaps[BLACK_BISHOP.ordinal()] & coordinateMask) != 0) return BLACK_BISHOP;
-                    if ((pieceMaps[BLACK_ROOK.ordinal()] & coordinateMask) != 0) return BLACK_ROOK;
-                    if ((pieceMaps[BLACK_QUEEN.ordinal()] & coordinateMask) != 0) return BLACK_QUEEN;
-                    if ((pieceMaps[BLACK_KING.ordinal()] & coordinateMask) != 0) return BLACK_KING;
+                    if ((pieceMaps[BLACK_PAWN.ordinal()] & coordinateMask) != 0)
+                        return BLACK_PAWN;
+                    if ((pieceMaps[BLACK_KNIGHT.ordinal()] & coordinateMask) != 0)
+                        return BLACK_KNIGHT;
+                    if ((pieceMaps[BLACK_BISHOP.ordinal()] & coordinateMask) != 0)
+                        return BLACK_BISHOP;
+                    if ((pieceMaps[BLACK_ROOK.ordinal()] & coordinateMask) != 0)
+                        return BLACK_ROOK;
+                    if ((pieceMaps[BLACK_QUEEN.ordinal()] & coordinateMask) != 0)
+                        return BLACK_QUEEN;
+                    if ((pieceMaps[BLACK_KING.ordinal()] & coordinateMask) != 0)
+                        return BLACK_KING;
                 }
             }
             return null;

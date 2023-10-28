@@ -38,17 +38,6 @@ public class BigFastMap implements Iterable<Long> {
         map = Arrays.copyOf(map, map.length + 1);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        for (long map : map) {
-            builder.append(Long.toBinaryString(map));
-        }
-
-        return builder.toString();
-    }
-
     public String toShortString() {
         StringBuilder builder = new StringBuilder();
         for (long bucket : map) {
@@ -59,15 +48,28 @@ public class BigFastMap implements Iterable<Long> {
     }
 
     @Override
+    public int hashCode() {
+        return Arrays.hashCode(map);
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BigFastMap that)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof BigFastMap that))
+            return false;
         return Arrays.equals(map, that.map);
     }
 
     @Override
-    public int hashCode() {
-        return Arrays.hashCode(map);
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (long map : map) {
+            builder.append(Long.toBinaryString(map));
+        }
+
+        return builder.toString();
     }
 
     public int numBytes() {

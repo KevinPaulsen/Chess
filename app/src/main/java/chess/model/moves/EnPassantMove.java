@@ -43,7 +43,8 @@ public class EnPassantMove implements Movable {
         long deltaHash = 0x0L;
         deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(start), deltaHash);
         deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(end), deltaHash);
-        deltaHash = Zobrist.flipPiece(captured, ChessCoordinate.getChessCoordinate(captureStart), deltaHash);
+        deltaHash = Zobrist.flipPiece(captured, ChessCoordinate.getChessCoordinate(captureStart),
+                deltaHash);
 
         return new BoardModel.BoardState(pieceMaps, white, black, white | black, deltaHash);
     }
@@ -51,10 +52,6 @@ public class EnPassantMove implements Movable {
     @Override
     public Piece getMovingPiece() {
         return moving;
-    }
-
-    public ChessCoordinate getCaptureCoordinate() {
-        return ChessCoordinate.getChessCoordinate(captureStart);
     }
 
     @Override
@@ -67,16 +64,8 @@ public class EnPassantMove implements Movable {
         return ChessCoordinate.getChessCoordinate(end);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EnPassantMove that)) return false;
-
-        if (start != that.start) return false;
-        if (end != that.end) return false;
-        if (captureStart != that.captureStart) return false;
-        if (moving != that.moving) return false;
-        return captured == that.captured;
+    public ChessCoordinate getCaptureCoordinate() {
+        return ChessCoordinate.getChessCoordinate(captureStart);
     }
 
     @Override
@@ -90,8 +79,26 @@ public class EnPassantMove implements Movable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof EnPassantMove that))
+            return false;
+
+        if (start != that.start)
+            return false;
+        if (end != that.end)
+            return false;
+        if (captureStart != that.captureStart)
+            return false;
+        if (moving != that.moving)
+            return false;
+        return captured == that.captured;
+    }
+
+    @Override
     public String toString() {
-        return ChessCoordinate.getChessCoordinate(start).toString()
-                + ChessCoordinate.getChessCoordinate(end).toString();
+        return ChessCoordinate.getChessCoordinate(start).toString() +
+                ChessCoordinate.getChessCoordinate(end).toString();
     }
 }

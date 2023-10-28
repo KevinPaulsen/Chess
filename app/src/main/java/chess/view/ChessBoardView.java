@@ -22,16 +22,20 @@ public class ChessBoardView extends Region {
 
     private final GridPane board;
     private final ChessView.MoveController controller;
+    private ChessPieceView movingPiece = null;
 
-    public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller, ChessView.GameDataRetriever dataRetriever) {
+    public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller,
+                          ChessView.GameDataRetriever dataRetriever) {
         this.board = createBoard();
         this.controller = controller;
 
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
                 if (pieceArray[row * 8 + col] != null) {
-                    StackPane square = (StackPane) board.getChildren().get((numRows - row - 1) * 8 + col);
-                    ImageView piece = new ChessPieceView(pieceArray[row * 8 + col], square.widthProperty());
+                    StackPane square =
+                            (StackPane) board.getChildren().get((numRows - row - 1) * 8 + col);
+                    ImageView piece =
+                            new ChessPieceView(pieceArray[row * 8 + col], square.widthProperty());
                     square.getChildren().add(piece);
                 }
             }
@@ -45,8 +49,6 @@ public class ChessBoardView extends Region {
     public Region getRegion() {
         return this;
     }
-
-    private ChessPieceView movingPiece = null;
 
     private GridPane createBoard() {
         GridPane gridPane = new GridPane();
@@ -73,7 +75,8 @@ public class ChessBoardView extends Region {
                 movingPiece = new ChessPieceView(square.getPieceView().getPiece(),
                         square.widthProperty());
                 Bounds bounds = board.localToScene(board.getBoundsInLocal());
-                movingPiece.relocate(event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
+                movingPiece.relocate(
+                        event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
                         event.getSceneY() - movingPiece.getFitWidth() / 2 - bounds.getMinY());
                 this.getChildren().add(movingPiece);
             }
@@ -109,7 +112,8 @@ public class ChessBoardView extends Region {
         square.setOnMouseDragged(event -> {
             if (event.getButton() == MouseButton.PRIMARY && movingPiece != null) {
                 Bounds bounds = board.localToScene(board.getBoundsInLocal());
-                movingPiece.relocate(event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
+                movingPiece.relocate(
+                        event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
                         event.getSceneY() - movingPiece.getFitWidth() / 2 - bounds.getMinY());
             }
             event.consume();
@@ -146,7 +150,8 @@ public class ChessBoardView extends Region {
     }
 
     private ChessSquare getSquareAt(ChessCoordinate coordinate) {
-        return (ChessSquare) board.getChildren().get((7 - coordinate.getRank()) * numRows + coordinate.getFile());
+        return (ChessSquare) board.getChildren()
+                .get((7 - coordinate.getRank()) * numRows + coordinate.getFile());
     }
 
     private @Nullable ChessSquare getSquareAt(double sceneX, double sceneY) {

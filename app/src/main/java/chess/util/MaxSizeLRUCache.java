@@ -1,7 +1,5 @@
 package chess.util;
 
-import chess.model.MoveList;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 

@@ -170,8 +170,10 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
      * @throws ClassCastException   if key is not a Long.
      */
     private static void checkKey(Object key) {
-        if (key == null) throw new NullPointerException("Key cannot be null");
-        if (!(key instanceof Long)) throw new ClassCastException("Key is not of type Long");
+        if (key == null)
+            throw new NullPointerException("Key cannot be null");
+        if (!(key instanceof Long))
+            throw new ClassCastException("Key is not of type Long");
     }
 
     /**
@@ -208,10 +210,12 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
      * key
      * @throws ClassCastException   if the key is of an inappropriate type for
      *                              this map
-     *                              (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     *                              (<a href="{@docRoot}/java.base/java/util/Collection
+     *                              .html#optional-restrictions">optional</a>)
      * @throws NullPointerException if the specified key is null and this map
      *                              does not permit null keys
-     *                              (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     *                              (<a href="{@docRoot}/java.base/java/util/Collection
+     *                              .html#optional-restrictions">optional</a>)
      */
     @Override
     public boolean containsKey(Object key) {
@@ -255,10 +259,12 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
      * {@code null} if this map contains no mapping for the key
      * @throws ClassCastException   if the key is of an inappropriate type for
      *                              this map
-     *                              (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     *                              (<a href="{@docRoot}/java.base/java/util/Collection
+     *                              .html#optional-restrictions">optional</a>)
      * @throws NullPointerException if the specified key is null and this map
      *                              does not permit null keys
-     *                              (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     *                              (<a href="{@docRoot}/java.base/java/util/Collection
+     *                              .html#optional-restrictions">optional</a>)
      */
     @Override
     public GameEntry get(Object key) {
@@ -299,7 +305,8 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
     @Override
     public GameEntry put(Long key, GameEntry value) {
         checkKey(key);
-        if (value == null) throw new IllegalStateException("Null values are not supported");
+        if (value == null)
+            throw new IllegalStateException("Null values are not supported");
 
         if (bufferMap.size() > MAX_BUFFER_SIZE) {
             writeBufferMap();
@@ -313,29 +320,6 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
             currentEntry.addScore(value.getWhiteWins(), value.getBlackWins());
         }
         return currentEntry;
-    }
-
-    public void writeBufferMap() {
-        long startTime = System.currentTimeMillis();
-        System.out.println("Writing to file...");
-        RandomAccessFile accessFile = getRandomAccessFile(filePath);
-        for (Entry<Long, GameEntry> entry : bufferMap.entrySet()) {
-            seek(accessFile, entry.getKey());
-            int size = readInt(accessFile);
-
-            if (size == 0) {
-                seek(accessFile, entry.getKey());
-                write(accessFile, GameEntry.toByteArray(entry.getValue()));
-            } else {
-                int timesReached = readInt(accessFile) + entry.getValue().getTimesReached();
-                int score = readInt(accessFile) + entry.getValue().getWhiteWins();
-                writeInts(accessFile, timesReached, score);
-            }
-
-        }
-        close(accessFile);
-        bufferMap.clear();
-        System.out.printf("Finished writing to file... (%dms)\n", System.currentTimeMillis() - startTime);
     }
 
     /**
@@ -363,7 +347,8 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
      *                                       this map does not permit null keys or values, and the
      *                                       specified map contains null keys or values
      * @throws IllegalArgumentException      if some property of a key or value in
-     *                                       the specified map prevents it from being stored in this map
+     *                                       the specified map prevents it from being stored in
+     *                                       this map
      */
     @Override
     public void putAll(Map<? extends Long, ? extends GameEntry> m) {
@@ -443,6 +428,30 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
     @Override
     public Set<Entry<Long, GameEntry>> entrySet() {
         return null;
+    }
+
+    public void writeBufferMap() {
+        long startTime = System.currentTimeMillis();
+        System.out.println("Writing to file...");
+        RandomAccessFile accessFile = getRandomAccessFile(filePath);
+        for (Entry<Long, GameEntry> entry : bufferMap.entrySet()) {
+            seek(accessFile, entry.getKey());
+            int size = readInt(accessFile);
+
+            if (size == 0) {
+                seek(accessFile, entry.getKey());
+                write(accessFile, GameEntry.toByteArray(entry.getValue()));
+            } else {
+                int timesReached = readInt(accessFile) + entry.getValue().getTimesReached();
+                int score = readInt(accessFile) + entry.getValue().getWhiteWins();
+                writeInts(accessFile, timesReached, score);
+            }
+
+        }
+        close(accessFile);
+        bufferMap.clear();
+        System.out.printf("Finished writing to file... (%dms)\n",
+                System.currentTimeMillis() - startTime);
     }
 
     /**

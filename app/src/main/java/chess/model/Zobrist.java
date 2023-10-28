@@ -65,7 +65,8 @@ public abstract class Zobrist {
         long stateHashValue = 0x0L;
 
         ChessCoordinate enPassant = game.getEnPassantTarget();
-        int addedEnPassantTarget = enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
+        int addedEnPassantTarget =
+                enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
         stateHashValue ^= enPassantCoordTable[addedEnPassantTarget];
         int addedCastlingData = (int) (game.getGameState().getMap() & 0b1111L);
         stateHashValue ^= castlingHashTable[addedCastlingData];
@@ -85,9 +86,11 @@ public abstract class Zobrist {
         int currentCastlingData = (int) (gameState.getMap() & 0b1111L);
         hashValue ^= castlingHashTable[currentCastlingData];
 
-        ChessCoordinate enPassant = ChessCoordinate.getChessCoordinate((int) gameState.getMap() >> 7);
+        ChessCoordinate enPassant =
+                ChessCoordinate.getChessCoordinate((int) gameState.getMap() >> 7);
         enPassant = enPassant == A1 ? null : enPassant;
-        int addedEnPassantTarget = enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
+        int addedEnPassantTarget =
+                enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
         hashValue ^= enPassantCoordTable[addedEnPassantTarget];
 
         int currentSideToMove = gameState.isMarked(4) ? 0 : 1;
@@ -98,8 +101,9 @@ public abstract class Zobrist {
 
     public static long getHashValueWithTimesMoved(long hashValue, int numTimesReached) {
         if (3 < numTimesReached || numTimesReached < 0) {
-            throw new IllegalStateException("Times moved must be between 0 and 3 (inclusive). " +
-                    "Passed in: " + numTimesReached);
+            throw new IllegalStateException(
+                    "Times moved must be between 0 and 3 (inclusive). " + "Passed in: " +
+                            numTimesReached);
         }
 
         return hashValue ^ numTimesReachedTable[numTimesReached - 1];

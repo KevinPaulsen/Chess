@@ -19,10 +19,6 @@ public class ChessPieceView extends ImageView {
         this.piece = piece;
     }
 
-    public Piece getPiece() {
-        return piece;
-    }
-
     /**
      * Returns the ImageIcon corresponding to the given ChessPiece. A blank
      * ImageIcon is returned if the Piece is null.
@@ -52,6 +48,10 @@ public class ChessPieceView extends ImageView {
             case BLACK_KING -> path += "BKing.png";
         }
         return new Image(path);
+    }
+
+    public Piece getPiece() {
+        return piece;
     }
 
     public void promote(Piece promotedPiece) {

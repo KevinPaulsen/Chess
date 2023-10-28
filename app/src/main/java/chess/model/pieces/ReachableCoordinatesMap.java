@@ -25,13 +25,15 @@ public class ReachableCoordinatesMap {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<List<ChessCoordinate>>[] generateReachableCoordinates(CoordinateMapMaker mapMaker) {
+    private static List<List<ChessCoordinate>>[] generateReachableCoordinates(
+            CoordinateMapMaker mapMaker) {
         List<List<ChessCoordinate>>[] result = new List[64];
 
         if (mapMaker != null) {
             for (int file = 0; file < 8; file++) {
                 for (int rank = 0; rank < 8; rank++) {
-                    result[rank * 8 + file] = mapMaker.makeMap(ChessCoordinate.getChessCoordinate(file, rank));
+                    result[rank * 8 + file] =
+                            mapMaker.makeMap(ChessCoordinate.getChessCoordinate(file, rank));
                 }
             }
         }

@@ -1,7 +1,7 @@
 package chess.model.chessai;
 
-import chess.model.moves.Movable;
 import chess.model.GameModel;
+import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
 
 import java.util.List;

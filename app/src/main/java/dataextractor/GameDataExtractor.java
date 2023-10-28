@@ -1,7 +1,6 @@
 package dataextractor;
 
 import chess.model.GameModel;
-import chess.model.features.BoardRepFeature;
 import chess.model.features.Feature;
 
 import java.io.BufferedWriter;
@@ -99,7 +98,8 @@ public class GameDataExtractor {
 
         final int initSize = posToWins.size();
 
-        System.out.printf("Writing %d entries, estimated %f GB\n", initSize, (initSize * 62L) / 1_000_000_000f);
+        System.out.printf("Writing %d entries, estimated %f GB\n", initSize,
+                (initSize * 62L) / 1_000_000_000f);
 
         Writer writer = getFileWriter(FEN_FILENAME);
         Iterator<GameProcessor.PositionData> positionDataIterator = posToWins.values().iterator();
@@ -122,15 +122,18 @@ public class GameDataExtractor {
 
         // Create Executors
         final ExecutorService gameProcessingExecutor = Executors.newFixedThreadPool(numThreads - 1);
-        final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+        final ScheduledExecutorService scheduledExecutor =
+                Executors.newSingleThreadScheduledExecutor();
 
         // Start game processing threads
         for (int threadNum = 0; threadNum < numThreads - 1; threadNum++) {
-            CompletableFuture.runAsync(() -> runUntilNoSuchElement(r, counter), gameProcessingExecutor);
+            CompletableFuture.runAsync(() -> runUntilNoSuchElement(r, counter),
+                    gameProcessingExecutor);
         }
 
-        final ScheduledFuture<?> scheduledFuture = scheduledExecutor.scheduleAtFixedRate(() ->
-                        printProgress(100, (float) counter.get() / total), 0, 250, TimeUnit.MILLISECONDS);
+        final ScheduledFuture<?> scheduledFuture = scheduledExecutor.scheduleAtFixedRate(
+                () -> printProgress(100, (float) counter.get() / total), 0, 250,
+                TimeUnit.MILLISECONDS);
 
         runUntilNoSuchElement(r, counter);
 
@@ -145,7 +148,8 @@ public class GameDataExtractor {
     }
 
     private static void printProgress(int length, float progress) {
-        System.out.printf(String.format("|%%-%ds|\r", length), "#".repeat((int) (length * progress)));
+        System.out.printf(String.format("|%%-%ds|\r", length),
+                "#".repeat((int) (length * progress)));
     }
 
     private static void runUntilNoSuchElement(Runnable r, AtomicInteger counter) {
@@ -176,7 +180,8 @@ public class GameDataExtractor {
         fileReader.close();
 
 
-        int[] frequencies = new int[countToFrequency.keySet().stream().max(Integer::compareTo).orElse(0) + 1];
+        int[] frequencies =
+                new int[countToFrequency.keySet().stream().max(Integer::compareTo).orElse(0) + 1];
         countToFrequency.forEach((key, value) -> frequencies[frequencies.length - 1 - key] = value);
 
         int sum = 0;
@@ -225,7 +230,8 @@ public class GameDataExtractor {
             float whiteScore = (float) whiteWin / (whiteWin + blackWin);
             float blackScore = (float) blackWin / (whiteWin + blackWin);
 
-            writeTo(fileWriter, String.format("%10.7f\t%s\n", (whiteScore - blackScore), sections[1]));
+            writeTo(fileWriter,
+                    String.format("%10.7f\t%s\n", (whiteScore - blackScore), sections[1]));
         });
 
         closeWriter(fileWriter);
@@ -243,7 +249,8 @@ public class GameDataExtractor {
 
     private static void extractFeature(Feature feature) {
         LineFileReader filteredScoreReader = new LineFileReader(FILTERED_SCORE);
-        Writer writer = getFileWriter(MODEL_DATA_PATH + feature.getClass().getSimpleName() + ".txt");
+        Writer writer =
+                getFileWriter(MODEL_DATA_PATH + feature.getClass().getSimpleName() + ".txt");
 
         parallelize(6, NUM_FILTERED, () -> {
             String line = filteredScoreReader.next();
@@ -252,10 +259,7 @@ public class GameDataExtractor {
             GameModel game = new GameModel(sections[1]);
             String featureString = feature.featureString(game);
             if (!sections[0].equals(" 0.0000000")) {
-                String builder = sections[0]
-                        + ","
-                        + featureString
-                        + "\n";
+                String builder = sections[0] + "," + featureString + "\n";
                 writeTo(writer, builder);
             }
         });

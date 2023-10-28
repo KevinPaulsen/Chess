@@ -4,7 +4,6 @@ import chess.ChessCoordinate;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
-import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
 import chess.view.ChessView;
 import javafx.application.Application;
@@ -46,18 +45,18 @@ public class ChessController extends Application {
         super.init();
 
         gameModel = new GameModel();
-        view = new ChessView(gameModel.getBoard().getPieceArray(),
-                this::makeMove, new ChessView.GameDataRetriever() {
-            @Override
-            public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
-                return null;
-            }
+        view = new ChessView(gameModel.getBoard().getPieceArray(), this::makeMove,
+                new ChessView.GameDataRetriever() {
+                    @Override
+                    public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
+                        return null;
+                    }
 
-            @Override
-            public char getTurn() {
-                return gameModel.getTurn();
-            }
-        });
+                    @Override
+                    public char getTurn() {
+                        return gameModel.getTurn();
+                    }
+                });
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
@@ -112,7 +111,9 @@ public class ChessController extends Application {
 
     private void makeAIMove() {
         if (futureAIMove == null || futureAIMove.isDone()) {
-            futureAIMove = CompletableFuture.runAsync(() -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor).thenRun(this::printAndUpdate).exceptionally((ex) -> {
+            futureAIMove = CompletableFuture.runAsync(
+                    () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)),
+                    aiExecutor).thenRun(this::printAndUpdate).exceptionally((ex) -> {
                 ex.printStackTrace();
                 return null;
             });

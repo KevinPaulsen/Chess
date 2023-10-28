@@ -14,7 +14,8 @@ public class ChessSquare extends StackPane {
 
     private final ChessCoordinate coordinate;
 
-    public ChessSquare(boolean isDark, DoubleBinding widthProperty, DoubleBinding heightProperty, int file, int rank) {
+    public ChessSquare(boolean isDark, DoubleBinding widthProperty, DoubleBinding heightProperty,
+                       int file, int rank) {
         this.setMinSize(MIN_SIZE, MIN_SIZE);
         this.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         this.prefWidthProperty().bind(widthProperty);

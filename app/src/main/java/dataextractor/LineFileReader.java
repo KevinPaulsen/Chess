@@ -8,10 +8,9 @@ import java.util.Scanner;
 
 public class LineFileReader implements Iterator<String> {
 
-    private final Scanner fileScanner;
-
-    int count = 0;
     private static final int MAX_COUNT = 100_000;
+    private final Scanner fileScanner;
+    int count = 0;
 
     public LineFileReader(String fileName) {
         this.fileScanner = getFileScanner(fileName);

@@ -5,7 +5,7 @@ import chess.model.BoardModel;
 import chess.model.Zobrist;
 import chess.model.pieces.Piece;
 
-import static chess.model.pieces.Piece.*;
+import static chess.model.pieces.Piece.WHITE_PAWN;
 
 public class PromotionMove implements Movable {
 
@@ -14,7 +14,8 @@ public class PromotionMove implements Movable {
     private final long start;
     private final long end;
 
-    public PromotionMove(Piece pawn, Piece promotedPiece, ChessCoordinate start, ChessCoordinate end) {
+    public PromotionMove(Piece pawn, Piece promotedPiece, ChessCoordinate start,
+                         ChessCoordinate end) {
         this.pawn = pawn;
         this.promotedPiece = promotedPiece;
         this.start = start.getBitMask();
@@ -35,23 +36,29 @@ public class PromotionMove implements Movable {
 
         if (capturedPiece != null) { // This move captures a piece
             pieceMaps[capturedPiece.ordinal()] &= ~end;
-            deltaHash = Zobrist.flipPiece(capturedPiece, ChessCoordinate.getChessCoordinate(end), deltaHash);
+            deltaHash = Zobrist.flipPiece(capturedPiece, ChessCoordinate.getChessCoordinate(end),
+                    deltaHash);
 
-            if (isWhite) black ^= end;
-            else white ^= end;
+            if (isWhite)
+                black ^= end;
+            else
+                white ^= end;
 
             occupied ^= start;
         } else {
             occupied ^= moveMask;
         }
 
-        if (isWhite) white ^= moveMask;
-        else black ^= moveMask;
+        if (isWhite)
+            white ^= moveMask;
+        else
+            black ^= moveMask;
 
         pieceMaps[pawn.ordinal()] ^= start;
         deltaHash = Zobrist.flipPiece(pawn, ChessCoordinate.getChessCoordinate(start), deltaHash);
         pieceMaps[promotedPiece.ordinal()] ^= end;
-        deltaHash = Zobrist.flipPiece(promotedPiece, ChessCoordinate.getChessCoordinate(end), deltaHash);
+        deltaHash = Zobrist.flipPiece(promotedPiece, ChessCoordinate.getChessCoordinate(end),
+                deltaHash);
 
         return new BoardModel.BoardState(pieceMaps, white, black, occupied, deltaHash);
     }
@@ -59,10 +66,6 @@ public class PromotionMove implements Movable {
     @Override
     public Piece getMovingPiece() {
         return pawn;
-    }
-
-    public Piece getPromotedPiece() {
-        return promotedPiece;
     }
 
     @Override
@@ -75,15 +78,8 @@ public class PromotionMove implements Movable {
         return ChessCoordinate.getChessCoordinate(end);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PromotionMove that)) return false;
-
-        if (start != that.start) return false;
-        if (end != that.end) return false;
-        if (pawn != that.pawn) return false;
-        return getPromotedPiece() == that.getPromotedPiece();
+    public Piece getPromotedPiece() {
+        return promotedPiece;
     }
 
     @Override
@@ -96,8 +92,25 @@ public class PromotionMove implements Movable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof PromotionMove that))
+            return false;
+
+        if (start != that.start)
+            return false;
+        if (end != that.end)
+            return false;
+        if (pawn != that.pawn)
+            return false;
+        return getPromotedPiece() == that.getPromotedPiece();
+    }
+
+    @Override
     public String toString() {
-        return ChessCoordinate.getChessCoordinate(start).toString()
-                + ChessCoordinate.getChessCoordinate(end).toString() + "=" + promotedPiece.getStringRep();
+        return ChessCoordinate.getChessCoordinate(start).toString() +
+                ChessCoordinate.getChessCoordinate(end).toString() + "=" +
+                promotedPiece.getStringRep();
     }
 }

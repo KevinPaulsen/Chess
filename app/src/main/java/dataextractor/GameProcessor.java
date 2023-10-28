@@ -1,10 +1,10 @@
 package dataextractor;
 
 import chess.ChessCoordinate;
-import chess.model.moves.CastlingMove;
-import chess.model.moves.Movable;
 import chess.model.GameModel;
 import chess.model.MoveList;
+import chess.model.moves.CastlingMove;
+import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 
@@ -34,14 +34,16 @@ public class GameProcessor {
                 if (stringMove.length() == 1) {
                     break;
                 }
-                
-                if (game.move(getMove(game, stringMove))) moveNum++;
+
+                if (game.move(getMove(game, stringMove)))
+                    moveNum++;
 
                 if (MIN_MOVE < moveNum && moveNum < MAX_MOVE) {
                     byte[] byteRep = game.getRep();
                     int[] winData = winner == 0 ? new int[]{1, 0} : new int[]{0, 1};
                     PositionData data = new PositionData(byteRep, winData);
-                    posToWins.merge(game.getZobristHash(), data, (oldScore, newScore) -> oldScore.addTo(winner));
+                    posToWins.merge(game.getZobristHash(), data,
+                            (oldScore, newScore) -> oldScore.addTo(winner));
                 }
             }
         }
@@ -62,35 +64,41 @@ public class GameProcessor {
             Piece movingPiece = move.getMovingPiece();
 
             if (isCastleMove) {
-                if ((move instanceof CastlingMove)
-                        && ((endCoord.getFile() == 6 && stringMove.length() < 5)
-                        || (endCoord.getFile() == 2 && stringMove.length() >= 5))) {
+                if ((move instanceof CastlingMove) &&
+                        ((endCoord.getFile() == 6 && stringMove.length() < 5) ||
+                                (endCoord.getFile() == 2 && stringMove.length() >= 5))) {
                     return move;
                 } else {
                     continue;
                 }
             }
 
-            if (!movingPiece.isPawn() && charRep[PIECE] != movingPiece.getStringRep().toUpperCase().charAt(0)) {
+            if (!movingPiece.isPawn() &&
+                    charRep[PIECE] != movingPiece.getStringRep().toUpperCase().charAt(0)) {
                 continue;
             }
 
             // Ensure that the end coordinate is correct.
-            if (charRep[END_FILE] != endCoord.getCharFile() || charRep[END_RANK] - '0' != endCoord.getCharRank()) {
+            if (charRep[END_FILE] != endCoord.getCharFile() ||
+                    charRep[END_RANK] - '0' != endCoord.getCharRank()) {
                 continue;
             }
 
             ChessCoordinate startingCoordinate = move.getStartCoordinate();
 
-            if (charRep[START_FILE] != 0 && charRep[START_FILE] != startingCoordinate.getCharFile()) {
+            if (charRep[START_FILE] != 0 &&
+                    charRep[START_FILE] != startingCoordinate.getCharFile()) {
                 continue;
             }
 
-            if (charRep[START_RANK] != 0 && charRep[START_RANK] - '0' != startingCoordinate.getCharRank()) {
+            if (charRep[START_RANK] != 0 &&
+                    charRep[START_RANK] - '0' != startingCoordinate.getCharRank()) {
                 continue;
             }
 
-            if (charRep[EQUALS] == '=' && ((PromotionMove) move).getPromotedPiece().getStringRep().toUpperCase().charAt(0) != charRep[PROMOTION]) {
+            if (charRep[EQUALS] == '=' &&
+                    ((PromotionMove) move).getPromotedPiece().getStringRep().toUpperCase()
+                            .charAt(0) != charRep[PROMOTION]) {
                 continue;
             }
 
@@ -104,7 +112,8 @@ public class GameProcessor {
         char[] charRep = new char[7];
 
         char possibleCheckChar = stringMove.charAt(stringMove.length() - 1);
-        int endIdx = stringMove.length() - (possibleCheckChar == '+' || possibleCheckChar == '#' ? 2 : 1);
+        int endIdx = stringMove.length() -
+                (possibleCheckChar == '+' || possibleCheckChar == '#' ? 2 : 1);
         if (stringMove.charAt(endIdx - 1) == '=') {
             charRep[EQUALS] = '=';
             charRep[PROMOTION] = stringMove.charAt(endIdx--);
