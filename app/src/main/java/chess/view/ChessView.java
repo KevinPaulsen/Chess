@@ -21,14 +21,15 @@ public class ChessView {
     private final BorderPane content;
     private final ChessBoardView boardView;
     private final ChessTurnView turnView;
+    private final ChessInputView inputView;
 
     public ChessView(Piece[] pieceArray, MoveController controller,
                      GameDataRetriever dataRetriever) {
         this.root = new StackPane();
         this.boardView = new ChessBoardView(pieceArray, controller, dataRetriever);
         this.turnView = new ChessTurnView(dataRetriever);
+        this.inputView = new ChessInputView();
         this.scene = new Scene(root, 400, 400);
-
 
         content = new BorderPane();
         content.setPadding(new Insets(10));
@@ -40,6 +41,11 @@ public class ChessView {
         turnView.prefWidthProperty().bind(content.widthProperty());
         BorderPane.setMargin(turnView, new Insets(0, 0, 10, 0));
         content.setTop(turnView);
+
+        // Set inputView at bottom
+        inputView.prefWidthProperty().bind(content.widthProperty());
+        BorderPane.setMargin(inputView, new Insets(10, 0, 0, 0));
+        content.setBottom(inputView);
 
         // Set the Background and add content
         Background background = new Background(
@@ -66,12 +72,16 @@ public class ChessView {
     }
 
     private void adjustSize() {
-        double availableWidth =
-                root.getWidth() - content.getPadding().getLeft() - content.getPadding().getRight();
-        double availableHeight = root.getHeight() - content.getPadding().getTop() -
-                content.getPadding().getBottom() - turnView.getHeight() -
-                BorderPane.getMargin(turnView).getBottom() +
-                BorderPane.getMargin(turnView).getTop();
+        Insets boardPadding = content.getPadding();
+        Insets turnPadding = BorderPane.getMargin(turnView);
+        Insets inputPadding = BorderPane.getMargin(inputView);
+
+        double availableWidth = root.getWidth() - boardPadding.getLeft() - boardPadding.getRight();
+
+        double availableHeight =
+                root.getHeight() - boardPadding.getTop() - boardPadding.getBottom() -
+                        turnView.getHeight() - turnPadding.getBottom() - turnPadding.getTop() -
+                        inputView.getHeight() - inputPadding.getBottom() - inputPadding.getTop();
 
         double size = Math.min(availableWidth, availableHeight);
 
@@ -87,9 +97,11 @@ public class ChessView {
     public double getMinimumHeight() {
         Insets contentPadding = content.getPadding();
         Insets turnViewPadding = BorderPane.getMargin(turnView);
+        Insets inputViewPadding = BorderPane.getMargin(inputView);
 
         return boardView.getMinimumHeight() + contentPadding.getTop() + contentPadding.getBottom() +
-                turnView.getHeight() + turnViewPadding.getTop() + turnViewPadding.getBottom();
+                turnView.getHeight() + turnViewPadding.getTop() + turnViewPadding.getBottom() +
+                inputView.getHeight() + inputViewPadding.getTop() + inputViewPadding.getBottom();
     }
 
     public interface MoveController {
