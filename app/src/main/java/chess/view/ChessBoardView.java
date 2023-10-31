@@ -14,7 +14,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ChessBoardView extends Region {
     private static final int numRows = 8;
@@ -22,12 +25,37 @@ public class ChessBoardView extends Region {
 
     private final GridPane board;
     private final ChessView.MoveController controller;
-    private ChessPieceView movingPiece = null;
+    private final ChessView.GameDataRetriever retriever;
+    private final Set<ChessSquareView> moveDestinations;
+    private final Set<ChessSquareView> lastMoved;
+    private DragData dragData;
 
     public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller,
                           ChessView.GameDataRetriever dataRetriever) {
         this.board = createBoard();
         this.controller = controller;
+        this.retriever = dataRetriever;
+
+        this.moveDestinations = new HashSet<>();
+        this.lastMoved = new HashSet<>();
+
+        addPieces(pieceArray);
+
+        this.board.prefHeightProperty().bind(this.heightProperty());
+        this.board.prefWidthProperty().bind(this.widthProperty());
+        this.getChildren().add(board);
+    }
+
+    /**
+     * Add all the Pieces to the correct squares.
+     *
+     * @param pieceArray the array of pieces from the Model. piece array should always be
+     *                   {@link #numRows} x {@link #numCols} long.
+     */
+    private void addPieces(Piece[] pieceArray) {
+        if (pieceArray.length != numCols * numRows) {
+            return;
+        }
 
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
@@ -40,22 +68,24 @@ public class ChessBoardView extends Region {
                 }
             }
         }
-
-        board.prefHeightProperty().bind(this.heightProperty());
-        board.prefWidthProperty().bind(this.widthProperty());
-        this.getChildren().add(board);
     }
 
     public Region getRegion() {
         return this;
     }
 
+    /**
+     * Initialize the board by creating pieces, and making sure they are properly resizeable. Also
+     * make sure each square is intractable.
+     *
+     * @return the created board
+     */
     private GridPane createBoard() {
         GridPane gridPane = new GridPane();
 
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
-                ChessSquare square = new ChessSquare((row + col) % 2 == 0,
+                ChessSquareView square = new ChessSquareView((row + col) % 2 == 0,
                         gridPane.widthProperty().divide(numCols),
                         gridPane.heightProperty().divide(numRows), col, 7 - row);
 
@@ -67,63 +97,112 @@ public class ChessBoardView extends Region {
         return gridPane;
     }
 
-    private void makeSquareDraggable(ChessSquare square) {
+    /**
+     * Add the logic to make sure that the square is draggable.
+     *
+     * @param square the square to make draggable
+     */
+    private void makeSquareDraggable(ChessSquareView square) {
         square.setOnMousePressed(event -> {
-            if (event.getButton() == MouseButton.PRIMARY && square.hasPiece()) {
-                Objects.requireNonNull(square.getPieceView()).opacityProperty().set(0.5);
-
-                movingPiece = new ChessPieceView(square.getPieceView().getPiece(),
-                        square.widthProperty());
-                Bounds bounds = board.localToScene(board.getBoundsInLocal());
-                movingPiece.relocate(
-                        event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
-                        event.getSceneY() - movingPiece.getFitWidth() / 2 - bounds.getMinY());
-                this.getChildren().add(movingPiece);
+            if (event.getButton() == MouseButton.PRIMARY) {
+                startDrag(square, event.getSceneX(), event.getSceneY());
             }
 
             event.consume();
         });
 
         square.setOnMouseReleased(event -> {
-            ChessPieceView piece = square.getPieceView();
-
-            if (piece == null) {
-                return;
-            }
-
-            square.getPieceView().opacityProperty().set(1);
-            this.getChildren().remove(movingPiece);
-            movingPiece = null;
-
-            if (event.getButton() != MouseButton.PRIMARY) {
-                event.consume();
-                return;
-            }
-
-            ChessSquare targetSquare = getSquareAt(event.getSceneX(), event.getSceneY());
-
-            if (targetSquare != null) {
-                controller.makeMove(square.getCoordinate(), targetSquare.getCoordinate());
+            if (event.getButton() == MouseButton.PRIMARY) {
+                endDrag(square, event.getSceneX(), event.getSceneY());
             }
 
             event.consume();
         });
 
         square.setOnMouseDragged(event -> {
-            if (event.getButton() == MouseButton.PRIMARY && movingPiece != null) {
-                Bounds bounds = board.localToScene(board.getBoundsInLocal());
-                movingPiece.relocate(
-                        event.getSceneX() - movingPiece.getFitWidth() / 2 - bounds.getMinX(),
-                        event.getSceneY() - movingPiece.getFitWidth() / 2 - bounds.getMinY());
-            }
+            updateDragged(event.getSceneX(), event.getSceneY());
             event.consume();
         });
+    }
+
+    private synchronized void updateDragged(double sceneX, double sceneY) {
+        if (dragData == null) {
+            return;
+        }
+
+        Bounds bounds = board.localToScene(board.getBoundsInLocal());
+        dragData.movePiece(sceneX, sceneY, bounds.getMinX(), bounds.getMinY());
+    }
+
+    private synchronized void endDrag(ChessSquareView square, double sceneX, double sceneY) {
+        // If Drag not happening, return
+        if (dragData == null) {
+            return;
+        }
+
+        // Make piece not transparent
+        dragData.originalPiece.makeNotGhost();
+        dragData.selected.unselect();
+
+        // Remove the dragged piece
+        this.getChildren().remove(dragData.draggedPiece);
+
+        // remove move destinations
+        for (ChessSquareView moveDestination : moveDestinations) {
+            moveDestination.removeModeDestination();
+        }
+        moveDestinations.clear();
+
+        // Attempt to make a move
+        ChessSquareView targetSquare = getSquareAt(sceneX, sceneY);
+        if (targetSquare != null) {
+            controller.makeMove(square.getCoordinate(), targetSquare.getCoordinate());
+        }
+
+        // Clear drag data
+        dragData = null;
+    }
+
+    private synchronized void startDrag(ChessSquareView square, double sceneX, double sceneY) {
+        // Make sure drag is possible
+        if (!retriever.canMove(square.getCoordinate())) {
+            return;
+        }
+
+        // If DragData is not null, then drag is already happening
+        if (dragData != null) {
+            return;
+        }
+
+        // Initialize DragData and move piece to cursor
+        dragData = new DragData(square);
+        Bounds bounds = board.localToScene(board.getBoundsInLocal());
+        dragData.movePiece(sceneX, sceneY, bounds.getMinX(), bounds.getMinY());
+        this.getChildren().add(dragData.draggedPiece);
+
+        moveDestinations.addAll(retriever.getReachableCoordinates(square.getCoordinate()).stream()
+                .map(this::getSquareAt).toList());
+        for (ChessSquareView destinationSquare : moveDestinations) {
+            destinationSquare.setMoveDestination();
+        }
+    }
+
+    private synchronized void clearAndUpdateLastMoved(ChessSquareView... squares) {
+        lastMoved.forEach(ChessSquareView::notLastMove);
+        lastMoved.clear();
+        Collections.addAll(lastMoved, squares);
+        lastMoved.forEach(ChessSquareView::isLastMove);
     }
 
     public void displayMove(Movable move) {
         if (move == null) {
             return;
         }
+
+        ChessSquareView start = getSquareAt(move.getStartCoordinate());
+        ChessSquareView end = getSquareAt(move.getEndCoordinate());
+
+        clearAndUpdateLastMoved(start, end);
 
         // If castling, move the rook
         if (move instanceof CastlingMove castlingMove) {
@@ -149,12 +228,12 @@ public class ChessBoardView extends Region {
         }
     }
 
-    private ChessSquare getSquareAt(ChessCoordinate coordinate) {
-        return (ChessSquare) board.getChildren()
+    private ChessSquareView getSquareAt(ChessCoordinate coordinate) {
+        return (ChessSquareView) board.getChildren()
                 .get((7 - coordinate.getRank()) * numRows + coordinate.getFile());
     }
 
-    private @Nullable ChessSquare getSquareAt(double sceneX, double sceneY) {
+    private @Nullable ChessSquareView getSquareAt(double sceneX, double sceneY) {
         Bounds bounds = board.localToScene(board.getBoundsInLocal());
 
         if (bounds.contains(sceneX, sceneY)) {
@@ -164,17 +243,36 @@ public class ChessBoardView extends Region {
             int row = (int) (localX / (bounds.getWidth() / numCols));
             int col = (int) (localY / (bounds.getHeight() / numRows));
 
-            return (ChessSquare) board.getChildren().get(numCols * col + row);
+            return (ChessSquareView) board.getChildren().get(numCols * col + row);
         } else {
             return null;
         }
     }
 
     public double getMinimumWidth() {
-        return numCols * ChessSquare.MIN_SIZE;
+        return numCols * ChessSquareView.MIN_SIZE;
     }
 
     public double getMinimumHeight() {
-        return numRows * ChessSquare.MIN_SIZE;
+        return numRows * ChessSquareView.MIN_SIZE;
+    }
+
+    private record DragData(ChessPieceView originalPiece, ChessPieceView draggedPiece,
+                            ChessSquareView selected) {
+
+        private DragData {
+            originalPiece.makeGhost();
+            selected.select();
+        }
+
+        private DragData(ChessSquareView selected) {
+            this(selected.getPieceView(), new ChessPieceView(selected.getPieceView().getPiece(),
+                    selected.widthProperty()), selected);
+        }
+
+        public void movePiece(double sceneX, double sceneY, double minX, double minY) {
+            draggedPiece.relocate(sceneX - draggedPiece.getFitWidth() / 2 - minX,
+                    sceneY - draggedPiece.getFitWidth() / 2 - minY);
+        }
     }
 }

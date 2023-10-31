@@ -100,5 +100,7 @@ public class ChessView {
         List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start);
 
         char getTurn();
+
+        boolean canMove(ChessCoordinate coordinate);
     }
 }

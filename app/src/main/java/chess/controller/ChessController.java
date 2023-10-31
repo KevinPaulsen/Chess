@@ -4,6 +4,7 @@ import chess.ChessCoordinate;
 import chess.model.GameModel;
 import chess.model.chessai.ChessAI;
 import chess.model.chessai.PositionEvaluator;
+import chess.model.moves.Movable;
 import chess.model.pieces.Piece;
 import chess.view.ChessView;
 import javafx.application.Application;
@@ -26,7 +27,7 @@ public class ChessController extends Application {
     private static final boolean AI_ON = true;
 
     private static final int MINIMUM_DEPTH = 1;
-    private static final int SEARCH_TIME = 1_000;
+    private static final int SEARCH_TIME = 2_000;
 
     private GameModel gameModel;
     private ChessView view;
@@ -49,12 +50,20 @@ public class ChessController extends Application {
                 new ChessView.GameDataRetriever() {
                     @Override
                     public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
-                        return null;
+                        return gameModel.getLegalMoves().toList().stream()
+                                .filter(move -> move.getStartCoordinate().equals(start))
+                                .map(Movable::getEndCoordinate).toList();
                     }
 
                     @Override
                     public char getTurn() {
                         return gameModel.getTurn();
+                    }
+
+                    @Override
+                    public boolean canMove(ChessCoordinate coordinate) {
+                        Piece piece = gameModel.getBoard().getPieceOn(coordinate);
+                        return piece != null && piece.getColor() == gameModel.getTurn();
                     }
                 });
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
@@ -110,20 +119,28 @@ public class ChessController extends Application {
     }
 
     private void makeAIMove() {
-        if (futureAIMove == null || futureAIMove.isDone()) {
-            futureAIMove = CompletableFuture.runAsync(
-                    () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)),
-                    aiExecutor).thenRun(this::printAndUpdate).exceptionally((ex) -> {
-                ex.printStackTrace();
-                return null;
-            });
+        // If game is over, dont make the move
+        if (gameModel.getGameOverStatus() != IN_PROGRESS) {
+            return;
         }
+
+        // If the future move is not done (previously computing) then return
+        if (futureAIMove != null && !futureAIMove.isDone()) {
+            return;
+        }
+
+        // Calculate the next best move, and make that move
+        futureAIMove = CompletableFuture.runAsync(
+                        () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)),
+                        aiExecutor)
+                .thenRun(this::printAndUpdate).exceptionally((ex) -> {
+                    ex.printStackTrace();
+                    return null;
+                });
     }
 
     private void printAndUpdate() {
-        Platform.runLater(() -> {
-            view.displayMove(gameModel.getLastMove());
-        });
+        Platform.runLater(() -> view.displayMove(gameModel.getLastMove()));
         if (gameModel.getGameOverStatus() != IN_PROGRESS) {
             System.out.printf("GAME OVER (%s)\n", switch (gameModel.getGameOverStatus()) {
                 case DRAW -> "Draw";

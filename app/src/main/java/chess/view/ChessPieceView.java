@@ -7,6 +7,9 @@ import javafx.scene.image.ImageView;
 
 public class ChessPieceView extends ImageView {
 
+    private static final double GHOST_OPACITY = 0.5;
+    private static final double NORMAL_OPACITY = 1;
+
     private Piece piece;
 
     public ChessPieceView(Piece piece, ReadOnlyDoubleProperty widthProperty) {
@@ -57,5 +60,13 @@ public class ChessPieceView extends ImageView {
     public void promote(Piece promotedPiece) {
         this.piece = promotedPiece;
         this.setImage(getImage(piece));
+    }
+
+    public void makeGhost() {
+        setOpacity(GHOST_OPACITY);
+    }
+
+    public void makeNotGhost() {
+        setOpacity(NORMAL_OPACITY);
     }
 }
