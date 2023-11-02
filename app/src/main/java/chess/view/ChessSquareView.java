@@ -72,9 +72,10 @@ public class ChessSquareView extends StackPane {
     }
 
     public void addPiece(ChessPieceView movingPiece) {
-        if (!hasPiece()) {
-            this.getChildren().add(movingPiece);
+        if (hasPiece()) {
+            this.removePiece();
         }
+        this.getChildren().add(movingPiece);
     }
 
     public ChessPieceView removePiece() {

@@ -18,57 +18,8 @@ public class BoardModel {
 
     private long hashValue = 0x0L;
 
-    public BoardModel(String FEN) {
+    public BoardModel() {
         stateHistory = new ArrayDeque<>();
-
-        long[] pieceMaps = new long[values().length];
-        long white = 0x0L;
-        long black = 0x0L;
-
-        int pieceIdx = 63;
-        for (char c : FEN.toCharArray()) {
-            if (c == '/') {
-                continue;
-            }
-
-            if (49 <= c && c <= 56) {
-                pieceIdx -= c - 48;
-                continue;
-            }
-
-            byte squareIdx = (byte) (pieceIdx + (7 - 2 * (pieceIdx % 8)));
-            Piece piece = switch (c) {
-                case 'K' -> WHITE_KING;
-                case 'Q' -> WHITE_QUEEN;
-                case 'R' -> WHITE_ROOK;
-                case 'B' -> WHITE_BISHOP;
-                case 'N' -> WHITE_KNIGHT;
-                case 'P' -> WHITE_PAWN;
-                case 'k' -> BLACK_KING;
-                case 'q' -> BLACK_QUEEN;
-                case 'r' -> BLACK_ROOK;
-                case 'b' -> BLACK_BISHOP;
-                case 'n' -> BLACK_KNIGHT;
-                case 'p' -> BLACK_PAWN;
-                default -> throw new IllegalStateException("Unexpected value: " + c);
-            };
-
-            long squareMask = ChessCoordinate.getChessCoordinate(squareIdx).getBitMask();
-
-            pieceMaps[piece.ordinal()] |= squareMask;
-
-            if (c < 'a') {
-                white |= squareMask;
-            } else {
-                black |= squareMask;
-            }
-
-            hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx),
-                    hashValue);
-
-            pieceIdx--;
-        }
-        stateHistory.add(new BoardState(pieceMaps, white, black, white | black, hashValue));
     }
 
     /**
@@ -186,6 +137,59 @@ public class BoardModel {
 
     public long getHashValue() {
         return hashValue;
+    }
+
+    public void setPosition(String fen) {
+        stateHistory.clear();
+
+        long[] pieceMaps = new long[values().length];
+        long white = 0x0L;
+        long black = 0x0L;
+
+        int pieceIdx = 63;
+        for (char c : fen.toCharArray()) {
+            if (c == '/') {
+                continue;
+            }
+
+            if (49 <= c && c <= 56) {
+                pieceIdx -= c - 48;
+                continue;
+            }
+
+            byte squareIdx = (byte) (pieceIdx + (7 - 2 * (pieceIdx % 8)));
+            Piece piece = switch (c) {
+                case 'K' -> WHITE_KING;
+                case 'Q' -> WHITE_QUEEN;
+                case 'R' -> WHITE_ROOK;
+                case 'B' -> WHITE_BISHOP;
+                case 'N' -> WHITE_KNIGHT;
+                case 'P' -> WHITE_PAWN;
+                case 'k' -> BLACK_KING;
+                case 'q' -> BLACK_QUEEN;
+                case 'r' -> BLACK_ROOK;
+                case 'b' -> BLACK_BISHOP;
+                case 'n' -> BLACK_KNIGHT;
+                case 'p' -> BLACK_PAWN;
+                default -> throw new IllegalStateException("Unexpected value: " + c);
+            };
+
+            long squareMask = ChessCoordinate.getChessCoordinate(squareIdx).getBitMask();
+
+            pieceMaps[piece.ordinal()] |= squareMask;
+
+            if (c < 'a') {
+                white |= squareMask;
+            } else {
+                black |= squareMask;
+            }
+
+            hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx),
+                    hashValue);
+
+            pieceIdx--;
+        }
+        stateHistory.add(new BoardState(pieceMaps, white, black, white | black, hashValue));
     }
 
     public record BoardState(long[] pieceMaps, long white, long black, long occupied,

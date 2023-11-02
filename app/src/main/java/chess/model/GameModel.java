@@ -174,14 +174,11 @@ public class GameModel {
      * Creates a game from the given FEN string. Behavior is undefined
      * when the FEN string is not properly formatted.
      *
-     * @param FEN the FEN string for this game.
+     * @param fen the FEN string for this game.
      */
-    public GameModel(String FEN, boolean threeFold) {
-        // Split the FEN into each of its 6 sections.
-        String[] fenSections = FEN.split(" ");
-
+    public GameModel(String fen, boolean threeFold) {
         // Instantiate each of the fields of this GameModel.
-        this.board = new BoardModel(fenSections[0]);
+        this.board = new BoardModel();
         this.moveHistory = new ArrayList<>();
         this.stateHistory = new ArrayList<>();
         this.positionTracker = new HashMap<>();
@@ -189,32 +186,7 @@ public class GameModel {
         this.previousLegalMoves = new ArrayList<>();
         this.threeFold = threeFold;
 
-        // Check for EnPassant target
-        ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ?
-                ChessCoordinate.getChessCoordinate(fenSections[3].charAt(0),
-                        Integer.parseInt(fenSections[3].substring(1))) : null;
-
-        // Set the turn to the correct value
-        char turn = fenSections[1].charAt(0);
-
-        // Check for each of the castling rights
-        boolean whiteKingCastle = fenSections[2].contains("K");
-        boolean whiteQueenCastle = fenSections[2].contains("Q");
-        boolean blackKingCastle = fenSections[2].contains("k");
-        boolean blackQueenCastle = fenSections[2].contains("q");
-
-        // Create and add the initial state
-        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn,
-                enPassantTarget);
-
-        // Initialize the deltaHash with the initial value
-        this.hashValue = Zobrist.slowZobrist(this);
-
-        // Generate the legal moves in this current position
-        previousLegalMoves.add(this.moveGenerator.generateMoves());
-
-        // Set the current position tracker to 1
-        positionTracker.put(hashValue, 1);
+        setPosition(fen);
     }
 
     /**
@@ -591,7 +563,7 @@ public class GameModel {
      * @return the last move made.
      */
     public Movable getLastMove() {
-        return moveHistory.size() > 0 ? moveHistory.get(moveHistory.size() - 1) : null;
+        return !moveHistory.isEmpty() ? moveHistory.get(moveHistory.size() - 1) : null;
     }
 
     /**
@@ -605,7 +577,7 @@ public class GameModel {
      * @return the gameState.
      */
     public FastMap getGameState() {
-        return stateHistory.size() > 0 ? stateHistory.get(stateHistory.size() - 1) : null;
+        return !stateHistory.isEmpty() ? stateHistory.get(stateHistory.size() - 1) : null;
     }
 
     /**
@@ -765,5 +737,44 @@ public class GameModel {
 
     public boolean hasEPTarget() {
         return getGameState().getMap() >> 7 != 0;
+    }
+
+    public void setPosition(String fen) {
+        // Split the FEN into each of its 6 sections.
+        String[] fenSections = fen.split(" ");
+
+        // Instantiate each of the fields of this GameModel.
+        this.board.setPosition(fenSections[0]);
+        this.moveHistory.clear();
+        this.stateHistory.clear();
+        this.positionTracker.clear();
+        this.previousLegalMoves.clear();
+
+        // Check for EnPassant target
+        ChessCoordinate enPassantTarget = !fenSections[3].equals("-") ?
+                ChessCoordinate.getChessCoordinate(fenSections[3].charAt(0),
+                        Integer.parseInt(fenSections[3].substring(1))) : null;
+
+        // Set the turn to the correct value
+        char turn = fenSections[1].charAt(0);
+
+        // Check for each of the castling rights
+        boolean whiteKingCastle = fenSections[2].contains("K");
+        boolean whiteQueenCastle = fenSections[2].contains("Q");
+        boolean blackKingCastle = fenSections[2].contains("k");
+        boolean blackQueenCastle = fenSections[2].contains("q");
+
+        // Create and add the initial state
+        addInitialState(whiteKingCastle, whiteQueenCastle, blackKingCastle, blackQueenCastle, turn,
+                enPassantTarget);
+
+        // Initialize the deltaHash with the initial value
+        this.hashValue = Zobrist.slowZobrist(this);
+
+        // Generate the legal moves in this current position
+        previousLegalMoves.add(this.moveGenerator.generateMoves());
+
+        // Set the current position tracker to 1
+        positionTracker.put(hashValue, 1);
     }
 }

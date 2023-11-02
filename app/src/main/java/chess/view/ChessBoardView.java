@@ -7,11 +7,9 @@ import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 import javafx.geometry.Bounds;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -24,13 +22,13 @@ public class ChessBoardView extends Region {
     private static final int numCols = 8;
 
     private final GridPane board;
-    private final ChessView.MoveController controller;
+    private final ChessView.ViewControlable controller;
     private final ChessView.GameDataRetriever retriever;
     private final Set<ChessSquareView> moveDestinations;
     private final Set<ChessSquareView> lastMoved;
     private DragData dragData;
 
-    public ChessBoardView(Piece[] pieceArray, ChessView.MoveController controller,
+    public ChessBoardView(Piece[] pieceArray, ChessView.ViewControlable controller,
                           ChessView.GameDataRetriever dataRetriever) {
         this.board = createBoard();
         this.controller = controller;
@@ -39,7 +37,7 @@ public class ChessBoardView extends Region {
         this.moveDestinations = new HashSet<>();
         this.lastMoved = new HashSet<>();
 
-        addPieces(pieceArray);
+        setPieces(pieceArray);
 
         this.board.prefHeightProperty().bind(this.heightProperty());
         this.board.prefWidthProperty().bind(this.widthProperty());
@@ -52,21 +50,31 @@ public class ChessBoardView extends Region {
      * @param pieceArray the array of pieces from the Model. piece array should always be
      *                   {@link #numRows} x {@link #numCols} long.
      */
-    private void addPieces(Piece[] pieceArray) {
+    public void setPieces(Piece[] pieceArray) {
         if (pieceArray.length != numCols * numRows) {
             return;
         }
 
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
-                if (pieceArray[row * 8 + col] != null) {
-                    StackPane square =
-                            (StackPane) board.getChildren().get((numRows - row - 1) * 8 + col);
-                    ImageView piece =
-                            new ChessPieceView(pieceArray[row * 8 + col], square.widthProperty());
-                    square.getChildren().add(piece);
+                ChessSquareView square =
+                        (ChessSquareView) board.getChildren().get((numRows - row - 1) * 8 + col);
+                Piece piece = pieceArray[row * 8 + col];
+
+                if (piece == null) {
+                    square.removePiece();
+                } else {
+                    square.addPiece(new ChessPieceView(piece, square.widthProperty()));
                 }
             }
+        }
+
+        Movable move = retriever.getLastMove();
+        if (move != null) {
+            clearAndUpdateLastMoved(getSquareAt(move.getStartCoordinate()),
+                    getSquareAt(move.getEndCoordinate()));
+        } else {
+            clearAndUpdateLastMoved();
         }
     }
 

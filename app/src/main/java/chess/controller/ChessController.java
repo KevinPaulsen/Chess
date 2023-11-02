@@ -11,6 +11,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -46,7 +48,7 @@ public class ChessController extends Application {
         super.init();
 
         gameModel = new GameModel();
-        view = new ChessView(gameModel.getBoard().getPieceArray(), this::makeMove,
+        view = new ChessView(gameModel.getBoard().getPieceArray(), new ViewController(),
                 new ChessView.GameDataRetriever() {
                     @Override
                     public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
@@ -65,6 +67,11 @@ public class ChessController extends Application {
                         Piece piece = gameModel.getBoard().getPieceOn(coordinate);
                         return piece != null && piece.getColor() == gameModel.getTurn();
                     }
+
+                    @Override
+                    public @Nullable Movable getLastMove() {
+                        return gameModel.getLastMove();
+                    }
                 });
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
@@ -76,14 +83,15 @@ public class ChessController extends Application {
         primaryStage.setTitle("Chess Program");
 
         primaryStage.setScene(view.getScene());
-        primaryStage.requestFocus();
-        primaryStage.setAlwaysOnTop(true);
         primaryStage.show();
+        primaryStage.setAlwaysOnTop(true);
+        primaryStage.requestFocus();
 
         final double titleBarHeight = primaryStage.getHeight() - view.getScene().getHeight();
 
         primaryStage.setMinHeight(view.getMinimumHeight() + titleBarHeight);
         primaryStage.setMinWidth(view.getMinimumWidth());
+        view.adjustSize();
     }
 
     @Override
@@ -116,10 +124,11 @@ public class ChessController extends Application {
 
     private void undoMove() {
         gameModel.undoLastMove();
+        view.setPosition(gameModel.getBoard().getPieceArray());
     }
 
     private void makeAIMove() {
-        // If game is over, dont make the move
+        // If game is over, don't make the move
         if (gameModel.getGameOverStatus() != IN_PROGRESS) {
             return;
         }
@@ -159,6 +168,41 @@ public class ChessController extends Application {
                 ex.printStackTrace();
                 return null;
             });
+        }
+    }
+
+    private class ViewController implements ChessView.ViewControlable {
+        @Override
+        public void makeMove(ChessCoordinate start, ChessCoordinate end) {
+            ChessController.this.makeMove(start, end);
+        }
+
+        @Override
+        public void processCommand(String command) {
+            String[] splitCommand = command.split("\\s+");
+
+            if (splitCommand.length == 0) {
+                return;
+            }
+
+            switch (splitCommand[0].toLowerCase()) {
+                case "clear", "c" -> {
+                    gameModel.setPosition("8/8/8/8/8/8/8/8 w - - 0 1");
+                    view.setPosition(gameModel.getBoard().getPieceArray());
+                }
+                case "position", "pos", "p" -> {
+                    if (splitCommand.length == 1) {
+                        System.out.println("No FEN given");
+                    }
+
+                    String fen = String.join(" ",
+                            Arrays.copyOfRange(splitCommand, 1, splitCommand.length));
+                    gameModel.setPosition(fen);
+                    view.setPosition(gameModel.getBoard().getPieceArray());
+                }
+                case "undo" -> undoMove();
+                case "finish", "f" -> letAIFinishGame();
+            }
         }
     }
 }

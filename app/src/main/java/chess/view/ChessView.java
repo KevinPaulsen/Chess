@@ -23,12 +23,12 @@ public class ChessView {
     private final ChessTurnView turnView;
     private final ChessInputView inputView;
 
-    public ChessView(Piece[] pieceArray, MoveController controller,
+    public ChessView(Piece[] pieceArray, ViewControlable controller,
                      GameDataRetriever dataRetriever) {
         this.root = new StackPane();
         this.boardView = new ChessBoardView(pieceArray, controller, dataRetriever);
         this.turnView = new ChessTurnView(dataRetriever);
-        this.inputView = new ChessInputView();
+        this.inputView = new ChessInputView(controller);
         this.scene = new Scene(root, 400, 400);
 
         content = new BorderPane();
@@ -71,7 +71,7 @@ public class ChessView {
         turnView.updateTurn();
     }
 
-    private void adjustSize() {
+    public void adjustSize() {
         Insets boardPadding = content.getPadding();
         Insets turnPadding = BorderPane.getMargin(turnView);
         Insets inputPadding = BorderPane.getMargin(inputView);
@@ -104,8 +104,14 @@ public class ChessView {
                 inputView.getHeight() + inputViewPadding.getTop() + inputViewPadding.getBottom();
     }
 
-    public interface MoveController {
+    public void setPosition(Piece[] pieceArray) {
+        boardView.setPieces(pieceArray);
+    }
+
+    public interface ViewControlable {
         void makeMove(ChessCoordinate start, ChessCoordinate end);
+
+        void processCommand(String command);
     }
 
     public interface GameDataRetriever {
@@ -114,5 +120,7 @@ public class ChessView {
         char getTurn();
 
         boolean canMove(ChessCoordinate coordinate);
+
+        Movable getLastMove();
     }
 }
