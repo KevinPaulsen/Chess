@@ -6,6 +6,7 @@ import chess.model.moves.EnPassantMove;
 import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
+import chess.util.BitIterator;
 import javafx.geometry.Bounds;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
@@ -26,6 +27,7 @@ public class ChessBoardView extends Region {
     private final ChessView.GameDataRetriever retriever;
     private final Set<ChessSquareView> moveDestinations;
     private final Set<ChessSquareView> lastMoved;
+    private final Set<ChessSquareView> highlighted;
     private DragData dragData;
 
     public ChessBoardView(Piece[] pieceArray, ChessView.ViewControlable controller,
@@ -36,6 +38,7 @@ public class ChessBoardView extends Region {
 
         this.moveDestinations = new HashSet<>();
         this.lastMoved = new HashSet<>();
+        this.highlighted = new HashSet<>();
 
         setPieces(pieceArray);
 
@@ -211,6 +214,7 @@ public class ChessBoardView extends Region {
         ChessSquareView end = getSquareAt(move.getEndCoordinate());
 
         clearAndUpdateLastMoved(start, end);
+        clearHighlighted();
 
         // If castling, move the rook
         if (move instanceof CastlingMove castlingMove) {
@@ -233,6 +237,24 @@ public class ChessBoardView extends Region {
         if (move instanceof PromotionMove promotionMove) {
             Objects.requireNonNull(getSquareAt(move.getEndCoordinate()).getPieceView())
                     .promote(promotionMove.getPromotedPiece());
+        }
+    }
+
+    private void clearHighlighted() {
+        synchronized (highlighted) {
+            for (ChessSquareView square : highlighted) {
+                square.removeHighlight();
+            }
+            highlighted.clear();
+        }
+    }
+
+    public void highlightSquares(ChessCoordinate... coordinates) {
+        synchronized (highlighted) {
+            for (ChessCoordinate coordinate : coordinates) {
+                getSquareAt(coordinate).highlight();
+                highlighted.add(getSquareAt(coordinate));
+            }
         }
     }
 
@@ -263,6 +285,15 @@ public class ChessBoardView extends Region {
 
     public double getMinimumHeight() {
         return numRows * ChessSquareView.MIN_SIZE;
+    }
+
+    public void displayBits(long bitBoard) {
+        clearHighlighted();
+        BitIterator bitIterator = new BitIterator(bitBoard);
+
+        while (bitIterator.hasNext()) {
+            highlightSquares(bitIterator.next());
+        }
     }
 
     private record DragData(ChessPieceView originalPiece, ChessPieceView draggedPiece,

@@ -84,7 +84,6 @@ public class ChessController extends Application {
 
         primaryStage.setScene(view.getScene());
         primaryStage.show();
-        primaryStage.setAlwaysOnTop(true);
         primaryStage.requestFocus();
 
         final double titleBarHeight = primaryStage.getHeight() - view.getScene().getHeight();
@@ -202,6 +201,26 @@ public class ChessController extends Application {
                 }
                 case "undo" -> undoMove();
                 case "finish", "f" -> letAIFinishGame();
+                case "display", "d" -> {
+                    if (splitCommand.length != 2) {
+                        return;
+                    }
+
+                    try {
+                        String bitBoard = splitCommand[1];
+                        if (bitBoard.startsWith("0x")) {
+                            bitBoard = bitBoard.substring(2);
+                            view.displayBits(Long.parseUnsignedLong(bitBoard, 16));
+                        } else if (bitBoard.startsWith("0b")) {
+                            bitBoard = bitBoard.substring(2);
+                            view.displayBits(Long.parseUnsignedLong(bitBoard, 2));
+                        } else {
+                            view.displayBits(Long.parseLong(bitBoard, 10));
+                        }
+                    } catch (NumberFormatException ignored) {
+                        System.out.println("Second input is NaN");
+                    }
+                }
             }
         }
     }

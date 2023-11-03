@@ -108,6 +108,10 @@ public class ChessView {
         boardView.setPieces(pieceArray);
     }
 
+    public void displayBits(long bitBoard) {
+        boardView.displayBits(bitBoard);
+    }
+
     public interface ViewControlable {
         void makeMove(ChessCoordinate start, ChessCoordinate end);
 

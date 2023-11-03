@@ -13,6 +13,7 @@ public class ChessSquareView extends StackPane {
     private static final String LIGHT_COLOR = "-fx-background-color: rgb(236, 218, 185);";
     private static final String DARK_COLOR = "-fx-background-color: rgb(174, 138, 104);";
     private static final String SELECTED = "-fx-background-color: rgba(20, 85, 30, .5)";
+    private static final String HIGHLIGHTED = "-fx-background-color: rgba(255,0,232,0.5)";
     private static final String MOVE_DESTINATION = "-fx-background-color: radial-gradient(" +
             "center 50% 50%, radius 75%, rgba(20, 85, 30, 0.5) 19%, rgba(0, 0, 0, 0) 20%);";
     private static final String MOVE_DESTINATION_CAPTURE =
@@ -100,6 +101,14 @@ public class ChessSquareView extends StackPane {
     }
 
     public void removeModeDestination() {
+        colorFilter.setStyle(TRANSPARENT);
+    }
+
+    public void highlight() {
+        colorFilter.setStyle(HIGHLIGHTED);
+    }
+
+    public void removeHighlight() {
         colorFilter.setStyle(TRANSPARENT);
     }
 }
