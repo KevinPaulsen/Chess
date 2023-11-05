@@ -8,8 +8,7 @@ import chess.util.BitIterator;
 import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.BLACK;
 import static chess.model.GameModel.WHITE;
-import static chess.model.pieces.Direction.LEFT;
-import static chess.model.pieces.Direction.RIGHT;
+import static chess.model.pieces.Direction.*;
 import static chess.model.pieces.Directions.*;
 import static chess.model.pieces.Piece.*;
 
@@ -18,8 +17,18 @@ import static chess.model.pieces.Piece.*;
  */
 public class MoveGenerator {
 
+    /**
+     * Accessed by
+     * coordinateToMask[posIdx][direction.ordinal]
+     */
+    protected static final long[][] SLIDING_ATTACK_MASKS;
     private static final int BITS_IN_BYTE = 8;
-
+    private static final long[] ROOK_MOVE_MASKS;
+    private static final long[] BISHOP_MOVE_MASKS;
+    private static final long[][] ROOK_TABLE;
+    private static final long[][] BISHOP_TABLE;
+    private static final long[][] BITS_BETWEEN_MAP;
+    private static final long EDGE_SQUARES = 0xFF818181818181FFL;
     private static final long ONES = 0xFFFFFFFFFFFFFFFFL;
     private static final long WHITE_KING_CASTLE_MASK = 0x0000000000000070L;
     private static final long WHITE_QUEEN_CASTLE_MASK = 0x000000000000001EL;
@@ -27,26 +36,94 @@ public class MoveGenerator {
     private static final long BLACK_QUEEN_CASTLE_MASK = 0x1E00000000000000L;
     private static final long WHITE_QUEEN_ATTACK_CASTLE_MASK = 0x000000000000001CL;
     private static final long BLACK_QUEEN_ATTACK_CASTLE_MASK = 0x1C00000000000000L;
-
-    private static final long[] FILE_MASKS =
-            {0x0101010101010101L, 0x0202020202020202L, 0x0404040404040404L, 0x0808080808080808L,
-                    0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L,
-                    0x8080808080808080L,};
-
-    private static final long[] ROW_MASKS =
-            {0x00000000000000FFL, 0x000000000000FF00L, 0x0000000000FF0000L, 0x00000000FF000000L,
-                    0x000000FF00000000L, 0x0000FF0000000000L, 0x00FF000000000000L,
-                    0xFF00000000000000L,};
-
-    /**
-     * Accessed by
-     * coordinateToMask[posIdx][direction.ordinal]
-     */
-    private static final long[][] coordinateToMask = createDirectionMaskMap();
-
+    private static final long[] FILE_MASKS = {
+            0x0101010101010101L, 0x0202020202020202L, 0x0404040404040404L, 0x0808080808080808L,
+            0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L,
+    };
+    private static final long[] ROW_MASKS = {
+            0x00000000000000FFL, 0x000000000000FF00L, 0x0000000000FF0000L, 0x00000000FF000000L,
+            0x000000FF00000000L, 0x0000FF0000000000L, 0x00FF000000000000L, 0xFF00000000000000L,
+    };
     private static final long[] KNIGHT_MOVE_MASKS = createKnightMoveMasks();
-
     private static final long[] KING_MOVE_MASKS = createKingMoveMasks();
+    private static final MagicData[] ROOK_MAGICS = {
+            new MagicData(0xa8002c000108020L, 12), new MagicData(0x6c00049b0002001L, 11),
+            new MagicData(0x100200010090040L, 11), new MagicData(0x2480041000800801L, 11),
+            new MagicData(0x280028004000800L, 11), new MagicData(0x900410008040022L, 11),
+            new MagicData(0x280020001001080L, 11), new MagicData(0x2880002041000080L, 12),
+            new MagicData(0xa000800080400034L, 11), new MagicData(0x4808020004000L, 10),
+            new MagicData(0x2290802004801000L, 10), new MagicData(0x411000d00100020L, 10),
+            new MagicData(0x402800800040080L, 10), new MagicData(0xb000401004208L, 10),
+            new MagicData(0x2409000100040200L, 10), new MagicData(0x1002100004082L, 11),
+            new MagicData(0x22878001e24000L, 11), new MagicData(0x1090810021004010L, 10),
+            new MagicData(0x801030040200012L, 10), new MagicData(0x500808008001000L, 10),
+            new MagicData(0xa08018014000880L, 10), new MagicData(0x8000808004000200L, 10),
+            new MagicData(0x201008080010200L, 10), new MagicData(0x801020000441091L, 11),
+            new MagicData(0x800080204005L, 11), new MagicData(0x1040200040100048L, 10),
+            new MagicData(0x120200402082L, 10), new MagicData(0xd14880480100080L, 10),
+            new MagicData(0x12040280080080L, 10), new MagicData(0x100040080020080L, 10),
+            new MagicData(0x9020010080800200L, 10), new MagicData(0x813241200148449L, 11),
+            new MagicData(0x491604001800080L, 11), new MagicData(0x100401000402001L, 10),
+            new MagicData(0x4820010021001040L, 10), new MagicData(0x400402202000812L, 10),
+            new MagicData(0x209009005000802L, 10), new MagicData(0x810800601800400L, 10),
+            new MagicData(0x4301083214000150L, 10), new MagicData(0x204026458e001401L, 11),
+            new MagicData(0x40204000808000L, 11), new MagicData(0x8001008040010020L, 10),
+            new MagicData(0x8410820820420010L, 10), new MagicData(0x1003001000090020L, 10),
+            new MagicData(0x804040008008080L, 10), new MagicData(0x12000810020004L, 10),
+            new MagicData(0x1000100200040208L, 10), new MagicData(0x430000a044020001L, 11),
+            new MagicData(0x280009023410300L, 11), new MagicData(0xe0100040002240L, 10),
+            new MagicData(0x200100401700L, 10), new MagicData(0x2244100408008080L, 10),
+            new MagicData(0x8000400801980L, 10), new MagicData(0x2000810040200L, 10),
+            new MagicData(0x8010100228810400L, 10), new MagicData(0x2000009044210200L, 11),
+            new MagicData(0x4080008040102101L, 12), new MagicData(0x40002080411d01L, 11),
+            new MagicData(0x2005524060000901L, 11), new MagicData(0x502001008400422L, 11),
+            new MagicData(0x489a000810200402L, 11), new MagicData(0x1004400080a13L, 11),
+            new MagicData(0x4000011008020084L, 11), new MagicData(0x26002114058042L, 12),
+    };
+    private static final MagicData[] BISHOP_MAGICS = {
+            new MagicData(0x89a1121896040240L, 6), new MagicData(0x2004844802002010L, 5),
+            new MagicData(0x2068080051921000L, 5), new MagicData(0x62880a0220200808L, 5),
+            new MagicData(0x4042004000000L, 5), new MagicData(0x100822020200011L, 5),
+            new MagicData(0xc00444222012000aL, 5), new MagicData(0x28808801216001L, 6),
+            new MagicData(0x400492088408100L, 5), new MagicData(0x201c401040c0084L, 5),
+            new MagicData(0x840800910a0010L, 5), new MagicData(0x82080240060L, 5),
+            new MagicData(0x2000840504006000L, 5), new MagicData(0x30010c4108405004L, 5),
+            new MagicData(0x1008005410080802L, 5), new MagicData(0x8144042209100900L, 5),
+            new MagicData(0x208081020014400L, 5), new MagicData(0x4800201208ca00L, 5),
+            new MagicData(0xf18140408012008L, 7), new MagicData(0x1004002802102001L, 7),
+            new MagicData(0x841000820080811L, 7), new MagicData(0x40200200a42008L, 7),
+            new MagicData(0x800054042000L, 5), new MagicData(0x88010400410c9000L, 5),
+            new MagicData(0x520040470104290L, 5), new MagicData(0x1004040051500081L, 5),
+            new MagicData(0x2002081833080021L, 7), new MagicData(0x400c00c010142L, 9),
+            new MagicData(0x941408200c002000L, 9), new MagicData(0x658810000806011L, 7),
+            new MagicData(0x188071040440a00L, 5), new MagicData(0x4800404002011c00L, 5),
+            new MagicData(0x104442040404200L, 5), new MagicData(0x511080202091021L, 5),
+            new MagicData(0x4022401120400L, 7), new MagicData(0x80c0040400080120L, 9),
+            new MagicData(0x8040010040820802L, 9), new MagicData(0x480810700020090L, 7),
+            new MagicData(0x102008e00040242L, 5), new MagicData(0x809005202050100L, 5),
+            new MagicData(0x8002024220104080L, 5), new MagicData(0x431008804142000L, 5),
+            new MagicData(0x19001802081400L, 7), new MagicData(0x200014208040080L, 7),
+            new MagicData(0x3308082008200100L, 7), new MagicData(0x41010500040c020L, 7),
+            new MagicData(0x4012020c04210308L, 5), new MagicData(0x208220a202004080L, 5),
+            new MagicData(0x111040120082000L, 5), new MagicData(0x6803040141280a00L, 5),
+            new MagicData(0x2101004202410000L, 5), new MagicData(0x8200000041108022L, 5),
+            new MagicData(0x21082088000L, 5), new MagicData(0x2410204010040L, 5),
+            new MagicData(0x40100400809000L, 5), new MagicData(0x822088220820214L, 5),
+            new MagicData(0x40808090012004L, 6), new MagicData(0x910224040218c9L, 5),
+            new MagicData(0x402814422015008L, 5), new MagicData(0x90014004842410L, 5),
+            new MagicData(0x1000042304105L, 5), new MagicData(0x10008830412a00L, 5),
+            new MagicData(0x2520081090008908L, 5), new MagicData(0x40102000a0a60140L, 6),
+    };
+
+    static {
+        SLIDING_ATTACK_MASKS = createDirectionMaskMap();
+        ROOK_MOVE_MASKS = createRookMasks();
+        BISHOP_MOVE_MASKS = createBishopMasks();
+        ROOK_TABLE = createTable(STRAIGHT_COMPLEMENTS, ROOK_MOVE_MASKS, ROOK_MAGICS, 4096);
+        BISHOP_TABLE = createTable(DIAGONAL_COMPLEMENTS, BISHOP_MOVE_MASKS, BISHOP_MAGICS, 1048);
+
+        BITS_BETWEEN_MAP = createBitsBetweenMap();
+    }
 
     private final GameModel game;
     private final BoardModel board;
@@ -70,7 +147,6 @@ public class MoveGenerator {
     private Piece attackingQueen;
     private ChessCoordinate friendlyKingCoord;
     private ChessCoordinate attackingKingSquare;
-
     private char friendlyColor;
     private char attackingColor;
 
@@ -79,12 +155,129 @@ public class MoveGenerator {
         this.board = game.getBoard();
     }
 
+    private static long[][] createBitsBetweenMap() {
+        long[][] bitBetweenMap =
+                new long[ChessCoordinate.values().length][ChessCoordinate.values().length];
+
+        for (int firstSquare = 0; firstSquare < bitBetweenMap.length; firstSquare++) {
+            for (int secondSquare = firstSquare; secondSquare < bitBetweenMap.length;
+                 secondSquare++) {
+                /*long bitsBetween = getBitsBetweenInclusiveSLOW(firstSquare, secondSquare);
+
+                bitBetweenMap[firstSquare][secondSquare] = bitsBetween;
+                bitBetweenMap[secondSquare][firstSquare] = bitsBetween;//*/
+            }
+        }
+
+        return bitBetweenMap;
+    }
+
+    private static long[] createRookMasks() {
+        long[] rookMasks = new long[ChessCoordinate.values().length];
+        for (ChessCoordinate coordinate : ChessCoordinate.values()) {
+            int square = coordinate.getOndDimIndex();
+            rookMasks[square] = SLIDING_ATTACK_MASKS[square][UP.ordinal()] & ~ROW_MASKS[7] |
+                    SLIDING_ATTACK_MASKS[square][DOWN.ordinal()] & ~ROW_MASKS[0] |
+                    SLIDING_ATTACK_MASKS[square][LEFT.ordinal()] & ~FILE_MASKS[0] |
+                    SLIDING_ATTACK_MASKS[square][RIGHT.ordinal()] & ~FILE_MASKS[7];
+        }
+        return rookMasks;
+    }
+
+    private static long[] createBishopMasks() {
+        long[] moveMasks = new long[ChessCoordinate.values().length];
+
+        for (ChessCoordinate coordinate : ChessCoordinate.values()) {
+            int square = coordinate.getOndDimIndex();
+            long[] SLIDING_DIRECTIONS = SLIDING_ATTACK_MASKS[square];
+            for (Direction direction : DIAGONALS) {
+                moveMasks[square] |= SLIDING_DIRECTIONS[direction.ordinal()] & ~EDGE_SQUARES;
+            }
+        }
+
+        return moveMasks;
+    }
+
+    private static long[][] createTable(Direction[] directions, long[] moveMasks,
+                                        MagicData[] magics, int maxSize) {
+        long[][] moveTable = new long[ChessCoordinate.values().length][maxSize];
+
+        // For all squares
+        for (ChessCoordinate coordinate : ChessCoordinate.values()) {
+            int square = coordinate.getOndDimIndex();
+
+            // For all possible blockers for this square
+            for (int blockerIndex = 0; blockerIndex < magics[square].numCombinations();
+                 blockerIndex++) {
+                long blockers = getBlockersFromIndex(blockerIndex, moveMasks[square]);
+
+                moveTable[square][magics[square].getIndex(blockers)] =
+                        getAttacksSlow(coordinate, blockers, directions);
+            }
+        }
+        return moveTable;
+    }
+
+    private static long getBlockersFromIndex(int index, long mask) {
+        long blockers = 0L;
+        int bits = Long.bitCount(mask);
+        for (int i = 0; i < bits; i++) {
+            int bitPos = lowestSetBit(mask);
+            mask = mask ^ Long.lowestOneBit(mask);
+
+            if ((index & (1 << i)) != 0) {
+                blockers |= 1L << bitPos;
+            }
+        }
+        return blockers;
+    }
+
+    private static long getAttacksSlow(ChessCoordinate coordinate, long blockers,
+                                       Direction[] directionComplements) {
+        long bishopAttacks = 0L;
+        for (Direction direction : directionComplements) {
+            long upperMask = SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.ordinal()];
+            long lowerMask =
+                    SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.complement()
+                            .ordinal()];
+
+            bishopAttacks |= getMoveMask(lowerMask, upperMask, blockers);
+        }
+        return bishopAttacks;
+    }
+
+    private static int lowestSetBit(long mask) {
+        return Long.numberOfTrailingZeros(mask);
+    }
+
+    private static long getMoveMask(long lowerMask, long upperMask, long board) {
+        long lower = board & lowerMask;
+        long upper = board & upperMask;
+
+        return getBitsBetweenInclusiveSLOW(lower, upper, upperMask | lowerMask);
+    }
+
+    private static long getBitsBetweenInclusiveSLOW(long lower, long upper, long mask) {
+        long rightBits = Long.lowestOneBit(upper << 1) - 1;
+        long leftBits;
+        if (lower == 0) {
+            leftBits = ONES;
+        } else {
+            leftBits = -Long.highestOneBit(lower);
+        }
+        return rightBits & leftBits & mask;
+    }
+
+    private static long getBitsBetween(long lower, long upper) {
+        return BITS_BETWEEN_MAP[ChessCoordinate.getChessCoordinate(lower)
+                .getOndDimIndex()][ChessCoordinate.getChessCoordinate(upper).getOndDimIndex()];
+    }
+
     private static long[][] createDirectionMaskMap() {
         long[][] coordinateToMask = new long[Long.BYTES * BITS_IN_BYTE][ALL_DIRECTIONS.length];
 
         for (int coordIdx = 0; coordIdx < coordinateToMask.length; coordIdx++) {
-            for (int index = 0; index < ALL_DIRECTIONS.length; index++) {
-                Direction direction = ALL_DIRECTIONS[index];
+            for (Direction direction : ALL_DIRECTIONS) {
                 long mask = 0x0;
                 ChessCoordinate coordinate =
                         direction.next(ChessCoordinate.getChessCoordinate(coordIdx));
@@ -310,9 +503,9 @@ public class MoveGenerator {
             if (!((epRank & friendlyKingMask) == 0 || (epRank & rookAndQueen) == 0 ||
                     (epRank & pawns) == 0)) {
                 long upperMask =
-                        coordinateToMask[friendlyKingCoord.getOndDimIndex()][RIGHT.ordinal()];
+                        SLIDING_ATTACK_MASKS[friendlyKingCoord.getOndDimIndex()][RIGHT.ordinal()];
                 long lowerMask =
-                        coordinateToMask[friendlyKingCoord.getOndDimIndex()][LEFT.ordinal()];
+                        SLIDING_ATTACK_MASKS[friendlyKingCoord.getOndDimIndex()][LEFT.ordinal()];
                 if (eplPawn != 0) {
                     long afterEP = board.getOccupancyMap() ^ eplPawn ^ epTargetPawn;
                     long moveMask = getMoveMask(lowerMask, upperMask, afterEP);
@@ -339,15 +532,48 @@ public class MoveGenerator {
 
         long queens = board.getPieceMap(attackingQueen);
 
-        BitIterator bitIterator = new BitIterator(this.board.getPieceMap(attackingRook) | queens);
+        BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingRook) | queens);
         slidingAttackMap |= getSlidingAttackMap(friendlyKingBit, boardWithoutKing, bitIterator,
                 STRAIGHT_COMPLEMENTS);
+        //getRookAttackMap(bitIterator, boardWithoutKing);
 
-        bitIterator = new BitIterator(this.board.getPieceMap(attackingBishop) | queens);
+        bitIterator = new BitIterator(board.getPieceMap(attackingBishop) | queens);
         slidingAttackMap |= getSlidingAttackMap(friendlyKingBit, boardWithoutKing, bitIterator,
                 DIAGONAL_COMPLEMENTS);
 
         opponentAttackMap |= slidingAttackMap;
+    }
+
+    private void getRookAttackMap(BitIterator rooksAndQueens, long boardWithoutKing,
+                                  long friendlyKing) {
+        while (rooksAndQueens.hasNext()) {
+            ChessCoordinate rook = rooksAndQueens.next();
+            int square = rook.getOndDimIndex();
+
+            // Get all squares piece is attacking
+            long attackingSquares = ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                    boardWithoutKing & ROOK_MOVE_MASKS[square])];
+
+            if ((attackingSquares & friendlyKing) == 0) {
+                // If there is no check, look for pins
+                boardWithoutKing &= ~attackingSquares;
+
+                long xRaySquares = ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                        boardWithoutKing & ROOK_MOVE_MASKS[square])];
+
+                if ((xRaySquares & friendlyKing) != 0) {
+                    // TODO make constant time
+                    long lower = square;
+                    long upper = friendlyKing;
+                    if (Long.compareUnsigned(lower, upper) == 1) {
+                        long temp = lower;
+                        lower = upper;
+                        upper = temp;
+                    }
+                    //hvPinRayMap |= getBitsBetweenInclusiveSLOW(lower, upper, );
+                }
+            }
+        }
     }
 
     private long getSlidingAttackMap(long friendlyKingBit, long board, BitIterator bitIterator,
@@ -362,7 +588,7 @@ public class MoveGenerator {
             if ((ray & friendlyKingBit) == 0) {
                 generateSlidingPieceMoves(directions, attackingCoordinate, board & ~ray,
                         PinCheckStatus.PIN);
-            }//*/
+            }
         }
         return slidingAttackMap;
     }
@@ -405,10 +631,16 @@ public class MoveGenerator {
         BitIterator bitIterator = new BitIterator(pinnedPieces);
         while (bitIterator.hasNext()) {
             ChessCoordinate coordinate = bitIterator.next();
-            long legalMoveMap =
-                    generateSlidingPieceMoves(directions, coordinate, board.getOccupancyMap(),
-                            PinCheckStatus.NONE) & pinMask & checkRayMask &
-                            ~board.getOccupancyMap(friendlyColor);
+
+            long legalMoveMap = pinMask & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            int square = coordinate.getOndDimIndex();
+            if (directions == STRAIGHT_COMPLEMENTS) {
+                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
+            } else {
+                legalMoveMap &= BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
+            }
 
             if ((coordinate.getBitMask() & queenMask) != 0) {
                 addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
@@ -420,10 +652,16 @@ public class MoveGenerator {
         bitIterator = new BitIterator(unpinnedPieces);
         while (bitIterator.hasNext()) {
             ChessCoordinate coordinate = bitIterator.next();
-            long legalMoveMap =
-                    generateSlidingPieceMoves(directions, coordinate, board.getOccupancyMap(),
-                            PinCheckStatus.NONE) & checkRayMask &
-                            ~board.getOccupancyMap(friendlyColor);
+
+            long legalMoveMap = checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            int square = coordinate.getOndDimIndex();
+            if (directions == STRAIGHT_COMPLEMENTS) {
+                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
+            } else {
+                legalMoveMap &= BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
+            }
 
             if ((coordinate.getBitMask() & queenMask) != 0) {
                 addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
@@ -438,9 +676,10 @@ public class MoveGenerator {
         long moveMask = 0x0L;
         for (int index = 0; index < directions.length; index++) {
             Direction direction = directions[index];
-            long upperMask = coordinateToMask[coordinate.getOndDimIndex()][direction.ordinal()];
+            long upperMask = SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.ordinal()];
             long lowerMask =
-                    coordinateToMask[coordinate.getOndDimIndex()][direction.complement().ordinal()];
+                    SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.complement()
+                            .ordinal()];
             long ray = getMoveMask(lowerMask, upperMask, board);
             moveMask |= ray;
 
@@ -456,10 +695,10 @@ public class MoveGenerator {
                             upper = temp;
                         }
                         if (directions == DIAGONAL_COMPLEMENTS) {
-                            d12PinRayMap |= getBitsBetweenInclusive(lower, upper,
+                            d12PinRayMap |= getBitsBetweenInclusiveSLOW(lower, upper,
                                     ray | coordinate.getBitMask());
                         } else {
-                            hvPinRayMap |= getBitsBetweenInclusive(lower, upper,
+                            hvPinRayMap |= getBitsBetweenInclusiveSLOW(lower, upper,
                                     ray | coordinate.getBitMask());
                         }
                     }
@@ -474,7 +713,7 @@ public class MoveGenerator {
                             lower = upper;
                             upper = temp;
                         }
-                        checkRayMask |= getBitsBetweenInclusive(lower, upper,
+                        checkRayMask |= getBitsBetweenInclusiveSLOW(lower, upper,
                                 ray | coordinate.getBitMask());
                         inDoubleCheck = inCheck;
                         inCheck = true;
@@ -490,24 +729,6 @@ public class MoveGenerator {
         if (moveMask == 0)
             return;
         moves.add(piece, startingCoordinate, moveMask, status);
-    }
-
-    private long getMoveMask(long lowerMask, long upperMask, long board) {
-        long lower = board & lowerMask;
-        long upper = board & upperMask;
-
-        return getBitsBetweenInclusive(lower, upper, upperMask | lowerMask);
-    }
-
-    private long getBitsBetweenInclusive(long lower, long upper, long mask) {
-        long rightBits = Long.lowestOneBit(upper << 1) - 1;
-        long leftBits;// = lower == 0 ? ONES : -Long.highestOneBit(lower);
-        if (lower == 0) {
-            leftBits = ONES;
-        } else {
-            leftBits = -Long.highestOneBit(lower);
-        }
-        return rightBits & leftBits & mask;
     }
 
     private void generateKnightMoves() {
@@ -614,5 +835,16 @@ public class MoveGenerator {
 
     private enum PinCheckStatus {
         NONE, PIN, CHECK
+    }
+
+    private record MagicData(long magicNumber, int indexBits) {
+
+        private int numCombinations() {
+            return 1 << indexBits;
+        }
+
+        private int getIndex(long blockers) {
+            return (int) ((blockers * magicNumber) >>> (64 - indexBits));
+        }
     }
 }

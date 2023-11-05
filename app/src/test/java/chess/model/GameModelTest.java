@@ -1,9 +1,7 @@
 package chess.model;
 
-import chess.model.moves.EnPassantMove;
 import chess.model.moves.Movable;
 import chess.model.moves.NormalMove;
-import chess.model.moves.PromotionMove;
 import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +27,8 @@ public class GameModelTest {
             if (game.move(move)) {
                 int num = countNumPositions(game, depth - 1, false);
                 if (printMove) {
-                    System.out.printf("%s%s\t%6s: %7d\n", move.getStartCoordinate(), move.getEndCoordinate(), move, num);
+                    System.out.printf("%s%s\t%6s: %7d\n", move.getStartCoordinate(),
+                            move.getEndCoordinate(), move, num);
                 }
                 sum += num;
                 game.undoLastMove();
@@ -44,6 +43,19 @@ public class GameModelTest {
             int actual = countNumPositions(gameModel, depth, false);
             System.out.println();
             Assert.assertEquals("Wrong number of nodes found.", expected, actual);
+        }
+    }
+
+    private static void runToDepth(GameModel game, int depth, AtomicLong counter) {
+        counter.getAndIncrement();
+        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS)
+            return;
+        MoveList moves = game.getLegalMoves();
+        //moves.sort(Comparator.comparing(NormalMove::toString));
+        for (Movable move : moves) {
+            game.move(move);
+            runToDepth(game, depth - 1, counter);
+            game.undoLastMove();
         }
     }
 
@@ -67,7 +79,8 @@ public class GameModelTest {
 
     @Test
     public void testMiddleWithFourCastle() {
-        GameModel game = new GameModel("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+        GameModel game =
+                new GameModel("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
         int[] expectedNumPositions = {1, 48, 2_039, 97_862, 4_085_603, 193_690_690/**/};
         //debug(game, 3);
         runCountTest(game, expectedNumPositions);
@@ -89,21 +102,26 @@ public class GameModelTest {
         int[] expectedNumPositions = {1, 14, 191, 2_812, 43_238, 674_624, 11_030_083};
         runCountTest(game, expectedNumPositions);
     }
+
     @Test
     public void testMiddlePromotionAndChecks() {
-        GameModel game = new GameModel("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+        GameModel game =
+                new GameModel("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
         int[] expectedNumPositions = {1, 6, 264, 9_467, 422_333, 15_833_292};
         runCountTest(game, expectedNumPositions);
     }
+
     @Test
     public void testComplexMiddle1() {
         GameModel game = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         int[] expectedNumPositions = {1, 44, 1_486, 62_379, 2_103_487, 89_941_194};
         runCountTest(game, expectedNumPositions);
     }
+
     @Test
     public void testComplexMiddle2() {
-        GameModel game = new GameModel("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+        GameModel game = new GameModel(
+                "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
         int[] expectedNumPositions = {1, 46, 2_079, 89_890, 3_894_594, 164_075_551/**/};
         //debug(game, 4);
         runCountTest(game, expectedNumPositions);
@@ -118,7 +136,8 @@ public class GameModelTest {
         Bitmap test v3: 2605
         Bitmap test v3: 2671 / 2678 / 2542
          */
-        GameModel complicated = new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
+        GameModel complicated =
+                new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
 
         PositionCounter positionCounter = new PositionCounter(complicated, 12, counter);
@@ -142,18 +161,6 @@ public class GameModelTest {
         System.out.printf("Approximately %d ns per position\n", totalTime / counter.get());//*/
     }
 
-    private static void runToDepth(GameModel game, int depth, AtomicLong counter) {
-        counter.getAndIncrement();
-        if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) return;
-        MoveList moves = game.getLegalMoves();
-        //moves.sort(Comparator.comparing(NormalMove::toString));
-        for (Movable move : moves) {
-            game.move(move);
-            runToDepth(game, depth - 1, counter);
-            game.undoLastMove();
-        }
-    }
-
     private static class PositionCounter implements Runnable {
         private final GameModel game;
         private final int depth;
@@ -175,7 +182,8 @@ public class GameModelTest {
 
         private void runToDepth(int depth) {
             counter.getAndIncrement();
-            if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS || shutdown) return;
+            if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS || shutdown)
+                return;
             MoveList moves = game.getLegalMoves();
             //moves.sort(Comparator.comparing(NormalMove::toString));
             for (Movable move : moves) {
