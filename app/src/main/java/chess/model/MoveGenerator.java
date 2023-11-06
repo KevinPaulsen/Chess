@@ -129,32 +129,24 @@ public class MoveGenerator {
 
     private final GameModel game;
     private final BoardModel board;
+    private final PieceGroup whitePieceGroup;
+    private final PieceGroup blackPieceGroup;
     private long checkRayMask;
     private long hvPinRayMap;
     private long d12PinRayMap;
     private long opponentAttackMap;
     private long epTarget;
-    private MoveList moves;
     private boolean inCheck;
     private boolean inDoubleCheck;
-    private Piece friendlyPawn;
-    private Piece friendlyKnight;
-    private Piece friendlyBishop;
-    private Piece friendlyRook;
-    private Piece friendlyQueen;
-    private Piece attackingPawn;
-    private Piece attackingKnight;
-    private Piece attackingBishop;
-    private Piece attackingRook;
-    private Piece attackingQueen;
-    private ChessCoordinate friendlyKingCoord;
-    private ChessCoordinate attackingKingSquare;
-    private char friendlyColor;
-    private char attackingColor;
+    private MoveList moves;
+    private PieceGroup friendlyPieceGroup;
+    private PieceGroup attackingPieceGroup;
 
     public MoveGenerator(GameModel game) {
         this.game = game;
         this.board = game.getBoard();
+        this.whitePieceGroup = new PieceGroup(WHITE);
+        this.blackPieceGroup = new PieceGroup(BLACK);
     }
 
     private static long[][] createBitsBetweenMap() {
@@ -430,19 +422,19 @@ public class MoveGenerator {
     public MoveList generateMoves() {
         resetState();
 
-        if (friendlyKingCoord != null) {
+        if (friendlyPieceGroup.kingCoord != null) {
             calculateAttackData();
             generateKingMoves();
         }
 
         if (!inDoubleCheck) {
-            long queens = board.getPieceMap(friendlyQueen);
-            long rooks = board.getPieceMap(friendlyRook);
-            long bishops = board.getPieceMap(friendlyBishop);
+            long queens = board.getPieceMap(friendlyPieceGroup.queen);
+            long rooks = board.getPieceMap(friendlyPieceGroup.rook);
+            long bishops = board.getPieceMap(friendlyPieceGroup.bishop);
             generateRookAndBishopMoves((queens | rooks) & ~d12PinRayMap, queens, hvPinRayMap,
-                    friendlyRook, STRAIGHT_COMPLEMENTS);
+                    friendlyPieceGroup.rook, STRAIGHT_COMPLEMENTS);
             generateRookAndBishopMoves((queens | bishops) & ~hvPinRayMap, queens, d12PinRayMap,
-                    friendlyBishop, DIAGONAL_COMPLEMENTS);
+                    friendlyPieceGroup.bishop, DIAGONAL_COMPLEMENTS);
             generateKnightMoves();
             generatePawnMoves();
         }
@@ -461,39 +453,18 @@ public class MoveGenerator {
         this.opponentAttackMap = 0;
         this.epTarget = 0x0L;
 
-        this.friendlyColor = game.getTurn();
-        this.attackingColor = friendlyColor == WHITE ? BLACK : WHITE;
+        if (game.getTurn() == WHITE) {
+            friendlyPieceGroup = whitePieceGroup;
+            attackingPieceGroup = blackPieceGroup;
 
-        if (friendlyColor == WHITE) {
-            friendlyPawn = WHITE_PAWN;
-            friendlyKnight = WHITE_KNIGHT;
-            friendlyBishop = WHITE_BISHOP;
-            friendlyRook = WHITE_ROOK;
-            friendlyQueen = WHITE_QUEEN;
-
-            attackingPawn = BLACK_PAWN;
-            attackingKnight = BLACK_KNIGHT;
-            attackingBishop = BLACK_BISHOP;
-            attackingRook = BLACK_ROOK;
-            attackingQueen = BLACK_QUEEN;
-
-            friendlyKingCoord = board.getWhiteKingCoord();
-            attackingKingSquare = board.getBlackKingCoord();
+            friendlyPieceGroup.kingCoord = board.getWhiteKingCoord();
+            attackingPieceGroup.kingCoord = board.getBlackKingCoord();
         } else {
-            attackingPawn = WHITE_PAWN;
-            attackingKnight = WHITE_KNIGHT;
-            attackingBishop = WHITE_BISHOP;
-            attackingRook = WHITE_ROOK;
-            attackingQueen = WHITE_QUEEN;
+            friendlyPieceGroup = blackPieceGroup;
+            attackingPieceGroup = whitePieceGroup;
 
-            friendlyPawn = BLACK_PAWN;
-            friendlyKnight = BLACK_KNIGHT;
-            friendlyBishop = BLACK_BISHOP;
-            friendlyRook = BLACK_ROOK;
-            friendlyQueen = BLACK_QUEEN;
-
-            friendlyKingCoord = board.getBlackKingCoord();
-            attackingKingSquare = board.getWhiteKingCoord();
+            friendlyPieceGroup.kingCoord = board.getBlackKingCoord();
+            attackingPieceGroup.kingCoord = board.getWhiteKingCoord();
         }
     }
 
@@ -503,31 +474,30 @@ public class MoveGenerator {
 
         calculatePinRays();
 
-        long friendlyKingMask = friendlyKingCoord.getBitMask();
+        long friendlyKingMask = friendlyPieceGroup.kingCoord.getBitMask();
 
         calculateKnightAttackData(friendlyKingMask);
 
         calculatePawnAttackData(friendlyKingMask);
 
         // Calculate King Attacks
-        opponentAttackMap |= KING_MOVE_MASKS[attackingKingSquare.getOndDimIndex()];
+        opponentAttackMap |= KING_MOVE_MASKS[attackingPieceGroup.kingCoord.getOndDimIndex()];
 
         if (checkRayMask == 0)
             checkRayMask = ~checkRayMask;
     }
 
     private void generateKingMoves() {
-        Piece movingKing = friendlyColor == WHITE ? WHITE_KING : BLACK_KING;
-
         // Add moves for the regular king moves
-        long kingMoveMask = KING_MOVE_MASKS[friendlyKingCoord.getOndDimIndex()] &
-                ~(board.getOccupancyMap(friendlyColor) | opponentAttackMap);
-        addMoves(movingKing, friendlyKingCoord.getBitMask(), kingMoveMask, MoveList.Status.NORMAL);
+        long kingMoveMask = KING_MOVE_MASKS[friendlyPieceGroup.kingCoord.getOndDimIndex()] &
+                ~(board.getOccupancyMap(friendlyPieceGroup.color) | opponentAttackMap);
+        addMoves(friendlyPieceGroup.king, friendlyPieceGroup.kingCoord.getBitMask(), kingMoveMask,
+                MoveList.Status.NORMAL);
 
         // Add castling moves
         kingMoveMask = 0x0L;
-        long occupancy = (board.getOccupancyMap() ^ friendlyKingCoord.getBitMask());
-        if (friendlyColor == WHITE) {
+        long occupancy = (board.getOccupancyMap() ^ friendlyPieceGroup.kingCoord.getBitMask());
+        if (friendlyPieceGroup.color == WHITE) {
             if (game.canKingSideCastle(WHITE) && (occupancy & WHITE_KING_CASTLE_MASK) == 0 &&
                     (opponentAttackMap & WHITE_KING_CASTLE_MASK) == 0)
                 kingMoveMask |= G1.getBitMask();
@@ -543,7 +513,7 @@ public class MoveGenerator {
                 kingMoveMask |= C8.getBitMask();
         }
 
-        addMoves(movingKing, friendlyKingCoord.getBitMask(), kingMoveMask,
+        addMoves(friendlyPieceGroup.king, friendlyPieceGroup.kingCoord.getBitMask(), kingMoveMask,
                 MoveList.Status.CASTLING);
     }
 
@@ -556,7 +526,8 @@ public class MoveGenerator {
         while (bitIterator.hasNext()) {
             int square = bitIterator.next();
 
-            long legalMoveMap = pinMask & checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            long legalMoveMap =
+                    pinMask & checkRayMask & ~board.getOccupancyMap(friendlyPieceGroup.color);
             if (directions == STRAIGHT_COMPLEMENTS) {
                 legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
                         board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
@@ -567,7 +538,8 @@ public class MoveGenerator {
 
             long squareMask = ChessCoordinate.getBitMask(square);
             if ((squareMask & queenMask) != 0) {
-                addMoves(friendlyQueen, squareMask, legalMoveMap, MoveList.Status.NORMAL);
+                addMoves(friendlyPieceGroup.queen, squareMask, legalMoveMap,
+                        MoveList.Status.NORMAL);
             } else {
                 addMoves(friendlyPiece, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             }
@@ -577,7 +549,7 @@ public class MoveGenerator {
         while (bitIterator.hasNext()) {
             int square = bitIterator.next();
 
-            long legalMoveMap = checkRayMask & ~board.getOccupancyMap(friendlyColor);
+            long legalMoveMap = checkRayMask & ~board.getOccupancyMap(friendlyPieceGroup.color);
             if (directions == STRAIGHT_COMPLEMENTS) {
                 legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
                         board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
@@ -588,7 +560,8 @@ public class MoveGenerator {
 
             long squareMask = ChessCoordinate.getBitMask(square);
             if ((squareMask & queenMask) != 0) {
-                addMoves(friendlyQueen, squareMask, legalMoveMap, MoveList.Status.NORMAL);
+                addMoves(friendlyPieceGroup.queen, squareMask, legalMoveMap,
+                        MoveList.Status.NORMAL);
             } else {
                 addMoves(friendlyPiece, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             }
@@ -596,21 +569,22 @@ public class MoveGenerator {
     }
 
     private void generateKnightMoves() {
-        long knights = board.getPieceMap(friendlyKnight) & ~(hvPinRayMap | d12PinRayMap);
+        long knights = board.getPieceMap(friendlyPieceGroup.knight) & ~(hvPinRayMap | d12PinRayMap);
         BitIterator bitIterator = new BitIterator(knights);
         while (bitIterator.hasNext()) {
             int square = bitIterator.next();
-            long moveMask = KNIGHT_MOVE_MASKS[square] & ~board.getOccupancyMap(friendlyColor) &
-                    checkRayMask;
-            addMoves(friendlyKnight, ChessCoordinate.getBitMask(square), moveMask,
+            long moveMask =
+                    KNIGHT_MOVE_MASKS[square] & ~board.getOccupancyMap(friendlyPieceGroup.color) &
+                            checkRayMask;
+            addMoves(friendlyPieceGroup.knight, ChessCoordinate.getBitMask(square), moveMask,
                     MoveList.Status.NORMAL);
         }
     }
 
     private void generatePawnMoves() {
 
-        long pawns = board.getPieceMap(friendlyPawn);
-        long enemy = board.getOccupancyMap(attackingColor);
+        long pawns = board.getPieceMap(friendlyPieceGroup.pawn);
+        long enemy = board.getOccupancyMap(attackingPieceGroup.color);
         long empty = ~board.getOccupancyMap();
 
         long pawnsLR = pawns & ~hvPinRayMap;
@@ -626,7 +600,7 @@ public class MoveGenerator {
         long eplTargetBit = 0;
         long eprTargetBit = 0;
 
-        if (friendlyColor == WHITE) {
+        if (friendlyPieceGroup.color == WHITE) {
             lPawns = lPawns << 7;
             rPawns = rPawns << 9;
             fPawns = (pawnsHV << 8) & empty;
@@ -639,7 +613,8 @@ public class MoveGenerator {
         }
 
         if (epTarget != 0) {
-            long shiftedCheckMask = friendlyColor == WHITE ? checkRayMask << 8 : checkRayMask >>> 8;
+            long shiftedCheckMask =
+                    friendlyPieceGroup.color == WHITE ? checkRayMask << 8 : checkRayMask >>> 8;
             eplTargetBit = lPawns & epTarget & shiftedCheckMask;
             eprTargetBit = rPawns & epTarget & shiftedCheckMask;
         }
@@ -647,49 +622,54 @@ public class MoveGenerator {
         lPawns &= enemy;
         rPawns &= enemy;
 
-        addMoves(friendlyPawn, 0, lPawns & notPromotion, MoveList.Status.PAWN_TAKE_LEFT);
-        addMoves(friendlyPawn, 0, rPawns & notPromotion, MoveList.Status.PAWN_TAKE_RIGHT);
-        addMoves(friendlyPawn, 0, fPawns & notPromotion, MoveList.Status.PAWN_FORWARD);
-        addMoves(friendlyPawn, 0, pPawns, MoveList.Status.PAWN_PUSH);
-        addMoves(friendlyPawn, 0, lPawns & promotion, MoveList.Status.PAWN_PROMOTE_LEFT);
-        addMoves(friendlyPawn, 0, rPawns & promotion, MoveList.Status.PAWN_PROMOTE_RIGHT);
-        addMoves(friendlyPawn, 0, fPawns & promotion, MoveList.Status.PAWN_PROMOTE);
-        addMoves(friendlyPawn, 0, eplTargetBit, MoveList.Status.EN_PASSANT_LEFT);
-        addMoves(friendlyPawn, 0, eprTargetBit, MoveList.Status.EN_PASSANT_RIGHT);
+        addMoves(friendlyPieceGroup.pawn, 0, lPawns & notPromotion, MoveList.Status.PAWN_TAKE_LEFT);
+        addMoves(friendlyPieceGroup.pawn, 0, rPawns & notPromotion,
+                MoveList.Status.PAWN_TAKE_RIGHT);
+        addMoves(friendlyPieceGroup.pawn, 0, fPawns & notPromotion, MoveList.Status.PAWN_FORWARD);
+        addMoves(friendlyPieceGroup.pawn, 0, pPawns, MoveList.Status.PAWN_PUSH);
+        addMoves(friendlyPieceGroup.pawn, 0, lPawns & promotion, MoveList.Status.PAWN_PROMOTE_LEFT);
+        addMoves(friendlyPieceGroup.pawn, 0, rPawns & promotion,
+                MoveList.Status.PAWN_PROMOTE_RIGHT);
+        addMoves(friendlyPieceGroup.pawn, 0, fPawns & promotion, MoveList.Status.PAWN_PROMOTE);
+        addMoves(friendlyPieceGroup.pawn, 0, eplTargetBit, MoveList.Status.EN_PASSANT_LEFT);
+        addMoves(friendlyPieceGroup.pawn, 0, eprTargetBit, MoveList.Status.EN_PASSANT_RIGHT);
     }
 
     /**
      * Calculate and return the attack map of all the opponents sliding moves.
      */
     private void calculateSlidingAttackMap() {
-        long friendlyKingBit = friendlyKingCoord.getBitMask();
+        long friendlyKingBit = friendlyPieceGroup.kingCoord.getBitMask();
         long boardWithoutKing = board.getOccupancyMap() ^ friendlyKingBit;
 
-        long queens = board.getPieceMap(attackingQueen);
+        long queens = board.getPieceMap(attackingPieceGroup.queen);
 
-        BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingRook) | queens);
+        BitIterator bitIterator =
+                new BitIterator(board.getPieceMap(attackingPieceGroup.rook) | queens);
         opponentAttackMap |=
                 getAttackMap(bitIterator, boardWithoutKing, friendlyKingBit, ROOK_TABLE,
                         ROOK_MAGICS, ROOK_MOVE_MASKS);
 
-        bitIterator = new BitIterator(board.getPieceMap(attackingBishop) | queens);
+        bitIterator = new BitIterator(board.getPieceMap(attackingPieceGroup.bishop) | queens);
         opponentAttackMap |=
                 getAttackMap(bitIterator, boardWithoutKing, friendlyKingBit, BISHOP_TABLE,
                         BISHOP_MAGICS, BISHOP_MOVE_MASKS);
     }
 
     private void calculatePinRays() {
-        int friendlyKingIndex = friendlyKingCoord.getOndDimIndex();
+        int friendlyKingIndex = friendlyPieceGroup.kingCoord.getOndDimIndex();
         hvPinRayMap = getPinRays(board.getOccupancyMap(), ROOK_MOVE_MASKS[friendlyKingIndex],
-                board.getPieceMap(attackingQueen) | board.getPieceMap(attackingRook),
-                friendlyKingCoord.getOndDimIndex(), ROOK_TABLE, ROOK_MAGICS);
+                board.getPieceMap(attackingPieceGroup.queen) |
+                        board.getPieceMap(attackingPieceGroup.rook),
+                friendlyPieceGroup.kingCoord.getOndDimIndex(), ROOK_TABLE, ROOK_MAGICS);
         d12PinRayMap = getPinRays(board.getOccupancyMap(), BISHOP_MOVE_MASKS[friendlyKingIndex],
-                board.getPieceMap(attackingQueen) | board.getPieceMap(attackingBishop),
-                friendlyKingCoord.getOndDimIndex(), BISHOP_TABLE, BISHOP_MAGICS);
+                board.getPieceMap(attackingPieceGroup.queen) |
+                        board.getPieceMap(attackingPieceGroup.bishop),
+                friendlyPieceGroup.kingCoord.getOndDimIndex(), BISHOP_TABLE, BISHOP_MAGICS);
     }
 
     private void calculateKnightAttackData(long friendlyKingMask) {
-        BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingKnight));
+        BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingPieceGroup.knight));
         while (bitIterator.hasNext()) {
             int knightSquare = bitIterator.next();
             long attackMask = KNIGHT_MOVE_MASKS[knightSquare];
@@ -705,9 +685,9 @@ public class MoveGenerator {
 
     private void calculatePawnAttackData(long friendlyKingMask) {
         // Calculate Pawn Attacks
-        long pawns = board.getPieceMap(attackingPawn);
+        long pawns = board.getPieceMap(attackingPieceGroup.pawn);
         long pawnAttackSquares;
-        if (friendlyColor == BLACK) {
+        if (friendlyPieceGroup.color == BLACK) {
             pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) << 7) | ((pawns & ~FILE_MASKS[7]) << 9);
         } else {
             pawnAttackSquares = ((pawns & ~FILE_MASKS[0]) >>> 9) | ((pawns & ~FILE_MASKS[7]) >>> 7);
@@ -718,20 +698,20 @@ public class MoveGenerator {
         if ((pawnAttackSquares & friendlyKingMask) != 0) {
             inDoubleCheck = inCheck;
             inCheck = true;
-            int kingFile = friendlyKingCoord.getFile();
-            long attackingPieceBit =
-                    ROW_MASKS[friendlyKingCoord.getRank() + ((friendlyColor == WHITE) ? 1 : -1)] &
-                            ((kingFile > 0 ? FILE_MASKS[friendlyKingCoord.getFile() - 1] : 0) |
-                                    (kingFile < 7 ? FILE_MASKS[friendlyKingCoord.getFile() + 1] :
-                                            0));
+            int kingFile = friendlyPieceGroup.kingCoord.getFile();
+            long attackingPieceBit = ROW_MASKS[friendlyPieceGroup.kingCoord.getRank() +
+                    ((friendlyPieceGroup.color == WHITE) ? 1 : -1)] &
+                    ((kingFile > 0 ? FILE_MASKS[friendlyPieceGroup.kingCoord.getFile() - 1] : 0) |
+                            (kingFile < 7 ? FILE_MASKS[friendlyPieceGroup.kingCoord.getFile() + 1] :
+                                    0));
             checkRayMask |= pawns & attackingPieceBit;
         }
 
         // Set Pawn ep bit
-        pawns = board.getPieceMap(friendlyPawn);
+        pawns = board.getPieceMap(friendlyPieceGroup.pawn);
         if (game.hasEPTarget() && (epTarget = game.getEnPassantTarget().getBitMask()) != 0) {
             long eplPawn, eprPawn, epRank, epTargetPawn;
-            if (friendlyColor == WHITE) {
+            if (friendlyPieceGroup.color == WHITE) {
                 epRank = ROW_MASKS[4];
                 eplPawn = pawns & (epTarget >>> 7);
                 eprPawn = pawns & (epTarget >>> 9);
@@ -743,14 +723,14 @@ public class MoveGenerator {
                 epTargetPawn = epTarget << 8;
             }
 
-            long rookAndQueen =
-                    board.getPieceMap(attackingRook) | board.getPieceMap(attackingQueen);
+            long rookAndQueen = board.getPieceMap(attackingPieceGroup.rook) |
+                    board.getPieceMap(attackingPieceGroup.queen);
             if (!((epRank & friendlyKingMask) == 0 || (epRank & rookAndQueen) == 0 ||
                     (epRank & pawns) == 0)) {
                 long upperMask =
-                        SLIDING_ATTACK_MASKS[friendlyKingCoord.getOndDimIndex()][RIGHT.ordinal()];
+                        SLIDING_ATTACK_MASKS[friendlyPieceGroup.kingCoord.getOndDimIndex()][RIGHT.ordinal()];
                 long lowerMask =
-                        SLIDING_ATTACK_MASKS[friendlyKingCoord.getOndDimIndex()][LEFT.ordinal()];
+                        SLIDING_ATTACK_MASKS[friendlyPieceGroup.kingCoord.getOndDimIndex()][LEFT.ordinal()];
                 if (eplPawn != 0) {
                     long afterEP = board.getOccupancyMap() ^ eplPawn ^ epTargetPawn;
                     long moveMask = getMoveMask(lowerMask, upperMask, afterEP);
@@ -778,7 +758,7 @@ public class MoveGenerator {
         long pinned = mask & hvPinRayMap;
         long unpinned = mask ^ pinned;
 
-        if (friendlyColor == WHITE)
+        if (friendlyPieceGroup.color == WHITE)
             pinned &= (hvPinRayMap & ~ROW_MASKS[0]) >>> 8;
         else
             pinned &= ((hvPinRayMap & ~FILE_MASKS[7]) << 8);
@@ -790,7 +770,7 @@ public class MoveGenerator {
         long pinned = mask & d12PinRayMap;
         long unpinned = mask ^ pinned;
 
-        if (friendlyColor == WHITE)
+        if (friendlyPieceGroup.color == WHITE)
             pinned &= (d12PinRayMap & ~FILE_MASKS[7]) >>> 7;
         else
             pinned &= (d12PinRayMap & ~FILE_MASKS[7]) << 9;
@@ -802,7 +782,7 @@ public class MoveGenerator {
         long pinned = mask & d12PinRayMap;
         long unpinned = mask ^ pinned;
 
-        if (friendlyColor == WHITE)
+        if (friendlyPieceGroup.color == WHITE)
             pinned &= (d12PinRayMap & ~FILE_MASKS[0]) >>> 9;
         else
             pinned &= (d12PinRayMap & ~FILE_MASKS[0]) << 7;
@@ -858,6 +838,36 @@ public class MoveGenerator {
 
     public long getOpponentAttackMap() {
         return opponentAttackMap;
+    }
+
+    private static class PieceGroup {
+        private final char color;
+        private final Piece pawn;
+        private final Piece knight;
+        private final Piece bishop;
+        private final Piece rook;
+        private final Piece queen;
+        private final Piece king;
+        private ChessCoordinate kingCoord;
+
+        public PieceGroup(char color) {
+            this.color = color;
+            if (color == WHITE) {
+                this.pawn = WHITE_PAWN;
+                this.knight = WHITE_KNIGHT;
+                this.bishop = WHITE_BISHOP;
+                this.rook = WHITE_ROOK;
+                this.queen = WHITE_QUEEN;
+                this.king = WHITE_KING;
+            } else {
+                this.pawn = BLACK_PAWN;
+                this.knight = BLACK_KNIGHT;
+                this.bishop = BLACK_BISHOP;
+                this.rook = BLACK_ROOK;
+                this.queen = BLACK_QUEEN;
+                this.king = BLACK_KING;
+            }
+        }
     }
 
     private static class MagicData {
