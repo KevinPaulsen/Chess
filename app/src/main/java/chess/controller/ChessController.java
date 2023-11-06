@@ -121,11 +121,6 @@ public class ChessController extends Application {
         view.displayMove(gameModel.getLastMove());
     }
 
-    private void undoMove() {
-        gameModel.undoLastMove();
-        view.setPosition(gameModel.getBoard().getPieceArray());
-    }
-
     private void makeAIMove() {
         // If game is over, don't make the move
         if (gameModel.getGameOverStatus() != IN_PROGRESS) {
@@ -156,6 +151,11 @@ public class ChessController extends Application {
                 default -> "Error";
             });
         }
+    }
+
+    private void undoMove() {
+        gameModel.undoLastMove();
+        view.setPosition(gameModel.getBoard().getPieceArray());
     }
 
     private void letAIFinishGame() {

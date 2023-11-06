@@ -289,4 +289,8 @@ public enum Piece {
     public boolean isPawn() {
         return this == WHITE_PAWN || this == BLACK_PAWN;
     }
+
+    public boolean isBishop() {
+        return this == WHITE_BISHOP || this == BLACK_BISHOP;
+    }
 }

@@ -60,7 +60,7 @@ public class ChessAI {
         this.game = game;
         this.useIterativeDeepening = useIterativeDeepening;
         this.useTranspositionTable = useTranspositionTable;
-        this.transpositionTable = new MaxSizeLRUCache<>(500_000);
+        this.transpositionTable = new MaxSizeLRUCache<>(1_000_000);
         positionsEvaluated = 0;
     }
 
@@ -295,12 +295,12 @@ public class ChessAI {
             }
         }
 
-        private void kill() {
-            killed = true;
-        }
-
         private void runToDepth(int depth) throws InterruptedException {
             bestEval = miniMax(game, new AlphaBeta(), depth);
+        }
+
+        private void kill() {
+            killed = true;
         }
     }
 }

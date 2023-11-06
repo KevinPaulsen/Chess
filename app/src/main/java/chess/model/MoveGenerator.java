@@ -30,7 +30,6 @@ public class MoveGenerator {
     private static final long[][] BISHOP_TABLE;
     private static final long[][] BITS_BETWEEN_MAP;
     private static final long EDGE_SQUARES = 0xFF818181818181FFL;
-    private static final long ONES = 0xFFFFFFFFFFFFFFFFL;
     private static final MagicData MAGIC_COORD;
     private static final long WHITE_KING_CASTLE_MASK = 0x0000000000000070L;
     private static final long WHITE_QUEEN_CASTLE_MASK = 0x000000000000001EL;
@@ -202,17 +201,6 @@ public class MoveGenerator {
         }
 
         return result;
-    }
-
-    private static long getBitsBetweenInclusiveOLD(long lower, long upper, long mask) {
-        long rightBits = Long.lowestOneBit(upper << 1) - 1;
-        long leftBits;
-        if (lower == 0) {
-            leftBits = ONES;
-        } else {
-            leftBits = -Long.highestOneBit(lower);
-        }
-        return rightBits & leftBits & mask;
     }
 
     private static long[] createRookMasks() {
@@ -432,9 +420,9 @@ public class MoveGenerator {
             long rooks = board.getPieceMap(friendlyPieceGroup.rook);
             long bishops = board.getPieceMap(friendlyPieceGroup.bishop);
             generateRookAndBishopMoves((queens | rooks) & ~d12PinRayMap, queens, hvPinRayMap,
-                    friendlyPieceGroup.rook, STRAIGHT_COMPLEMENTS);
+                    friendlyPieceGroup.rook);
             generateRookAndBishopMoves((queens | bishops) & ~hvPinRayMap, queens, d12PinRayMap,
-                    friendlyPieceGroup.bishop, DIAGONAL_COMPLEMENTS);
+                    friendlyPieceGroup.bishop);
             generateKnightMoves();
             generatePawnMoves();
         }
@@ -518,7 +506,7 @@ public class MoveGenerator {
     }
 
     private void generateRookAndBishopMoves(long slidingPieceMask, long queenMask, long pinMask,
-                                            Piece friendlyPiece, Direction[] directions) {
+                                            Piece friendlyPiece) {
         long pinnedPieces = slidingPieceMask & pinMask;
         long unpinnedPieces = slidingPieceMask & ~pinMask;
 
@@ -528,12 +516,12 @@ public class MoveGenerator {
 
             long legalMoveMap =
                     pinMask & checkRayMask & ~board.getOccupancyMap(friendlyPieceGroup.color);
-            if (directions == STRAIGHT_COMPLEMENTS) {
-                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
-                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
-            } else {
+            if (friendlyPiece.isBishop()) {
                 legalMoveMap &= BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
                         board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
+            } else {
+                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
             }
 
             long squareMask = ChessCoordinate.getBitMask(square);
@@ -550,12 +538,12 @@ public class MoveGenerator {
             int square = bitIterator.next();
 
             long legalMoveMap = checkRayMask & ~board.getOccupancyMap(friendlyPieceGroup.color);
-            if (directions == STRAIGHT_COMPLEMENTS) {
-                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
-                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
-            } else {
+            if (friendlyPiece.isBishop()) {
                 legalMoveMap &= BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
                         board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
+            } else {
+                legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
+                        board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
             }
 
             long squareMask = ChessCoordinate.getBitMask(square);
