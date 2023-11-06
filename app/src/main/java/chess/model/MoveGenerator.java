@@ -522,7 +522,7 @@ public class MoveGenerator {
         // Add moves for the regular king moves
         long kingMoveMask = KING_MOVE_MASKS[friendlyKingCoord.getOndDimIndex()] &
                 ~(board.getOccupancyMap(friendlyColor) | opponentAttackMap);
-        addMoves(movingKing, friendlyKingCoord, kingMoveMask, MoveList.Status.NORMAL);
+        addMoves(movingKing, friendlyKingCoord.getBitMask(), kingMoveMask, MoveList.Status.NORMAL);
 
         // Add castling moves
         kingMoveMask = 0x0L;
@@ -543,7 +543,8 @@ public class MoveGenerator {
                 kingMoveMask |= C8.getBitMask();
         }
 
-        addMoves(movingKing, friendlyKingCoord, kingMoveMask, MoveList.Status.CASTLING);//*/
+        addMoves(movingKing, friendlyKingCoord.getBitMask(), kingMoveMask,
+                MoveList.Status.CASTLING);
     }
 
     private void generateRookAndBishopMoves(long slidingPieceMask, long queenMask, long pinMask,
@@ -553,10 +554,9 @@ public class MoveGenerator {
 
         BitIterator bitIterator = new BitIterator(pinnedPieces);
         while (bitIterator.hasNext()) {
-            ChessCoordinate coordinate = bitIterator.next();
+            int square = bitIterator.next();
 
             long legalMoveMap = pinMask & checkRayMask & ~board.getOccupancyMap(friendlyColor);
-            int square = coordinate.getOndDimIndex();
             if (directions == STRAIGHT_COMPLEMENTS) {
                 legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
                         board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
@@ -565,19 +565,19 @@ public class MoveGenerator {
                         board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
             }
 
-            if ((coordinate.getBitMask() & queenMask) != 0) {
-                addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+            long squareMask = ChessCoordinate.getBitMask(square);
+            if ((squareMask & queenMask) != 0) {
+                addMoves(friendlyQueen, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             } else {
-                addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+                addMoves(friendlyPiece, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             }
         }
 
         bitIterator = new BitIterator(unpinnedPieces);
         while (bitIterator.hasNext()) {
-            ChessCoordinate coordinate = bitIterator.next();
+            int square = bitIterator.next();
 
             long legalMoveMap = checkRayMask & ~board.getOccupancyMap(friendlyColor);
-            int square = coordinate.getOndDimIndex();
             if (directions == STRAIGHT_COMPLEMENTS) {
                 legalMoveMap &= ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
                         board.getOccupancyMap() & ROOK_MOVE_MASKS[square])];
@@ -586,10 +586,11 @@ public class MoveGenerator {
                         board.getOccupancyMap() & BISHOP_MOVE_MASKS[square])];
             }
 
-            if ((coordinate.getBitMask() & queenMask) != 0) {
-                addMoves(friendlyQueen, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+            long squareMask = ChessCoordinate.getBitMask(square);
+            if ((squareMask & queenMask) != 0) {
+                addMoves(friendlyQueen, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             } else {
-                addMoves(friendlyPiece, coordinate, legalMoveMap, MoveList.Status.NORMAL);
+                addMoves(friendlyPiece, squareMask, legalMoveMap, MoveList.Status.NORMAL);
             }
         }
     }
@@ -598,10 +599,11 @@ public class MoveGenerator {
         long knights = board.getPieceMap(friendlyKnight) & ~(hvPinRayMap | d12PinRayMap);
         BitIterator bitIterator = new BitIterator(knights);
         while (bitIterator.hasNext()) {
-            ChessCoordinate coordinate = bitIterator.next();
-            long moveMask = KNIGHT_MOVE_MASKS[coordinate.getOndDimIndex()] &
-                    ~board.getOccupancyMap(friendlyColor) & checkRayMask;
-            addMoves(friendlyKnight, coordinate, moveMask, MoveList.Status.NORMAL);
+            int square = bitIterator.next();
+            long moveMask = KNIGHT_MOVE_MASKS[square] & ~board.getOccupancyMap(friendlyColor) &
+                    checkRayMask;
+            addMoves(friendlyKnight, ChessCoordinate.getBitMask(square), moveMask,
+                    MoveList.Status.NORMAL);
         }
     }
 
@@ -645,15 +647,15 @@ public class MoveGenerator {
         lPawns &= enemy;
         rPawns &= enemy;
 
-        addMoves(friendlyPawn, null, lPawns & notPromotion, MoveList.Status.PAWN_TAKE_LEFT);
-        addMoves(friendlyPawn, null, rPawns & notPromotion, MoveList.Status.PAWN_TAKE_RIGHT);
-        addMoves(friendlyPawn, null, fPawns & notPromotion, MoveList.Status.PAWN_FORWARD);
-        addMoves(friendlyPawn, null, pPawns, MoveList.Status.PAWN_PUSH);
-        addMoves(friendlyPawn, null, lPawns & promotion, MoveList.Status.PAWN_PROMOTE_LEFT);
-        addMoves(friendlyPawn, null, rPawns & promotion, MoveList.Status.PAWN_PROMOTE_RIGHT);
-        addMoves(friendlyPawn, null, fPawns & promotion, MoveList.Status.PAWN_PROMOTE);
-        addMoves(friendlyPawn, null, eplTargetBit, MoveList.Status.EN_PASSANT_LEFT);
-        addMoves(friendlyPawn, null, eprTargetBit, MoveList.Status.EN_PASSANT_RIGHT);
+        addMoves(friendlyPawn, 0, lPawns & notPromotion, MoveList.Status.PAWN_TAKE_LEFT);
+        addMoves(friendlyPawn, 0, rPawns & notPromotion, MoveList.Status.PAWN_TAKE_RIGHT);
+        addMoves(friendlyPawn, 0, fPawns & notPromotion, MoveList.Status.PAWN_FORWARD);
+        addMoves(friendlyPawn, 0, pPawns, MoveList.Status.PAWN_PUSH);
+        addMoves(friendlyPawn, 0, lPawns & promotion, MoveList.Status.PAWN_PROMOTE_LEFT);
+        addMoves(friendlyPawn, 0, rPawns & promotion, MoveList.Status.PAWN_PROMOTE_RIGHT);
+        addMoves(friendlyPawn, 0, fPawns & promotion, MoveList.Status.PAWN_PROMOTE);
+        addMoves(friendlyPawn, 0, eplTargetBit, MoveList.Status.EN_PASSANT_LEFT);
+        addMoves(friendlyPawn, 0, eprTargetBit, MoveList.Status.EN_PASSANT_RIGHT);
     }
 
     /**
@@ -689,14 +691,14 @@ public class MoveGenerator {
     private void calculateKnightAttackData(long friendlyKingMask) {
         BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingKnight));
         while (bitIterator.hasNext()) {
-            ChessCoordinate knightCoord = bitIterator.next();
-            long attackMask = KNIGHT_MOVE_MASKS[knightCoord.getOndDimIndex()];
+            int knightSquare = bitIterator.next();
+            long attackMask = KNIGHT_MOVE_MASKS[knightSquare];
             opponentAttackMap |= attackMask;
 
             if ((attackMask & friendlyKingMask) != 0) {
                 inDoubleCheck = inCheck;
                 inCheck = true;
-                checkRayMask |= knightCoord.getBitMask();
+                checkRayMask |= ChessCoordinate.getBitMask(knightSquare);
             }
         }
     }
@@ -765,7 +767,7 @@ public class MoveGenerator {
         }
     }
 
-    private void addMoves(Piece piece, ChessCoordinate startingCoordinate, long moveMask,
+    private void addMoves(Piece piece, long startingCoordinate, long moveMask,
                           MoveList.Status status) {
         if (moveMask == 0)
             return;
@@ -812,21 +814,20 @@ public class MoveGenerator {
                               long[][] moveTable, MagicData[] magicTable, long[] moveMaskTable) {
         long attackingSquares = 0;
         while (pieces.hasNext()) {
-            ChessCoordinate piece = pieces.next();
-            int square = piece.getOndDimIndex();
+            int pieceSquare = pieces.next();
 
             // Get all squares piece is attacking
-            long bishopAttackingSquares = moveTable[square][magicTable[square].getIndex(
-                    boardWithoutKing & moveMaskTable[square])];
+            long bishopAttackingSquares = moveTable[pieceSquare][magicTable[pieceSquare].getIndex(
+                    boardWithoutKing & moveMaskTable[pieceSquare])];
             attackingSquares |= bishopAttackingSquares;
 
             // If there is a check, mark it
             if ((bishopAttackingSquares & friendlyKing) != 0) {
                 inDoubleCheck = inCheck;
                 inCheck = true;
-                checkRayMask |=
-                        BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(1L << square)][MAGIC_COORD.getIndex(
-                                friendlyKing)];
+                checkRayMask |= BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(
+                        ChessCoordinate.getBitMask(pieceSquare))][MAGIC_COORD.getIndex(
+                        friendlyKing)];
             }
         }
         return attackingSquares;
@@ -845,10 +846,11 @@ public class MoveGenerator {
 
         BitIterator piningPieceIterator = new BitIterator(slidingPieces & xRaySquares);
         while (piningPieceIterator.hasNext()) {
-            ChessCoordinate piningPieceCoord = piningPieceIterator.next();
+            int piningPieceCoord = piningPieceIterator.next();
 
             pinRays |= BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(
-                    piningPieceCoord.getBitMask())][MAGIC_COORD.getIndex(1L << friendlyKingIndex)];
+                    ChessCoordinate.getBitMask(piningPieceCoord))][MAGIC_COORD.getIndex(
+                    1L << friendlyKingIndex)];
         }
 
         return pinRays;

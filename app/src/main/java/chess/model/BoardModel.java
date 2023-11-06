@@ -38,6 +38,10 @@ public class BoardModel {
         return hashValue;
     }
 
+    private BoardState getState() {
+        return stateHistory.peek();
+    }
+
     /**
      * Undoes the given move.
      */
@@ -47,24 +51,11 @@ public class BoardModel {
         return hashValue;
     }
 
-    private BoardState getState() {
-        return stateHistory.peek();
-    }
-
-    /**
-     * Gets the piece on the given ChessCoordinate.
-     *
-     * @param coordinate the coordinate of the requested piece is at.
-     * @return the piece on the given coordinate.
-     */
-    public Piece getPieceOn(ChessCoordinate coordinate) {
-        return getState().getPieceOn(coordinate.getBitMask());
-    }
-
     public List<ChessCoordinate> getLocations(Piece piece) {
         BitIterator iterator = new BitIterator(getState().pieceMaps[piece.ordinal()]);
         List<ChessCoordinate> locations = new ArrayList<>(8);
-        iterator.forEachRemaining(locations::add);
+        iterator.forEachRemaining(
+                index -> locations.add(ChessCoordinate.getChessCoordinate(index)));
 
         return locations;
     }
@@ -115,12 +106,22 @@ public class BoardModel {
         return pieceArray;
     }
 
-    public boolean coordIsPiece(Piece piece, ChessCoordinate coordinate) {
-        return (getState().pieceMaps[piece.ordinal()] & coordinate.getBitMask()) != 0;
+    /**
+     * Gets the piece on the given ChessCoordinate.
+     *
+     * @param coordinate the coordinate of the requested piece is at.
+     * @return the piece on the given coordinate.
+     */
+    public Piece getPieceOn(ChessCoordinate coordinate) {
+        return getState().getPieceOn(coordinate.getBitMask());
     }
 
     public boolean isPawn(ChessCoordinate coordinate) {
         return coordIsPiece(WHITE_PAWN, coordinate) || coordIsPiece(BLACK_PAWN, coordinate);
+    }
+
+    public boolean coordIsPiece(Piece piece, ChessCoordinate coordinate) {
+        return (getState().pieceMaps[piece.ordinal()] & coordinate.getBitMask()) != 0;
     }
 
     public long getOccupancyMap() {

@@ -37,7 +37,7 @@ public class MoveList implements Iterable<Movable> {
         this.potentialPromotions = new ArrayDeque<>(moveList.potentialPromotions);
     }
 
-    public void add(Piece movingPiece, ChessCoordinate coordinate, long moveMap, Status status) {
+    public void add(Piece movingPiece, long coordinate, long moveMap, Status status) {
         moveData.add(new MoveData(movingPiece, coordinate, moveMap, status));
     }
 
@@ -61,8 +61,7 @@ public class MoveList implements Iterable<Movable> {
         PAWN_PROMOTE_LEFT, PAWN_PROMOTE_RIGHT, EN_PASSANT_RIGHT, EN_PASSANT_LEFT
     }
 
-    private record MoveData(Piece movingPiece, ChessCoordinate coordinate, Long moveMap,
-                            Status status) {}
+    private record MoveData(Piece movingPiece, long coordinate, Long moveMap, Status status) {}
 
     private class MoveIterator implements Iterator<Movable> {
 
@@ -90,7 +89,7 @@ public class MoveList implements Iterable<Movable> {
                 throw new NoSuchElementException();
 
             if (potentialPromotions.isEmpty()) {
-                Movable move = createMove(bitIterator.next());
+                Movable move = createMove(ChessCoordinate.getChessCoordinate(bitIterator.next()));
 
                 if (!bitIterator.hasNext() && index < moveData.size()) {
                     currentMoveData = moveData.get(index++);
@@ -104,11 +103,11 @@ public class MoveList implements Iterable<Movable> {
 
         private Movable createMove(ChessCoordinate end) {
             Piece moving = currentMoveData.movingPiece;
-            ChessCoordinate start = currentMoveData.coordinate;
             Status status = currentMoveData.status;
 
             return switch (status) {
-                case NORMAL -> new NormalMove(moving, start, end);
+                case NORMAL -> new NormalMove(moving,
+                        ChessCoordinate.getChessCoordinate(currentMoveData.coordinate), end);
                 case CASTLING -> switch (end) {
                     case G1 -> WHITE_KING_SIDE_CASTLE;
                     case G8 -> BLACK_KING_SIDE_CASTLE;

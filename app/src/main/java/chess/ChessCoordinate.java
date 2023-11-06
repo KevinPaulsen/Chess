@@ -45,6 +45,10 @@ public enum ChessCoordinate {
         this.bitMask = 1L << ondDimIndex;
     }
 
+    public static long getBitMask(int squareIndex) {
+        return 1L << squareIndex;
+    }
+
     public static boolean isInBounds(int file, int rank) {
         return 0 <= file && file <= 7 && 0 <= rank && rank <= 7;
     }
