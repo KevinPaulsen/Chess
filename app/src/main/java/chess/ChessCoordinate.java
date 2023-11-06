@@ -129,7 +129,7 @@ public enum ChessCoordinate {
     }
 
     public static ChessCoordinate getChessCoordinate(long bitMask) {
-        return getChessCoordinate(Long.numberOfTrailingZeros(bitMask));
+        return getChessCoordinate(Long.bitCount(bitMask - 1));
     }
 
     public char getCharFile() {

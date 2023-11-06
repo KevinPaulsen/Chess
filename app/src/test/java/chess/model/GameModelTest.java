@@ -135,6 +135,7 @@ public class GameModelTest {
         Bitmap test v2: 3980 (run with profiler)
         Bitmap test v3: 2605
         Bitmap test v3: 2671 / 2678 / 2542
+        Magic Bitboard test: 638
          */
         GameModel complicated =
                 new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");

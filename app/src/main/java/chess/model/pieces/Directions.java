@@ -25,7 +25,7 @@ public class Directions {
     }
 
     public static boolean areDiagonallyAligned(ChessCoordinate c1, ChessCoordinate c2) {
-        return c1.getRank() - c2.getRank() == c1.getFile() - c2.getFile();
+        return Math.abs(c1.getRank() - c2.getRank()) == Math.abs(c1.getFile() - c2.getFile());
     }
 
     public static boolean areStraightlyAligned(ChessCoordinate c1, ChessCoordinate c2) {
