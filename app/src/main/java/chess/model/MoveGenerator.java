@@ -501,6 +501,8 @@ public class MoveGenerator {
         // Calculate the pin and check rays, and the sliding attack map
         calculateSlidingAttackMap();
 
+        calculatePinRays();
+
         long friendlyKingMask = friendlyKingCoord.getBitMask();
 
         calculateKnightAttackData(friendlyKingMask);
@@ -664,10 +666,24 @@ public class MoveGenerator {
         long queens = board.getPieceMap(attackingQueen);
 
         BitIterator bitIterator = new BitIterator(board.getPieceMap(attackingRook) | queens);
-        opponentAttackMap |= getRookAttackMap(bitIterator, boardWithoutKing, friendlyKingBit);//*/
+        opponentAttackMap |=
+                getAttackMap(bitIterator, boardWithoutKing, friendlyKingBit, ROOK_TABLE,
+                        ROOK_MAGICS, ROOK_MOVE_MASKS);
 
         bitIterator = new BitIterator(board.getPieceMap(attackingBishop) | queens);
-        opponentAttackMap |= getBishopAttackMap(bitIterator, boardWithoutKing, friendlyKingBit);
+        opponentAttackMap |=
+                getAttackMap(bitIterator, boardWithoutKing, friendlyKingBit, BISHOP_TABLE,
+                        BISHOP_MAGICS, BISHOP_MOVE_MASKS);
+    }
+
+    private void calculatePinRays() {
+        int friendlyKingIndex = friendlyKingCoord.getOndDimIndex();
+        hvPinRayMap = getPinRays(board.getOccupancyMap(), ROOK_MOVE_MASKS[friendlyKingIndex],
+                board.getPieceMap(attackingQueen) | board.getPieceMap(attackingRook),
+                friendlyKingCoord.getOndDimIndex(), ROOK_TABLE, ROOK_MAGICS);
+        d12PinRayMap = getPinRays(board.getOccupancyMap(), BISHOP_MOVE_MASKS[friendlyKingIndex],
+                board.getPieceMap(attackingQueen) | board.getPieceMap(attackingBishop),
+                friendlyKingCoord.getOndDimIndex(), BISHOP_TABLE, BISHOP_MAGICS);
     }
 
     private void calculateKnightAttackData(long friendlyKingMask) {
@@ -792,30 +808,20 @@ public class MoveGenerator {
         return pinned | unpinned;
     }
 
-    private long getRookAttackMap(BitIterator rooksAndQueens, long boardWithoutKing,
-                                  long friendlyKing) {
+    private long getAttackMap(BitIterator pieces, long boardWithoutKing, long friendlyKing,
+                              long[][] moveTable, MagicData[] magicTable, long[] moveMaskTable) {
         long attackingSquares = 0;
-        while (rooksAndQueens.hasNext()) {
-            ChessCoordinate rook = rooksAndQueens.next();
-            int square = rook.getOndDimIndex();
+        while (pieces.hasNext()) {
+            ChessCoordinate piece = pieces.next();
+            int square = piece.getOndDimIndex();
 
             // Get all squares piece is attacking
-            long rookAttackingSquares = ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
-                    boardWithoutKing & ROOK_MOVE_MASKS[square])];
-            attackingSquares |= rookAttackingSquares;
+            long bishopAttackingSquares = moveTable[square][magicTable[square].getIndex(
+                    boardWithoutKing & moveMaskTable[square])];
+            attackingSquares |= bishopAttackingSquares;
 
-            if ((rookAttackingSquares & friendlyKing) == 0) {
-                // If there is no check, look for pins
-                long xRayBoard = boardWithoutKing & ~rookAttackingSquares;
-
-                long xRaySquares = ROOK_TABLE[square][ROOK_MAGICS[square].getIndex(
-                        xRayBoard & ROOK_MOVE_MASKS[square])];
-
-                if ((xRaySquares & friendlyKing) != 0) {
-                    hvPinRayMap |= BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(
-                            1L << square)][MAGIC_COORD.getIndex(friendlyKing)];
-                }
-            } else {
+            // If there is a check, mark it
+            if ((bishopAttackingSquares & friendlyKing) != 0) {
                 inDoubleCheck = inCheck;
                 inCheck = true;
                 checkRayMask |=
@@ -826,38 +832,26 @@ public class MoveGenerator {
         return attackingSquares;
     }
 
-    private long getBishopAttackMap(BitIterator bishopsAndQueens, long boardWithoutKing,
-                                    long friendlyKing) {
-        long attackingSquares = 0;
-        while (bishopsAndQueens.hasNext()) {
-            ChessCoordinate bishop = bishopsAndQueens.next();
-            int square = bishop.getOndDimIndex();
+    private static long getPinRays(long board, long moveMask, long slidingPieces,
+                                   int friendlyKingIndex, long[][] moveTable,
+                                   MagicData[] magicTable) {
+        long pinRays = 0L;
 
-            // Get all squares piece is attacking
-            long bishopAttackingSquares = BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
-                    boardWithoutKing & BISHOP_MOVE_MASKS[square])];
-            attackingSquares |= bishopAttackingSquares;
+        board &= ~moveTable[friendlyKingIndex][magicTable[friendlyKingIndex].getIndex(
+                board & moveMask)];
 
-            if ((bishopAttackingSquares & friendlyKing) == 0) {
-                // If there is no check, look for pins
-                long xRayBoard = boardWithoutKing & ~bishopAttackingSquares;
+        long xRaySquares = moveTable[friendlyKingIndex][magicTable[friendlyKingIndex].getIndex(
+                board & moveMask)] & board;
 
-                long xRaySquares = BISHOP_TABLE[square][BISHOP_MAGICS[square].getIndex(
-                        xRayBoard & BISHOP_MOVE_MASKS[square])];
+        BitIterator piningPieceIterator = new BitIterator(slidingPieces & xRaySquares);
+        while (piningPieceIterator.hasNext()) {
+            ChessCoordinate piningPieceCoord = piningPieceIterator.next();
 
-                if ((xRaySquares & friendlyKing) != 0) {
-                    d12PinRayMap |= BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(
-                            1L << square)][MAGIC_COORD.getIndex(friendlyKing)];
-                }
-            } else {
-                inDoubleCheck = inCheck;
-                inCheck = true;
-                checkRayMask |=
-                        BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(1L << square)][MAGIC_COORD.getIndex(
-                                friendlyKing)];
-            }
+            pinRays |= BITS_BETWEEN_MAP[MAGIC_COORD.getIndex(
+                    piningPieceCoord.getBitMask())][MAGIC_COORD.getIndex(1L << friendlyKingIndex)];
         }
-        return attackingSquares;
+
+        return pinRays;
     }
 
     public long getOpponentAttackMap() {
