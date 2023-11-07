@@ -47,15 +47,6 @@ public class ChessSquareView extends StackPane {
         this.getChildren().add(colorFilter);
     }
 
-    public boolean hasPiece() {
-        return getChildren().stream().anyMatch(node -> node instanceof ChessPieceView);
-    }
-
-    public @Nullable ChessPieceView getPieceView() {
-        return (ChessPieceView) getChildren().stream()
-                .filter(node -> node instanceof ChessPieceView).findAny().orElse(null);
-    }
-
     public void isLastMove() {
         colorFilter.setStyle(LAST_MOVE);
     }
@@ -79,6 +70,10 @@ public class ChessSquareView extends StackPane {
         this.getChildren().add(movingPiece);
     }
 
+    public boolean hasPiece() {
+        return getChildren().stream().anyMatch(node -> node instanceof ChessPieceView);
+    }
+
     public ChessPieceView removePiece() {
         if (hasPiece()) {
             ChessPieceView piece = getPieceView();
@@ -86,6 +81,11 @@ public class ChessSquareView extends StackPane {
             return piece;
         }
         return null;
+    }
+
+    public @Nullable ChessPieceView getPieceView() {
+        return (ChessPieceView) getChildren().stream().filter(
+                node -> node instanceof ChessPieceView).findAny().orElse(null);
     }
 
     public ChessCoordinate getCoordinate() {

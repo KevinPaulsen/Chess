@@ -186,7 +186,7 @@ public class BoardModel {
             }
 
             hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx),
-                    hashValue);
+                                          hashValue);
 
             pieceIdx--;
         }

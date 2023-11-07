@@ -31,91 +31,6 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
     }
 
     /**
-     * Opens a RandomAccessFile with the given path.
-     *
-     * @param filePath the path of the file to open.
-     * @return the RandomAccessFile
-     */
-    private static RandomAccessFile getRandomAccessFile(String filePath) {
-        RandomAccessFile accessFile = null;
-        try {
-            accessFile = new RandomAccessFile(filePath, "rw");
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        return accessFile;
-    }
-
-    /**
-     * Opens a RandomAccessFile with the given path.
-     *
-     * @param randomAccessFile the RandomAccessFile to close
-     */
-    private static void close(RandomAccessFile randomAccessFile) {
-        try {
-            randomAccessFile.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Seek the RandomAccessFile to the given position
-     *
-     * @param randomAccessFile the RandomAccessFile.
-     * @param pos              the position to seek to.
-     */
-    private static void seek(RandomAccessFile randomAccessFile, long pos) {
-        pos = Math.abs(pos) % TABLE_SIZE;
-        pos = pos - (pos % ENTRY_SIZE);
-        try {
-            randomAccessFile.seek(pos);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Read from the randomAccessFile bufferSize number of bytes.
-     *
-     * @param randomAccessFile the file to read from.
-     * @param bufferSize       the size of the buffer to read into.
-     * @return the bytes read.
-     * @throws IllegalStateException if bufferSize number of bytes was not read
-     */
-    private static byte[] read(RandomAccessFile randomAccessFile, int bufferSize) {
-        int bytesRead = -1;
-        byte[] buffer = new byte[bufferSize];
-        try {
-            bytesRead = randomAccessFile.read(buffer);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        if (bytesRead != buffer.length) {
-            throw new IllegalStateException("Did not read the expected number of bytes.");
-        }
-        return buffer;
-    }
-
-    /**
-     * Reads the next int from the RandomAccessFile.
-     *
-     * @param randomAccessFile the file to read from.
-     * @return the next int read.
-     */
-    private static int readInt(RandomAccessFile randomAccessFile) {
-        int result = 0;
-        try {
-            if (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
-                result = randomAccessFile.readInt();
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        return result;
-    }
-
-    /**
      * Reads the next long from the RandomAccessFile.
      *
      * @param randomAccessFile the file to read from.
@@ -129,51 +44,6 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
             ex.printStackTrace();
         }
         return result;
-    }
-
-    /**
-     * Write the byte[] buffer to the given accessFile.
-     *
-     * @param randomAccessFile the file to write to.
-     * @param buffer           the buffer to write.
-     */
-    private static void write(RandomAccessFile randomAccessFile, byte[] buffer) {
-        try {
-            if (buffer.length != ENTRY_SIZE) {
-                int x = 0;
-            }
-            randomAccessFile.write(buffer);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Write an array of integers to the given file.
-     *
-     * @param randomAccessFile the file to write to.
-     * @param integers         the integers to write to the file.
-     */
-    private static void writeInts(RandomAccessFile randomAccessFile, int... integers) {
-        ByteBuffer buffer = ByteBuffer.allocate(integers.length * Integer.BYTES);
-        for (int val : integers) {
-            buffer.putInt(val);
-        }
-        write(randomAccessFile, buffer.array());
-    }
-
-    /**
-     * Checks that key is not null and is a Long.
-     *
-     * @param key the key to check.
-     * @throws NullPointerException if key is null.
-     * @throws ClassCastException   if key is not a Long.
-     */
-    private static void checkKey(Object key) {
-        if (key == null)
-            throw new NullPointerException("Key cannot be null");
-        if (!(key instanceof Long))
-            throw new ClassCastException("Key is not of type Long");
     }
 
     /**
@@ -231,6 +101,83 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
     }
 
     /**
+     * Checks that key is not null and is a Long.
+     *
+     * @param key the key to check.
+     * @throws NullPointerException if key is null.
+     * @throws ClassCastException   if key is not a Long.
+     */
+    private static void checkKey(Object key) {
+        if (key == null)
+            throw new NullPointerException("Key cannot be null");
+        if (!(key instanceof Long))
+            throw new ClassCastException("Key is not of type Long");
+    }
+
+    /**
+     * Opens a RandomAccessFile with the given path.
+     *
+     * @param filePath the path of the file to open.
+     * @return the RandomAccessFile
+     */
+    private static RandomAccessFile getRandomAccessFile(String filePath) {
+        RandomAccessFile accessFile = null;
+        try {
+            accessFile = new RandomAccessFile(filePath, "rw");
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        return accessFile;
+    }
+
+    /**
+     * Seek the RandomAccessFile to the given position
+     *
+     * @param randomAccessFile the RandomAccessFile.
+     * @param pos              the position to seek to.
+     */
+    private static void seek(RandomAccessFile randomAccessFile, long pos) {
+        pos = Math.abs(pos) % TABLE_SIZE;
+        pos = pos - (pos % ENTRY_SIZE);
+        try {
+            randomAccessFile.seek(pos);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Reads the next int from the RandomAccessFile.
+     *
+     * @param randomAccessFile the file to read from.
+     * @return the next int read.
+     */
+    private static int readInt(RandomAccessFile randomAccessFile) {
+        int result = 0;
+        try {
+            if (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
+                result = randomAccessFile.readInt();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * Opens a RandomAccessFile with the given path.
+     *
+     * @param randomAccessFile the RandomAccessFile to close
+     */
+    private static void close(RandomAccessFile randomAccessFile) {
+        try {
+            randomAccessFile.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
      * This method is not supported.
      */
     @Override
@@ -278,6 +225,28 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
         close(accessFile);
 
         return GameEntry.toGameEntry(buf);
+    }
+
+    /**
+     * Read from the randomAccessFile bufferSize number of bytes.
+     *
+     * @param randomAccessFile the file to read from.
+     * @param bufferSize       the size of the buffer to read into.
+     * @return the bytes read.
+     * @throws IllegalStateException if bufferSize number of bytes was not read
+     */
+    private static byte[] read(RandomAccessFile randomAccessFile, int bufferSize) {
+        int bytesRead = -1;
+        byte[] buffer = new byte[bufferSize];
+        try {
+            bytesRead = randomAccessFile.read(buffer);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        if (bytesRead != buffer.length) {
+            throw new IllegalStateException("Did not read the expected number of bytes.");
+        }
+        return buffer;
     }
 
     /**
@@ -451,7 +420,38 @@ public class DiskHashTable implements Map<Long, GameEntry>, Iterable<GameEntry> 
         close(accessFile);
         bufferMap.clear();
         System.out.printf("Finished writing to file... (%dms)\n",
-                System.currentTimeMillis() - startTime);
+                          System.currentTimeMillis() - startTime);
+    }
+
+    /**
+     * Write the byte[] buffer to the given accessFile.
+     *
+     * @param randomAccessFile the file to write to.
+     * @param buffer           the buffer to write.
+     */
+    private static void write(RandomAccessFile randomAccessFile, byte[] buffer) {
+        try {
+            if (buffer.length != ENTRY_SIZE) {
+                int x = 0;
+            }
+            randomAccessFile.write(buffer);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Write an array of integers to the given file.
+     *
+     * @param randomAccessFile the file to write to.
+     * @param integers         the integers to write to the file.
+     */
+    private static void writeInts(RandomAccessFile randomAccessFile, int... integers) {
+        ByteBuffer buffer = ByteBuffer.allocate(integers.length * Integer.BYTES);
+        for (int val : integers) {
+            buffer.putInt(val);
+        }
+        write(randomAccessFile, buffer.array());
     }
 
     /**

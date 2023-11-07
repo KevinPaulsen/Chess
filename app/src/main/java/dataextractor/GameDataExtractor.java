@@ -42,12 +42,17 @@ public class GameDataExtractor {
         this.reader = new PGNReader(pgnPathname);
     }
 
-    private synchronized static void writeTo(Writer writer, String string) {
-        try {
-            writer.write(string);
-        } catch (IOException ex) {
-            ex.printStackTrace();
+    private static void flattenData() {
+        Writer writer = getFileWriter(FLATTENED_FILENAME);
+        File dataFolder = new File(DATA_FOLDER);
+        for (final File fileEntry : Objects.requireNonNull(dataFolder.listFiles())) {
+            if (fileEntry.toString().endsWith(".pgn")) {
+                System.out.printf("Writing '%s'\n", fileEntry);
+                GameDataExtractor extractor = new GameDataExtractor(fileEntry.getPath());
+                extractor.writeGame(writer);
+            }
         }
+        closeWriter(writer);
     }
 
     private static Writer getFileWriter(String fileName) {
@@ -61,6 +66,12 @@ public class GameDataExtractor {
         return writer;
     }
 
+    public void writeGame(Writer writer) {
+        while (reader.hasNext() && writer != null) {
+            writeTo(writer, reader.next());
+        }
+    }
+
     private static void closeWriter(Writer writer) {
         try {
             if (writer != null) {
@@ -71,17 +82,12 @@ public class GameDataExtractor {
         }
     }
 
-    private static void flattenData() {
-        Writer writer = getFileWriter(FLATTENED_FILENAME);
-        File dataFolder = new File(DATA_FOLDER);
-        for (final File fileEntry : Objects.requireNonNull(dataFolder.listFiles())) {
-            if (fileEntry.toString().endsWith(".pgn")) {
-                System.out.printf("Writing '%s'\n", fileEntry);
-                GameDataExtractor extractor = new GameDataExtractor(fileEntry.getPath());
-                extractor.writeGame(writer);
-            }
+    private synchronized static void writeTo(Writer writer, String string) {
+        try {
+            writer.write(string);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
-        closeWriter(writer);
     }
 
     private static void processData() {
@@ -99,7 +105,7 @@ public class GameDataExtractor {
         final int initSize = posToWins.size();
 
         System.out.printf("Writing %d entries, estimated %f GB\n", initSize,
-                (initSize * 62L) / 1_000_000_000f);
+                          (initSize * 62L) / 1_000_000_000f);
 
         Writer writer = getFileWriter(FEN_FILENAME);
         Iterator<GameProcessor.PositionData> positionDataIterator = posToWins.values().iterator();
@@ -128,7 +134,7 @@ public class GameDataExtractor {
         // Start game processing threads
         for (int threadNum = 0; threadNum < numThreads - 1; threadNum++) {
             CompletableFuture.runAsync(() -> runUntilNoSuchElement(r, counter),
-                    gameProcessingExecutor);
+                                       gameProcessingExecutor);
         }
 
         final ScheduledFuture<?> scheduledFuture = scheduledExecutor.scheduleAtFixedRate(
@@ -147,11 +153,6 @@ public class GameDataExtractor {
         scheduledExecutor.shutdown();
     }
 
-    private static void printProgress(int length, float progress) {
-        System.out.printf(String.format("|%%-%ds|\r", length),
-                "#".repeat((int) (length * progress)));
-    }
-
     private static void runUntilNoSuchElement(Runnable r, AtomicInteger counter) {
         while (true) {
             try {
@@ -161,6 +162,11 @@ public class GameDataExtractor {
                 break;
             }
         }
+    }
+
+    private static void printProgress(int length, float progress) {
+        System.out.printf(String.format("|%%-%ds|\r", length),
+                          "#".repeat((int) (length * progress)));
     }
 
     private static void query() {
@@ -180,8 +186,8 @@ public class GameDataExtractor {
         fileReader.close();
 
 
-        int[] frequencies =
-                new int[countToFrequency.keySet().stream().max(Integer::compareTo).orElse(0) + 1];
+        int[] frequencies = new int[countToFrequency.keySet().stream().max(Integer::compareTo)
+                .orElse(0) + 1];
         countToFrequency.forEach((key, value) -> frequencies[frequencies.length - 1 - key] = value);
 
         int sum = 0;
@@ -191,29 +197,6 @@ public class GameDataExtractor {
                 System.out.printf("%4d -> %8d\n", count, sum);
             }
         }
-    }
-
-    private static void filterData(Filter... filters) {
-        LineFileReader fileReader = new LineFileReader(FEN_FILENAME);
-        Writer fileWriter = getFileWriter(FILTERED_FILENAME + ".test");
-
-        parallelize(3, NUM_POSITIONS, () -> {
-            String line = fileReader.next();
-
-            boolean shouldPrune = false;
-            for (Filter filter : filters) {
-                if (filter.shouldPrune(line)) {
-                    shouldPrune = true;
-                    break;
-                }
-            }
-            if (!shouldPrune) {
-                writeTo(fileWriter, line + "\n");
-            }
-        });
-
-        closeWriter(fileWriter);
-        fileReader.close();
     }
 
     private static void formatScore() {
@@ -247,10 +230,33 @@ public class GameDataExtractor {
         //extractFeature(new BoardRepFeature());
     }
 
+    private static void filterData(Filter... filters) {
+        LineFileReader fileReader = new LineFileReader(FEN_FILENAME);
+        Writer fileWriter = getFileWriter(FILTERED_FILENAME + ".test");
+
+        parallelize(3, NUM_POSITIONS, () -> {
+            String line = fileReader.next();
+
+            boolean shouldPrune = false;
+            for (Filter filter : filters) {
+                if (filter.shouldPrune(line)) {
+                    shouldPrune = true;
+                    break;
+                }
+            }
+            if (!shouldPrune) {
+                writeTo(fileWriter, line + "\n");
+            }
+        });
+
+        closeWriter(fileWriter);
+        fileReader.close();
+    }
+
     private static void extractFeature(Feature feature) {
         LineFileReader filteredScoreReader = new LineFileReader(FILTERED_SCORE);
-        Writer writer =
-                getFileWriter(MODEL_DATA_PATH + feature.getClass().getSimpleName() + ".txt");
+        Writer writer = getFileWriter(
+                MODEL_DATA_PATH + feature.getClass().getSimpleName() + ".txt");
 
         parallelize(6, NUM_FILTERED, () -> {
             String line = filteredScoreReader.next();
@@ -266,12 +272,6 @@ public class GameDataExtractor {
 
         closeWriter(writer);
         filteredScoreReader.close();
-    }
-
-    public void writeGame(Writer writer) {
-        while (reader.hasNext() && writer != null) {
-            writeTo(writer, reader.next());
-        }
     }
 
     private interface Filter {

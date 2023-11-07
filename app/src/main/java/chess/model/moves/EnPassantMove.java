@@ -44,7 +44,7 @@ public class EnPassantMove implements Movable {
         deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(start), deltaHash);
         deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(end), deltaHash);
         deltaHash = Zobrist.flipPiece(captured, ChessCoordinate.getChessCoordinate(captureStart),
-                deltaHash);
+                                      deltaHash);
 
         return new BoardModel.BoardState(pieceMaps, white, black, white | black, deltaHash);
     }

@@ -45,7 +45,7 @@ public class NormalMove implements Movable {
 
             pieceMaps[capturedPiece.ordinal()] &= ~end;
             deltaHash = Zobrist.flipPiece(capturedPiece, ChessCoordinate.getChessCoordinate(end),
-                    deltaHash);
+                                          deltaHash);
 
             if (isWhite)
                 black ^= end;

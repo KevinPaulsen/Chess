@@ -17,12 +17,12 @@ public class BigFastMap implements Iterable<Long> {
         this.map = new long[calculateSize(startSize)];
     }
 
-    public BigFastMap(long[] map) {
-        this.map = map;
-    }
-
     private static int calculateSize(int size) {
         return size / LONG_SIZE + 1;
+    }
+
+    public BigFastMap(long[] map) {
+        this.map = map;
     }
 
     public void flipBit(int bitIdx) {

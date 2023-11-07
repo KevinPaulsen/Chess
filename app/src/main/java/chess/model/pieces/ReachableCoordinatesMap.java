@@ -32,8 +32,8 @@ public class ReachableCoordinatesMap {
         if (mapMaker != null) {
             for (int file = 0; file < 8; file++) {
                 for (int rank = 0; rank < 8; rank++) {
-                    result[rank * 8 + file] =
-                            mapMaker.makeMap(ChessCoordinate.getChessCoordinate(file, rank));
+                    result[rank * 8 + file] = mapMaker.makeMap(
+                            ChessCoordinate.getChessCoordinate(file, rank));
                 }
             }
         }

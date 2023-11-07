@@ -59,8 +59,11 @@ public class ChessBoardView extends Region {
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
                 ChessSquareView square = new ChessSquareView((row + col) % 2 == 0,
-                        gridPane.widthProperty().divide(numCols),
-                        gridPane.heightProperty().divide(numRows), col, 7 - row);
+                                                             gridPane.widthProperty()
+                                                                     .divide(numCols),
+                                                             gridPane.heightProperty()
+                                                                     .divide(numRows), col,
+                                                             7 - row);
 
                 makeSquareDraggable(square);
 
@@ -83,8 +86,8 @@ public class ChessBoardView extends Region {
 
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
-                ChessSquareView square =
-                        (ChessSquareView) board.getChildren().get((numRows - row - 1) * 8 + col);
+                ChessSquareView square = (ChessSquareView) board.getChildren().get(
+                        (numRows - row - 1) * 8 + col);
                 Piece piece = pieceArray[row * 8 + col];
 
                 if (piece == null) {
@@ -98,7 +101,7 @@ public class ChessBoardView extends Region {
         Movable move = retriever.getLastMove();
         if (move != null) {
             clearAndUpdateLastMoved(getSquareAt(move.getStartCoordinate()),
-                    getSquareAt(move.getEndCoordinate()));
+                                    getSquareAt(move.getEndCoordinate()));
         } else {
             clearAndUpdateLastMoved();
         }
@@ -140,8 +143,8 @@ public class ChessBoardView extends Region {
     }
 
     private ChessSquareView getSquareAt(ChessCoordinate coordinate) {
-        return (ChessSquareView) board.getChildren()
-                .get((7 - coordinate.getRank()) * numRows + coordinate.getFile());
+        return (ChessSquareView) board.getChildren().get(
+                (7 - coordinate.getRank()) * numRows + coordinate.getFile());
     }
 
     private synchronized void startDrag(ChessSquareView square, double sceneX, double sceneY) {
@@ -162,7 +165,7 @@ public class ChessBoardView extends Region {
         this.getChildren().add(dragData.draggedPiece);
 
         moveDestinations.addAll(retriever.getReachableCoordinates(square.getCoordinate()).stream()
-                .map(this::getSquareAt).toList());
+                                        .map(this::getSquareAt).toList());
         for (ChessSquareView destinationSquare : moveDestinations) {
             destinationSquare.setMoveDestination();
         }
@@ -256,8 +259,8 @@ public class ChessBoardView extends Region {
         getSquareAt(move.getEndCoordinate()).addPiece(movingPiece);
 
         if (move instanceof PromotionMove promotionMove) {
-            Objects.requireNonNull(getSquareAt(move.getEndCoordinate()).getPieceView())
-                    .promote(promotionMove.getPromotedPiece());
+            Objects.requireNonNull(getSquareAt(move.getEndCoordinate()).getPieceView()).promote(
+                    promotionMove.getPromotedPiece());
         }
     }
 
@@ -300,8 +303,9 @@ public class ChessBoardView extends Region {
                             ChessSquareView selected) {
 
         private DragData(ChessSquareView selected) {
-            this(selected.getPieceView(), new ChessPieceView(selected.getPieceView().getPiece(),
-                    selected.widthProperty()), selected);
+            this(selected.getPieceView(),
+                 new ChessPieceView(selected.getPieceView().getPiece(), selected.widthProperty()),
+                 selected);
         }
 
         private DragData {
@@ -311,7 +315,7 @@ public class ChessBoardView extends Region {
 
         public void movePiece(double sceneX, double sceneY, double minX, double minY) {
             draggedPiece.relocate(sceneX - draggedPiece.getFitWidth() / 2 - minX,
-                    sceneY - draggedPiece.getFitWidth() / 2 - minY);
+                                  sceneY - draggedPiece.getFitWidth() / 2 - minY);
         }
     }
 }

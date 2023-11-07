@@ -33,6 +33,16 @@ public class Evaluation implements Comparable<Evaluation> {
         this(null, evaluation, NO_LOSER, depth, EXACT, null);
     }
 
+    public Evaluation(NormalMove currentMove, int evaluation, char loser, int depth, byte bound,
+                      Evaluation next) {
+        this.move = currentMove;
+        this.evaluation = evaluation;
+        this.loser = loser;
+        this.depth = depth;
+        this.bound = bound;
+        this.next = next;
+    }
+
     public Evaluation(Evaluation evaluation, Movable move, byte bound) {
         /*
         == == -> ==
@@ -65,53 +75,11 @@ public class Evaluation implements Comparable<Evaluation> {
 
     public Evaluation(NormalMove move, Evaluation evaluation, byte bound) {
         this(move, evaluation.evaluation + Integer.compare(0, evaluation.evaluation),
-                evaluation.loser, evaluation.depth + 1, bound, evaluation);
-    }
-
-    public Evaluation(NormalMove currentMove, int evaluation, char loser, int depth, byte bound,
-                      Evaluation next) {
-        this.move = currentMove;
-        this.evaluation = evaluation;
-        this.loser = loser;
-        this.depth = depth;
-        this.bound = bound;
-        this.next = next;
+             evaluation.loser, evaluation.depth + 1, bound, evaluation);
     }
 
     public static Evaluation min(Evaluation evaluation1, Evaluation evaluation2) {
         return evaluation1.compareTo(evaluation2) > 0 ? evaluation2 : evaluation1;
-    }
-
-    public static Evaluation max(Evaluation evaluation1, Evaluation evaluation2) {
-        return evaluation1.compareTo(evaluation2) < 0 ? evaluation2 : evaluation1;
-    }
-
-    public Movable getMove() {
-        return move;
-    }
-
-    public double getEvaluation() {
-        return evaluation;
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    public char getLoser() {
-        return loser;
-    }
-
-    public boolean isExact() {
-        return bound == EXACT;
-    }
-
-    public boolean isLower() {
-        return bound == LOWER;
-    }
-
-    public boolean isUpper() {
-        return bound == UPPER;
     }
 
     /**
@@ -180,6 +148,22 @@ public class Evaluation implements Comparable<Evaluation> {
         }
     }
 
+    public static Evaluation max(Evaluation evaluation1, Evaluation evaluation2) {
+        return evaluation1.compareTo(evaluation2) < 0 ? evaluation2 : evaluation1;
+    }
+
+    public boolean isExact() {
+        return bound == EXACT;
+    }
+
+    public boolean isLower() {
+        return bound == LOWER;
+    }
+
+    public boolean isUpper() {
+        return bound == UPPER;
+    }
+
     @Override
     public int hashCode() {
         int result = getMove() != null ? getMove().hashCode() : 0;
@@ -209,6 +193,22 @@ public class Evaluation implements Comparable<Evaluation> {
         if (getMove() != null ? !getMove().equals(that.getMove()) : that.getMove() != null)
             return false;
         return Objects.equals(next, that.next);
+    }
+
+    public double getEvaluation() {
+        return evaluation;
+    }
+
+    public char getLoser() {
+        return loser;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public Movable getMove() {
+        return move;
     }
 
     @Override

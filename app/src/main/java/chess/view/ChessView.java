@@ -62,15 +62,6 @@ public class ChessView {
         root.heightProperty().addListener((observable, oldValue, newValue) -> adjustSize());
     }
 
-    public Scene getScene() {
-        return scene;
-    }
-
-    public void displayMove(Movable move) {
-        boardView.displayMove(move);
-        turnView.updateTurn();
-    }
-
     public void adjustSize() {
         Insets boardPadding = content.getPadding();
         Insets turnPadding = BorderPane.getMargin(turnView);
@@ -87,6 +78,15 @@ public class ChessView {
 
         boardView.setMinSize(size, size);
         boardView.setMaxSize(size, size);
+    }
+
+    public Scene getScene() {
+        return scene;
+    }
+
+    public void displayMove(Movable move) {
+        boardView.displayMove(move);
+        turnView.updateTurn();
     }
 
     public double getMinimumWidth() {

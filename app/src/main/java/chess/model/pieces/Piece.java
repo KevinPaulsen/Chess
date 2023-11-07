@@ -118,9 +118,9 @@ public enum Piece {
         // If on castling square
         if (coordinate.getFile() == 4 && coordinate.getRank() % 7 == 0) {
             result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() + 2,
-                    coordinate.getRank())));
+                                                                  coordinate.getRank())));
             result.add(List.of(ChessCoordinate.getChessCoordinate(coordinate.getFile() - 2,
-                    coordinate.getRank())));
+                                                                  coordinate.getRank())));
         } else {
             result.add(List.of());
             result.add(List.of());
@@ -256,7 +256,7 @@ public enum Piece {
             result.add(List.of());
         }
         result.add(0,
-                List.of(straightMoves.toArray(straightMoves.toArray(ChessCoordinate[]::new))));
+                   List.of(straightMoves.toArray(straightMoves.toArray(ChessCoordinate[]::new))));
 
         return List.of(result.toArray(size -> (List<ChessCoordinate>[]) new List[size]));
     }

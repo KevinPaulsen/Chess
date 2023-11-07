@@ -99,8 +99,8 @@ public class ChessAI {
             long end = System.nanoTime();
 
             // Continue search starting at minDepth + 1, until timeout
-            IterativeDeepener deepener =
-                    new IterativeDeepener(bestEvalToLatestDepth, currentGame, minDepth);
+            IterativeDeepener deepener = new IterativeDeepener(bestEvalToLatestDepth, currentGame,
+                                                               minDepth);
             positionsEvaluated = 0;
             Future<?> future = executor.submit(deepener);
 
@@ -117,7 +117,7 @@ public class ChessAI {
         }
         synchronized (transpositionTable) {
             System.out.printf("%10d\t|\t%6d\t|\t%s\n", positionsEvaluated,
-                    transpositionTable.size(), bestEvalToLatestDepth);
+                              transpositionTable.size(), bestEvalToLatestDepth);
         }
         return bestEvalToLatestDepth == null ? null : bestEvalToLatestDepth.getMove();
     }
@@ -208,7 +208,7 @@ public class ChessAI {
 
         if (bestEval != tableEval) {
             bestEval = new Evaluation(bestEval, bestMove,
-                    didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
+                                      didBreak ? (maximizingPlayer ? LOWER : UPPER) : EXACT);
         }
 
         // Add best Eval to transposition table.
@@ -216,7 +216,8 @@ public class ChessAI {
                 bestEval != Evaluation.MIN_EVALUATION) {
             synchronized (transpositionTable) {
                 transpositionTable.merge(hash, bestEval,
-                        (prev, next) -> prev.getDepth() < next.getDepth() ? next : prev);
+                                         (prev, next) -> prev.getDepth() < next.getDepth() ? next :
+                                                 prev);
             }
         }
 

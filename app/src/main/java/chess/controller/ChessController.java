@@ -49,30 +49,32 @@ public class ChessController extends Application {
 
         gameModel = new GameModel();
         view = new ChessView(gameModel.getBoard().getPieceArray(), new ViewController(),
-                new ChessView.GameDataRetriever() {
-                    @Override
-                    public List<ChessCoordinate> getReachableCoordinates(ChessCoordinate start) {
-                        return gameModel.getLegalMoves().toList().stream()
-                                .filter(move -> move.getStartCoordinate().equals(start))
-                                .map(Movable::getEndCoordinate).toList();
-                    }
+                             new ChessView.GameDataRetriever() {
+                                 @Override
+                                 public List<ChessCoordinate> getReachableCoordinates(
+                                         ChessCoordinate start) {
+                                     return gameModel.getLegalMoves().toList().stream().filter(
+                                             move -> move.getStartCoordinate().equals(start)).map(
+                                             Movable::getEndCoordinate).toList();
+                                 }
 
-                    @Override
-                    public char getTurn() {
-                        return gameModel.getTurn();
-                    }
+                                 @Override
+                                 public char getTurn() {
+                                     return gameModel.getTurn();
+                                 }
 
-                    @Override
-                    public boolean canMove(ChessCoordinate coordinate) {
-                        Piece piece = gameModel.getBoard().getPieceOn(coordinate);
-                        return piece != null && piece.getColor() == gameModel.getTurn();
-                    }
+                                 @Override
+                                 public boolean canMove(ChessCoordinate coordinate) {
+                                     Piece piece = gameModel.getBoard().getPieceOn(coordinate);
+                                     return piece != null &&
+                                             piece.getColor() == gameModel.getTurn();
+                                 }
 
-                    @Override
-                    public @Nullable Movable getLastMove() {
-                        return gameModel.getLastMove();
-                    }
-                });
+                                 @Override
+                                 public @Nullable Movable getLastMove() {
+                                     return gameModel.getLastMove();
+                                 }
+                             });
         chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
@@ -194,8 +196,8 @@ public class ChessController extends Application {
                         System.out.println("No FEN given");
                     }
 
-                    String fen = String.join(" ",
-                            Arrays.copyOfRange(splitCommand, 1, splitCommand.length));
+                    String fen = String.join(" ", Arrays.copyOfRange(splitCommand, 1,
+                                                                     splitCommand.length));
                     gameModel.setPosition(fen);
                     view.setPosition(gameModel.getBoard().getPieceArray());
                 }

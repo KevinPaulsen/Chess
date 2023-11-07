@@ -43,7 +43,7 @@ public class GameProcessor {
                     int[] winData = winner == 0 ? new int[]{1, 0} : new int[]{0, 1};
                     PositionData data = new PositionData(byteRep, winData);
                     posToWins.merge(game.getZobristHash(), data,
-                            (oldScore, newScore) -> oldScore.addTo(winner));
+                                    (oldScore, newScore) -> oldScore.addTo(winner));
                 }
             }
         }
@@ -97,8 +97,8 @@ public class GameProcessor {
             }
 
             if (charRep[EQUALS] == '=' &&
-                    ((PromotionMove) move).getPromotedPiece().getStringRep().toUpperCase()
-                            .charAt(0) != charRep[PROMOTION]) {
+                    ((PromotionMove) move).getPromotedPiece().getStringRep().toUpperCase().charAt(
+                            0) != charRep[PROMOTION]) {
                 continue;
             }
 

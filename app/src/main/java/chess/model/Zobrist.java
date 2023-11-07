@@ -31,16 +31,6 @@ public abstract class Zobrist {
         return result;
     }
 
-    private static long[] makeTable(int size) {
-        long[] result = new long[size];
-
-        for (int coordIdx = 0; coordIdx < size; coordIdx++) {
-            result[coordIdx] = generateHash();
-        }
-
-        return result;
-    }
-
     private static long generateHash() {
         long hash = 0;
         for (int bit = 0; bit < 64; bit++) {
@@ -49,6 +39,16 @@ public abstract class Zobrist {
             }
         }
         return hash;
+    }
+
+    private static long[] makeTable(int size) {
+        long[] result = new long[size];
+
+        for (int coordIdx = 0; coordIdx < size; coordIdx++) {
+            result[coordIdx] = generateHash();
+        }
+
+        return result;
     }
 
     public static long slowZobrist(GameModel game) {
@@ -86,8 +86,8 @@ public abstract class Zobrist {
         int currentCastlingData = (int) (gameState.getMap() & 0b1111L);
         hashValue ^= castlingHashTable[currentCastlingData];
 
-        ChessCoordinate enPassant =
-                ChessCoordinate.getChessCoordinate((int) gameState.getMap() >> 7);
+        ChessCoordinate enPassant = ChessCoordinate.getChessCoordinate(
+                (int) gameState.getMap() >> 7);
         enPassant = enPassant == A1 ? null : enPassant;
         int addedEnPassantTarget =
                 enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
