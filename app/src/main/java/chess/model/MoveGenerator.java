@@ -198,8 +198,10 @@ public class MoveGenerator {
         BITS_BETWEEN_MAP = createBitsBetweenMap();
         ROOK_MOVE_MASKS = createRookMasks();
         BISHOP_MOVE_MASKS = createBishopMasks();
-        ROOK_TABLE = createTable(STRAIGHT_COMPLEMENTS, ROOK_MOVE_MASKS, ROOK_MAGICS, 4096);
-        BISHOP_TABLE = createTable(DIAGONAL_COMPLEMENTS, BISHOP_MOVE_MASKS, BISHOP_MAGICS, 1048);
+        ROOK_TABLE = createBlockerToMoveMap(STRAIGHT_COMPLEMENTS, ROOK_MOVE_MASKS, ROOK_MAGICS,
+                                            4096);
+        BISHOP_TABLE = createBlockerToMoveMap(DIAGONAL_COMPLEMENTS, BISHOP_MOVE_MASKS,
+                                              BISHOP_MAGICS, 1048);
     }
 
     private final GameModel game;
@@ -224,13 +226,19 @@ public class MoveGenerator {
         this.blackPieceGroup = new PieceGroup(BLACK);
     }
 
+    /**
+     * Create map to quickly access the ray between any two coordinates. This is accessed by
+     * chess [firstCoordIndex][secondCoordIndex].
+     *
+     * @return the map mapping every pair of coordinates to the ray between them
+     */
     private static long[][] createBitsBetweenMap() {
         long[][] bitBetweenMap =
                 new long[ChessCoordinate.values().length][ChessCoordinate.values().length];
 
         for (int firstSquare = 0; firstSquare < bitBetweenMap.length; firstSquare++) {
             for (int secondSquare = 0; secondSquare < bitBetweenMap.length; secondSquare++) {
-                long bitsBetween = getBitsBetweenInclusive(firstSquare, secondSquare);
+                long bitsBetween = getBitsBetweenInclusiveSLOW(firstSquare, secondSquare);
 
                 int firstIndex = MAGIC_COORD.getIndex(1L << firstSquare);
                 int secondIndex = MAGIC_COORD.getIndex(1L << secondSquare);
@@ -242,7 +250,16 @@ public class MoveGenerator {
         return bitBetweenMap;
     }
 
-    private static long getBitsBetweenInclusive(int first, int second) {
+    /**
+     * Get the ray that marks the bits between any two coordinates. This method is not optimized
+     * and should only be used to initialize the map. If two coordinates are not horizontally or
+     * vertically aligned, then 0 is returned.
+     *
+     * @param first  the index of the first coordinate (0-63 is expected range)
+     * @param second the index of the second coordinate (0-63 is expected range)
+     * @return the bit mask of the ray between the two indices
+     */
+    private static long getBitsBetweenInclusiveSLOW(int first, int second) {
         if (first > second) {
             int temp = first;
             first = second;
@@ -257,12 +274,7 @@ public class MoveGenerator {
 
         long result = 0;
         if (Directions.areDiagonallyAligned(firstCoord, secondCoord)) {
-            Direction direction;
-            if (firstCoord.getFile() < secondCoord.getFile()) {
-                direction = UP_RIGHT;
-            } else {
-                direction = UP_LEFT;
-            }
+            Direction direction = firstCoord.getFile() < secondCoord.getFile() ? UP_RIGHT : UP_LEFT;
 
             do {
                 result |= firstCoord.getBitMask();
@@ -279,6 +291,13 @@ public class MoveGenerator {
         return result;
     }
 
+    /**
+     * Create blocker masks for rooks on every coordinate. These masks are accessed by a coordinate
+     * index (0-63). These masks to not extend to the edge of the board (because use does not
+     * require them too, see wiki on magic bit boards for more info).
+     *
+     * @return the array of rook masks
+     */
     private static long[] createRookMasks() {
         long[] rookMasks = new long[ChessCoordinate.values().length];
         for (ChessCoordinate coordinate : ChessCoordinate.values()) {
@@ -291,6 +310,13 @@ public class MoveGenerator {
         return rookMasks;
     }
 
+    /**
+     * Create blocker masks for bishops on every coordinate. These masks are accessed by a
+     * coordinate index (0-63). These masks to not extend to the edge of the board (because use
+     * does not require them too, see wiki on magic bit boards for more info).
+     *
+     * @return the array of bishop masks
+     */
     private static long[] createBishopMasks() {
         long[] moveMasks = new long[ChessCoordinate.values().length];
 
@@ -305,8 +331,19 @@ public class MoveGenerator {
         return moveMasks;
     }
 
-    private static long[][] createTable(Direction[] directions, long[] moveMasks,
-                                        MagicData[] magics, int maxSize) {
+    /**
+     * Creates the map which maps the pair (Coordinate index, blocker array) -> (movement mask).
+     * This is used so that we can access the squares which can be moved to in O(1) time.
+     *
+     * @param directions the directions that can be moved, these should be complements (i.e. LEFT
+     *                   and RIGHT should not both be on here.
+     * @param moveMasks  the array of move masks that correspond with what is moving
+     * @param magics     the array of MagicData that is used for indexing
+     * @param maxSize    the maximum size of the array
+     * @return the blocker to movement map
+     */
+    private static long[][] createBlockerToMoveMap(Direction[] directions, long[] moveMasks,
+                                                   MagicData[] magics, int maxSize) {
         long[][] moveTable = new long[ChessCoordinate.values().length][maxSize];
 
         // For all squares
@@ -326,11 +363,19 @@ public class MoveGenerator {
         return moveTable;
     }
 
+    /**
+     * Gets the block mask from a given index. Each block mask has some combination of 1s and 0s,
+     * this indexes all combinations and makes looping over all of them easy.
+     *
+     * @param index the index of the blocker you want
+     * @param mask  the mask of the bits to index
+     * @return the blockers
+     */
     private static long getBlockersFromIndex(int index, long mask) {
         long blockers = 0L;
         int bits = Long.bitCount(mask);
         for (int i = 0; i < bits; i++) {
-            int bitPos = lowestSetBit(mask);
+            int bitPos = Long.numberOfTrailingZeros(mask);
             mask = mask ^ Long.lowestOneBit(mask);
 
             if ((index & (1 << i)) != 0) {
@@ -340,27 +385,44 @@ public class MoveGenerator {
         return blockers;
     }
 
+    /**
+     * Gets all the squares that can be moved to in the given directionComplements, and according
+     * to the blockers that are in place. This is slow and should only be used in initialization.
+     *
+     * @param coordinate           the coordinate that is the piece is moving from
+     * @param blockers             the blockers that are in place
+     * @param directionComplements the array of direction complements (LEFT and RIGHT should not
+     *                             be together)
+     * @return the squares that can be seen in the given direction complements (if there is a
+     * piece in the way, then the square that piece is on will be the final square in that
+     * direction.
+     */
     private static long getAttacksSlow(ChessCoordinate coordinate, long blockers,
                                        Direction[] directionComplements) {
-        long bishopAttacks = 0L;
+        long attacks = 0L;
         for (Direction direction : directionComplements) {
             long upperMask = SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.ordinal()];
             long lowerMask =
                     SLIDING_ATTACK_MASKS[coordinate.getOndDimIndex()][direction.complement()
                             .ordinal()];
 
-            bishopAttacks |= getMoveMask(lowerMask, upperMask, blockers);
+            attacks |= getMoveMask(lowerMask, upperMask, blockers);
         }
-        return bishopAttacks;
+        return attacks;
     }
 
-    private static int lowestSetBit(long mask) {
-        return Long.numberOfTrailingZeros(mask);
-    }
-
-    private static long getMoveMask(long lowerMask, long upperMask, long board) {
-        long lower = board & lowerMask;
-        long upper = board & upperMask;
+    /**
+     * Gets the move ray between the highest bit in the lower mask, and the lowest bit in the
+     * upper mask.
+     *
+     * @param lowerMask the lower mask
+     * @param upperMask the upper mask
+     * @param blockers  the board with blockers in the way
+     * @return the ray which can be moved to
+     */
+    private static long getMoveMask(long lowerMask, long upperMask, long blockers) {
+        long lower = blockers & lowerMask;
+        long upper = blockers & upperMask;
 
         long result;
 
@@ -372,35 +434,49 @@ public class MoveGenerator {
             long upperBit = Long.lowestOneBit(upper);
             long lowerBit = Long.lowestOneBit(upperMask);
 
-            result = getBitsBetweenInclusiveNEW(lowerBit, upperBit) | lowerMask;
+            result = getBitsBetweenInclusive(lowerBit, upperBit) | lowerMask;
         } else if (upper == 0) {
             // Lower has bits, but upper has no blockers
             long lowerBit = Long.highestOneBit(lower);
             long upperBit = Long.highestOneBit(lowerMask);
 
-            result = getBitsBetweenInclusiveNEW(lowerBit, upperBit) | upperMask;
+            result = getBitsBetweenInclusive(lowerBit, upperBit) | upperMask;
         } else {
             // Normal case: both have blockers
             long lowerBit = Long.highestOneBit(lower);
             long upperBit = Long.lowestOneBit(upper);
 
-            result = getBitsBetweenInclusiveNEW(lowerBit, upperBit) & (lowerMask | upperMask);
+            result = getBitsBetweenInclusive(lowerBit, upperBit) & (lowerMask | upperMask);
         }
 
         return result;
     }
 
-    private static long getBitsBetweenInclusiveNEW(long lower, long upper) {
+    /**
+     * Gets the ray of the bits between bitOne and bitTwo. bitOne and bitTwo are meant to contain
+     * one bit. If either has more bits, then the result is not defined.
+     *
+     * @param bitOne bit mask of the first coordinate
+     * @param bitTwo bit mask of the second coordinate
+     * @return the bits between bitOne and bitTwo, 0 if no ray exists.
+     */
+    private static long getBitsBetweenInclusive(long bitOne, long bitTwo) {
         // 6 +  1
-        int firstIndex = (int) ((MAGIC_COORD.magicNumber * lower) >>> MAGIC_COORD.shiftBits);
+        int firstIndex = (int) ((MAGIC_COORD.magicNumber * bitOne) >>> MAGIC_COORD.shiftBits);
 
         // 6 + 1
-        int secondIndex = (int) ((MAGIC_COORD.magicNumber * upper) >>> MAGIC_COORD.shiftBits);
+        int secondIndex = (int) ((MAGIC_COORD.magicNumber * bitTwo) >>> MAGIC_COORD.shiftBits);
 
         // ~100
         return BITS_BETWEEN_MAP[firstIndex][secondIndex];
     }
 
+    /**
+     * Create a map that contains the ray from any given coordinate to the edge in every direction.
+     * The given ray will be accessed by [coordinateIndex][Direction.ordinal()].
+     *
+     * @return the mapping from (coordinateIndex, direction) -> (mask of set bits in that direction)
+     */
     private static long[][] createDirectionMaskMap() {
         long[][] coordinateToMask = new long[Long.BYTES * BITS_IN_BYTE][ALL_DIRECTIONS.length];
 
@@ -424,6 +500,12 @@ public class MoveGenerator {
         return coordinateToMask;
     }
 
+    /**
+     * Create the move masks for a knight on any given square. This will be accessed by
+     * [coordinateIndex].
+     *
+     * @return the mapping from (coordinateIndex) -> (knight move mask)
+     */
     private static long[] createKnightMoveMasks() {
         long[] knightMoveMask = new long[64];
 
@@ -454,6 +536,12 @@ public class MoveGenerator {
         return knightMoveMask;
     }
 
+    /**
+     * Create the move masks for a king on any given square. This will be accessed by
+     * [coordinateIndex].
+     *
+     * @return the mapping from (coordinateIndex) -> (king move mask)
+     */
     private static long[] createKingMoveMasks() {
         long[] kingMoveMasks = new long[64];
 

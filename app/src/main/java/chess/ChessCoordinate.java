@@ -141,6 +141,10 @@ public enum ChessCoordinate {
         return getChessCoordinate(Long.bitCount(bitMask - 1));
     }
 
+    public static int getIndex(long bitMask) {
+        return bitMask == 1 ? 0 : Long.bitCount(bitMask - 1);
+    }
+
     public char getCharFile() {
         return charFile;
     }
