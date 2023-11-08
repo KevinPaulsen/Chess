@@ -29,7 +29,7 @@ public class ChessController extends Application {
     private static final boolean AI_ON = true;
 
     private static final int MINIMUM_DEPTH = 1;
-    private static final int SEARCH_TIME = 2_000;
+    private static final int SEARCH_TIME = 1_000;
 
     private GameModel gameModel;
     private ChessView view;
@@ -136,8 +136,7 @@ public class ChessController extends Application {
 
         // Calculate the next best move, and make that move
         futureAIMove = CompletableFuture.runAsync(
-                        () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)),
-                        aiExecutor)
+                        () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
                 .thenRun(this::printAndUpdate).exceptionally((ex) -> {
                     ex.printStackTrace();
                     return null;

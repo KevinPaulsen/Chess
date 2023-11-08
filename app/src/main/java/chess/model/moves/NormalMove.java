@@ -23,10 +23,10 @@ public class NormalMove implements Movable {
      * @param start  the coordinate the moving piece starts on.
      * @param end    the ending coordinate.
      */
-    public NormalMove(Piece moving, ChessCoordinate start, ChessCoordinate end) {
+    public NormalMove(Piece moving, long start, long end) {
         this.moving = moving;
-        this.start = start.getBitMask();
-        this.end = end.getBitMask();
+        this.start = start;
+        this.end = end;
     }
 
     @Override

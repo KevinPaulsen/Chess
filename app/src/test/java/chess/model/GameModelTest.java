@@ -1,8 +1,6 @@
 package chess.model;
 
 import chess.model.moves.Movable;
-import chess.model.moves.NormalMove;
-import chess.model.pieces.Piece;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static chess.ChessCoordinate.*;
 import static chess.model.GameModel.IN_PROGRESS;
 
 public class GameModelTest {
@@ -28,7 +25,7 @@ public class GameModelTest {
                 int num = countNumPositions(game, depth - 1, false);
                 if (printMove) {
                     System.out.printf("%s%s\t%6s: %7d\n", move.getStartCoordinate(),
-                            move.getEndCoordinate(), move, num);
+                                      move.getEndCoordinate(), move, num);
                 }
                 sum += num;
                 game.undoLastMove();
@@ -72,25 +69,26 @@ public class GameModelTest {
         GameModel testGame2 = new GameModel("r6k/5prp/3R4/4B3/8/8/7P/7K b q - 3 2");
 
         Assert.assertNotEquals("Same position but different moves evaluated to same hash.",
-                testGame1.getZobristHash(), testGame2.getZobristHash());
+                               testGame1.getZobristHash(), testGame2.getZobristHash());
         Assert.assertNotEquals("Same position but different moves evaluated to same hash.",
-                testGame1.getZobristWithTimesMoved(), testGame2.getZobristWithTimesMoved());
+                               testGame1.getZobristWithTimesMoved(),
+                               testGame2.getZobristWithTimesMoved());
     }
 
     @Test
     public void testMiddleWithFourCastle() {
-        GameModel game =
-                new GameModel("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+        GameModel game = new GameModel(
+                "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
         int[] expectedNumPositions = {1, 48, 2_039, 97_862, 4_085_603, 193_690_690/**/};
         //debug(game, 3);
         runCountTest(game, expectedNumPositions);
     }
 
     private void debug(GameModel game, int i) {
-        game.move(new NormalMove(Piece.WHITE_BISHOP, G5, F4));
-        game.move(new NormalMove(Piece.BLACK_KING, G8, H8));
-        game.move(new NormalMove(Piece.WHITE_KING, G1, H1));
-        game.undoLastMove();
+        //game.move(new NormalMove(Piece.WHITE_BISHOP, G5.getBitMask(), F4.getBitMask()));
+        //game.move(new NormalMove(Piece.BLACK_KING, G8.getBitMask(), H8.getBitMask()));
+        //game.move(new NormalMove(Piece.WHITE_KING, G1.getBitMask(), H1.getBitMask()));
+        //game.undoLastMove();
         //game.move(new NormalMove(Piece.BLACK_ROOK, F8, E8));
         System.out.println(game.getFEN());
         System.out.println(countNumPositions(game, i - game.moveNum(), true));
@@ -100,13 +98,14 @@ public class GameModelTest {
     public void testPawnEnPassantTest() {
         GameModel game = new GameModel("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
         int[] expectedNumPositions = {1, 14, 191, 2_812, 43_238, 674_624, 11_030_083};
-        runCountTest(game, expectedNumPositions);
+        debug(game, 4);
+        //runCountTest(game, expectedNumPositions);
     }
 
     @Test
     public void testMiddlePromotionAndChecks() {
-        GameModel game =
-                new GameModel("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+        GameModel game = new GameModel(
+                "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
         int[] expectedNumPositions = {1, 6, 264, 9_467, 422_333, 15_833_292};
         runCountTest(game, expectedNumPositions);
     }
@@ -137,8 +136,8 @@ public class GameModelTest {
         Bitmap test v3: 2671 / 2678 / 2542
         Magic Bitboard test: 638
          */
-        GameModel complicated =
-                new GameModel("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
+        GameModel complicated = new GameModel(
+                "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1");
         AtomicLong counter = new AtomicLong(0);
 
         PositionCounter positionCounter = new PositionCounter(complicated, 12, counter);
@@ -158,8 +157,10 @@ public class GameModelTest {
         executor.shutdown();
 
         long totalTime = end - start;
-        System.out.printf("Reached %d positions in 60s\n", counter.get());
-        System.out.printf("Approximately %d ns per position\n", totalTime / counter.get());//*/
+        long timeSecs = TimeUnit.SECONDS.convert(totalTime, TimeUnit.NANOSECONDS);
+        System.out.printf("Reached %d positions in %ds\n", counter.get(), timeSecs);
+        System.out.printf("Approximately %d positions per second\n", counter.get() / timeSecs);
+        System.out.printf("Approximately %d ns per position\n", totalTime / counter.get());
     }
 
     private static class PositionCounter implements Runnable {

@@ -14,12 +14,11 @@ public class PromotionMove implements Movable {
     private final long start;
     private final long end;
 
-    public PromotionMove(Piece pawn, Piece promotedPiece, ChessCoordinate start,
-                         ChessCoordinate end) {
+    public PromotionMove(Piece pawn, Piece promotedPiece, long start, long end) {
         this.pawn = pawn;
         this.promotedPiece = promotedPiece;
-        this.start = start.getBitMask();
-        this.end = end.getBitMask();
+        this.start = start;
+        this.end = end;
     }
 
     @Override

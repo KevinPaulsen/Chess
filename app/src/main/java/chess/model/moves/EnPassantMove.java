@@ -13,13 +13,12 @@ public class EnPassantMove implements Movable {
     private final long end;
     private final long captureStart;
 
-    public EnPassantMove(Piece moving, Piece captured, ChessCoordinate start, ChessCoordinate end,
-                         ChessCoordinate captureStart) {
+    public EnPassantMove(Piece moving, Piece captured, long start, long end, long captureStart) {
         this.moving = moving;
         this.captured = captured;
-        this.start = start.getBitMask();
-        this.end = end.getBitMask();
-        this.captureStart = captureStart.getBitMask();
+        this.start = start;
+        this.end = end;
+        this.captureStart = captureStart;
     }
 
     @Override

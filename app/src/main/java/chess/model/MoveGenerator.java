@@ -901,9 +901,8 @@ public class MoveGenerator {
 
     private void addMoves(Piece piece, long startingCoordinate, long moveMask,
                           MoveList.Status status) {
-        if (moveMask == 0)
-            return;
-        moves.add(piece, startingCoordinate, moveMask, status);
+        if (moveMask != 0)
+            moves.add(piece, startingCoordinate, moveMask, status);
     }
 
     private long pruneStraight(long mask) {

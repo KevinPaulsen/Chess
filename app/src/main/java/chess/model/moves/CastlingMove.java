@@ -9,13 +9,10 @@ import static chess.ChessCoordinate.*;
 import static chess.model.pieces.Piece.*;
 
 public enum CastlingMove implements Movable {
-    WHITE_KING_SIDE_CASTLE(E1, G1, H1, F1, WHITE_KING, WHITE_ROOK), WHITE_QUEEN_SIDE_CASTLE(E1, C1,
-                                                                                            A1, D1,
-                                                                                            WHITE_KING,
-                                                                                            WHITE_ROOK), BLACK_KING_SIDE_CASTLE(
-            E8, G8, H8, F8, BLACK_KING, BLACK_ROOK), BLACK_QUEEN_SIDE_CASTLE(E8, C8, A8, D8,
-                                                                             BLACK_KING,
-                                                                             BLACK_ROOK);
+    WHITE_KING_SIDE_CASTLE(E1, G1, H1, F1, WHITE_KING, WHITE_ROOK),
+    WHITE_QUEEN_SIDE_CASTLE(E1, C1, A1, D1, WHITE_KING, WHITE_ROOK),
+    BLACK_KING_SIDE_CASTLE(E8, G8, H8, F8, BLACK_KING, BLACK_ROOK),
+    BLACK_QUEEN_SIDE_CASTLE(E8, C8, A8, D8, BLACK_KING, BLACK_ROOK);
 
     private final Piece king;
     private final Piece rook;

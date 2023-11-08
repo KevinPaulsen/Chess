@@ -16,19 +16,19 @@ import static chess.model.pieces.Directions.ALL_DIRECTIONS;
 public enum Piece {
     EMPTY(null, 'w', "", 0),
 
-    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1), WHITE_QUEEN(
-            Piece::generateQueenReachableCoordsAt, 'w', "Q", 2), WHITE_ROOK(
-            Piece::generateRookReachableCoordsAt, 'w', "R", 3), WHITE_BISHOP(
-            Piece::generateBishopReachableCoordsAt, 'w', "B", 4), WHITE_KNIGHT(
-            Piece::generateKnightReachableCoordsAt, 'w', "N", 5), WHITE_PAWN(
-            Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
+    WHITE_KING(Piece::generateKingReachableCoordsAt, 'w', "K", 1),
+    WHITE_QUEEN(Piece::generateQueenReachableCoordsAt, 'w', "Q", 2),
+    WHITE_ROOK(Piece::generateRookReachableCoordsAt, 'w', "R", 3),
+    WHITE_BISHOP(Piece::generateBishopReachableCoordsAt, 'w', "B", 4),
+    WHITE_KNIGHT(Piece::generateKnightReachableCoordsAt, 'w', "N", 5),
+    WHITE_PAWN(Piece::generateWhitePawnReachableCoordsAt, 'w', "P", 6),
 
-    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7), BLACK_QUEEN(
-            Piece::generateQueenReachableCoordsAt, 'b', "q", 8), BLACK_ROOK(
-            Piece::generateRookReachableCoordsAt, 'b', "r", 9), BLACK_BISHOP(
-            Piece::generateBishopReachableCoordsAt, 'b', "b", 10), BLACK_KNIGHT(
-            Piece::generateKnightReachableCoordsAt, 'b', "n", 11), BLACK_PAWN(
-            Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
+    BLACK_KING(Piece::generateKingReachableCoordsAt, 'b', "k", 7),
+    BLACK_QUEEN(Piece::generateQueenReachableCoordsAt, 'b', "q", 8),
+    BLACK_ROOK(Piece::generateRookReachableCoordsAt, 'b', "r", 9),
+    BLACK_BISHOP(Piece::generateBishopReachableCoordsAt, 'b', "b", 10),
+    BLACK_KNIGHT(Piece::generateKnightReachableCoordsAt, 'b', "n", 11),
+    BLACK_PAWN(Piece::generateBlackPawnReachableCoordsAt, 'b', "p", 12);
 
     /**
      * The map of reachable coordinates
