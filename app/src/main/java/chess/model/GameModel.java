@@ -567,7 +567,7 @@ public class GameModel {
      * game state.
      */
     private void checkGameOver() {
-        long hash = getZobristHash();
+        long hash = hashValue;
         MoveList legalMoves = getLegalMoves();
         FastMap currentState = getGameState();
 
