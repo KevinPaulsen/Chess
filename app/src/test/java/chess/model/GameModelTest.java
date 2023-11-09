@@ -143,7 +143,7 @@ public class GameModelTest {
         runCountTest(game, expectedNumPositions);
     }
 
-    //@Test
+    @Test
     public void runSpeedTest() {
         /*
         Bitmap test v1: 3696 (run with profiler)
