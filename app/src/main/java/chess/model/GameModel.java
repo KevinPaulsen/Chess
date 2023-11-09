@@ -125,6 +125,22 @@ public class GameModel {
      */
     private final MoveGenerator moveGenerator;
     private final boolean threeFold;
+    long ifTime = 0;
+    long countIf = 0;
+    long boardMoveTime = 0;
+    long countBoardMove = 0;
+    long moveHistoryAddTime = 0;
+    long countMoveHistoryAdd = 0;
+    long stateHistoryAddTime = 0;
+    long countStateHistoryAdd = 0;
+    long positionTrackerAddTime = 0;
+    long countPositionTrackerAdd = 0;
+    long generateMovesTime = 0;
+    long countGenerateMove = 0;
+    long previousMovesAddTime = 0;
+    long countPreviousMoveAdd = 0;
+    long checkGameOverTime = 0;
+    long countCheckGameOver = 0;
     private long hashValue;
 
     /**
@@ -463,31 +479,63 @@ public class GameModel {
     public boolean move(Movable move) {
         boolean didMove = false;
 
-        if (getGameOverStatus() == IN_PROGRESS) {
-            hashValue = board.move(move);
-            moveHistory.add(move);
-            stateHistory.add(makeState());
-            positionTracker.merge(getZobristHash(), 1, Integer::sum);
-            previousLegalMoves.add(moveGenerator.generateMoves());
-            checkGameOver();
+        /*
+        long start;
+        long end;
 
-            didMove = true;
-        }
+        start = System.nanoTime();
+        hashValue = board.move(move);
+        end = System.nanoTime();
+        boardMoveTime += end - start;
+        countBoardMove++;
+
+        start = System.nanoTime();
+        moveHistory.add(move);
+        end = System.nanoTime();
+        moveHistoryAddTime += end - start;
+        countMoveHistoryAdd++;
+
+        start = System.nanoTime();
+        stateHistory.add(makeState());
+        end = System.nanoTime();
+        stateHistoryAddTime += end - start;
+        countStateHistoryAdd++;
+
+        start = System.nanoTime();
+        positionTracker.merge(getZobristHash(), 1, Integer::sum);
+        end = System.nanoTime();
+        positionTrackerAddTime += end - start;
+        countPositionTrackerAdd++;
+
+        start = System.nanoTime();
+        MoveList list = moveGenerator.generateMoves();
+        end = System.nanoTime();
+        generateMovesTime += end - start;
+        countGenerateMove++;
+
+        start = System.nanoTime();
+        previousLegalMoves.add(list);
+        end = System.nanoTime();
+        previousMovesAddTime += end - start;
+        countPreviousMoveAdd++;
+
+        start = System.nanoTime();
+        checkGameOver();
+        end = System.nanoTime();
+        checkGameOverTime += end - start;
+        countCheckGameOver++;
+         */
+
+        hashValue = board.move(move);
+        moveHistory.add(move);
+        stateHistory.add(makeState());
+        positionTracker.merge(getZobristHash(), 1, Integer::sum);
+        previousLegalMoves.add(moveGenerator.generateMoves());
+        checkGameOver();
+
+        didMove = true;
 
         return didMove;
-    }
-
-    /**
-     * @return the game over status of the game.
-     */
-    public char getGameOverStatus() {
-        FastMap currentState = getGameState();
-        if (currentState.isMarked(5)) {
-            return LOSER;
-        } else if (currentState.isMarked(6)) {
-            return DRAW;
-        }
-        return IN_PROGRESS;
     }
 
     /**
@@ -603,6 +651,37 @@ public class GameModel {
     public MoveList getLegalMoves() {
         return previousLegalMoves.get(previousLegalMoves.size() - 1);
     }
+
+    /**
+     * @return the game over status of the game.
+     */
+    public char getGameOverStatus() {
+        FastMap currentState = getGameState();
+        if (currentState.isMarked(5)) {
+            return LOSER;
+        } else if (currentState.isMarked(6)) {
+            return DRAW;
+        }
+        return IN_PROGRESS;
+    }
+
+    /*public void printTimes() {
+        System.out.printf("Average if Time:                      %dns\n", ifTime / countIf);
+        System.out.printf("Average Board Move Time:              %dns\n",
+                          boardMoveTime / countBoardMove);
+        System.out.printf("Average Move History Add Time:        %dns\n",
+                          moveHistoryAddTime / countMoveHistoryAdd);
+        System.out.printf("Average State History Add Time:       %dns\n",
+                          stateHistoryAddTime / countStateHistoryAdd);
+        System.out.printf("Average Position Tracker Add if Time: %dns\n",
+                          positionTrackerAddTime / countPositionTrackerAdd);
+        System.out.printf("Average Generate Move Time:           %dns\n",
+                          generateMovesTime / countGenerateMove);
+        System.out.printf("Average Previous Move Add Time:       %dns\n",
+                          previousMovesAddTime / countPreviousMoveAdd);
+        System.out.printf("Average Check Game Over Time:         %dns\n",
+                          checkGameOverTime / countCheckGameOver);
+    }//*/
 
     /**
      * Undoes the given move. The state will be exactly the same

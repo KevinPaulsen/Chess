@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static chess.model.moves.CastlingMove.*;
 import static chess.model.pieces.Piece.*;
@@ -56,6 +55,21 @@ public class MoveList implements Iterable<Movable> {
         return moves;
     }
 
+    public int size() {
+        int numMoves = 0;
+
+        for (MoveData data : moveData) {
+            if (data.status == Status.PAWN_PROMOTE || data.status == Status.PAWN_PROMOTE_RIGHT ||
+                    data.status == Status.PAWN_PROMOTE_LEFT) {
+                numMoves += 4;
+            } else {
+                numMoves += Long.bitCount(data.moveMap);
+            }
+        }
+
+        return numMoves;
+    }
+
     public enum Status {
         NORMAL,
         CASTLING,
@@ -94,9 +108,6 @@ public class MoveList implements Iterable<Movable> {
 
         @Override
         public Movable next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-
             if (potentialPromotions.isEmpty()) {
                 Movable move = createMove(1L << bitIterator.next());
 
