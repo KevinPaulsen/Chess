@@ -28,7 +28,7 @@ public interface Evaluator {
      * @param game the game to evaluate.
      * @return the evaluation of this game.
      */
-    Evaluation evaluate(GameModel game);
+    int evaluate(GameModel game);
 
     /**
      * Returns a list of all the legal moves in this position, and they are sorted

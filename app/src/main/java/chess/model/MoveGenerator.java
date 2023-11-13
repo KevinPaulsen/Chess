@@ -291,6 +291,11 @@ public class MoveGenerator {
         return result;
     }
 
+    public static long getRookAttackSquares(int square, long board) {
+        int blockerIdx = ROOK_MAGICS[square].getIndex(board & ROOK_MOVE_MASKS[square]);
+        return ROOK_TABLE[square][blockerIdx];
+    }
+
     /**
      * Create blocker masks for rooks on every coordinate. These masks are accessed by a coordinate
      * index (0-63). These masks to not extend to the edge of the board (because use does not
@@ -460,7 +465,7 @@ public class MoveGenerator {
      * @param bitTwo bit mask of the second coordinate
      * @return the bits between bitOne and bitTwo, 0 if no ray exists.
      */
-    private static long getBitsBetweenInclusive(long bitOne, long bitTwo) {
+    public static long getBitsBetweenInclusive(long bitOne, long bitTwo) {
         // 6 +  1
         int firstIndex = (int) ((MAGIC_COORD.magicNumber * bitOne) >>> MAGIC_COORD.shiftBits);
 

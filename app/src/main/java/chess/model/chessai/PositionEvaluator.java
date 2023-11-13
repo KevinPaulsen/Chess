@@ -1,25 +1,28 @@
 package chess.model.chessai;
 
 import chess.ChessCoordinate;
+import chess.model.BoardModel;
 import chess.model.GameModel;
-import chess.model.MoveList;
+import chess.model.MoveGenerator;
 import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
+import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 
+import static chess.model.GameModel.WHITE;
 import static chess.model.chessai.Constants.*;
-import static chess.model.chessai.Evaluation.EXACT;
 
 public class PositionEvaluator implements Evaluator {
 
-    private static final int WIN_SCORE = 100_000;
-
+    private static final int WIN_SCORE = 1_000_000;
+    private static final int SORT_MOVE = 5;
+    private final GameModel game;
 
     public PositionEvaluator(GameModel game) {
+        this.game = game;
     }
 
     /**
@@ -30,19 +33,15 @@ public class PositionEvaluator implements Evaluator {
      * @return the evaluation of this game.
      */
     @Override
-    public Evaluation evaluate(GameModel game) {
+    public int evaluate(GameModel game) {
         int whiteScore = 0;
         int blackScore = 0;
 
         game.getLegalMoves();
         if (game.getGameOverStatus() == GameModel.LOSER) {
-            if (game.getTurn() == GameModel.WHITE) {
-                return new Evaluation(null, -10_000, GameModel.WHITE, 0, EXACT, null);
-            } else {
-                return new Evaluation(null, 10_000, GameModel.BLACK, 0, EXACT, null);
-            }
+            return -WIN_SCORE + game.moveNum();
         } else if (game.getGameOverStatus() == GameModel.DRAW) {
-            return new Evaluation(null, 0, Evaluation.TIE, 0, EXACT, null);
+            return 0;
         }
 
         for (ChessCoordinate coordinate : ChessCoordinate.values()) {
@@ -53,13 +52,13 @@ public class PositionEvaluator implements Evaluator {
                 value += readTable(piece, coordinate);
 
                 if (piece.getColor() == 'w') {
-                    whiteScore += value;
+                    whiteScore += (int) value;
                 } else {
-                    blackScore += value;
+                    blackScore += (int) value;
                 }
             }
         }
-        return new Evaluation(whiteScore - blackScore, 0);
+        return game.getTurn() == WHITE ? whiteScore - blackScore : blackScore - whiteScore;
     }
 
     private static double readTable(Piece piece, ChessCoordinate coordinate) {
@@ -90,54 +89,113 @@ public class PositionEvaluator implements Evaluator {
      */
     @Override
     public List<Movable> getSortedMoves(GameModel game, Movable hashMove) {
-        MoveList moveList = game.getLegalMoves();
-        List<Movable> legalMoves = new ArrayList<>();
-        moveList.forEach(legalMoves::add);
+        List<Movable> legalMoves = game.getLegalMoves().toList();
 
-        legalMoves.sort(new MoveComparator(game));
-        if (hashMove != null) {
-            if (legalMoves.remove(hashMove)) {
-                legalMoves.add(0, hashMove);
-            } else {
-                System.out.println("Hash Collision?");
-            }
+        if (legalMoves.size() <= SORT_MOVE) {
+            // If the list is small or equal to the required size, no sorting needed
+            legalMoves.sort(((o1, o2) -> evaluateMove(o2) - evaluateMove(o1)));
+            return legalMoves;
         }
+
+        int[] moveEvaluations = new int[legalMoves.size()];
+        for (int index = 0; index < moveEvaluations.length; index++) {
+            moveEvaluations[index] = evaluateMove(legalMoves.get(index));
+        }
+
+
+        for (int index = 0; index < SORT_MOVE; index++) {
+            int maxIndex = index;
+            int maxEval = moveEvaluations[maxIndex];
+
+            for (int searchIndex = index + 1; searchIndex < legalMoves.size(); searchIndex++) {
+                int evalCurrent = moveEvaluations[searchIndex];
+
+                if (evalCurrent > maxEval) {
+                    maxIndex = searchIndex;
+                    maxEval = evalCurrent;
+                }
+            }
+            arraySwap(moveEvaluations, index, maxIndex);
+            Collections.swap(legalMoves, index, maxIndex);
+        }
+
         return legalMoves;
     }
 
-    private record MoveComparator(GameModel game) implements Comparator<Movable> {
+    private int evaluateMove(Movable move) {
+        int score = 0;
+        BoardModel board = game.getBoard();
 
-        @Override
-        public int compare(Movable o1, Movable o2) {
-            return Integer.compare(evaluateMove(o1), evaluateMove(o2));
+        Piece movingPiece = move.getMovingPiece();
+
+        Piece capturedPiece = game.getBoard().getPieceOn(move.getEndCoordinate());
+
+        // If the move captures weight moves that capture with lower value pieces higher
+        if (capturedPiece != null) {
+            score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(
+                    capturedPiece)) - Evaluator.getValue(movingPiece);
         }
 
-        private int evaluateMove(Movable move) {
-            int score = 0;
-
-            Piece movingPiece = move.getMovingPiece();
-
-            Piece capturedPiece = game.getBoard().getPieceOn(move.getEndCoordinate());
-
-            // If the move captures weight moves that capture with lower value pieces higher
-            if (capturedPiece != null) {
-                score = CAPTURE_BIAS + CAPTURED_PIECE_VALUE_MULTIPLIER * (Evaluator.getValue(
-                        capturedPiece)) - Evaluator.getValue(movingPiece);
-            }
-
-            if (move instanceof PromotionMove) {
-                switch (((PromotionMove) move).getPromotedPiece()) {
-                    case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
-                    case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
-                    case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
-                    case WHITE_KNIGHT, BLACK_KNIGHT -> score += KNIGHT_SCORE;
+        ChessCoordinate enemyKing = movingPiece.getColor() == WHITE ? board.getBlackKingCoord() :
+                board.getWhiteKingCoord();
+        ChessCoordinate end = move.getEndCoordinate();
+        score += switch (movingPiece) {
+            case WHITE_ROOK, BLACK_ROOK -> {
+                if (!Directions.areStraightlyAligned(enemyKing, end)) {
+                    yield 0;
                 }
+
+                yield getCheckAndPinScore(board, enemyKing, end);
             }
+            case WHITE_BISHOP, BLACK_BISHOP -> {
+                if (!Directions.areDiagonallyAligned(enemyKing, end)) {
+                    yield 0;
+                }
 
-            score += readTable(movingPiece, move.getEndCoordinate()) - readTable(movingPiece,
-                                                                                 move.getStartCoordinate());
+                yield getCheckAndPinScore(board, enemyKing, end);
+            }
+            case BLACK_QUEEN, WHITE_QUEEN -> {
+                if (!Directions.areAligned(enemyKing, end)) {
+                    yield 0;
+                }
 
-            return score;
+                yield getCheckAndPinScore(board, enemyKing, end);
+            }
+            default -> 0;
+        };
+
+        if (move instanceof PromotionMove) {
+            switch (((PromotionMove) move).getPromotedPiece()) {
+                case WHITE_QUEEN, BLACK_QUEEN -> score += QUEEN_SCORE;
+                case WHITE_ROOK, BLACK_ROOK -> score += ROOK_SCORE;
+                case WHITE_BISHOP, BLACK_BISHOP -> score += BISHOP_SCORE;
+                case WHITE_KNIGHT, BLACK_KNIGHT -> score += KNIGHT_SCORE;
+            }
+        }
+
+        score += (int) (readTable(movingPiece, move.getEndCoordinate()) - readTable(movingPiece,
+                                                                                    move.getStartCoordinate()));
+
+        return score;
+    }
+
+    private static void arraySwap(int[] moveEvaluations, int index, int maxIndex) {
+        int temp = moveEvaluations[index];
+        moveEvaluations[index] = moveEvaluations[maxIndex];
+        moveEvaluations[maxIndex] = temp;
+    }
+
+    private int getCheckAndPinScore(BoardModel board, ChessCoordinate enemyKing,
+                                    ChessCoordinate end) {
+        long kingBit = enemyKing.getBitMask();
+        long endBit = end.getBitMask();
+        long ray = MoveGenerator.getBitsBetweenInclusive(end.getBitMask(), kingBit);
+
+        long blockers = (ray & board.getOccupancyMap()) & ~(kingBit | endBit);
+        if (blockers == 0) {
+            return 10_000;
+        } else {
+            return 300 * Long.bitCount(blockers);
         }
     }
 }
