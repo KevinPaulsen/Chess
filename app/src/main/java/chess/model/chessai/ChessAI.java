@@ -102,17 +102,17 @@ public class ChessAI {
                 executor.shutdown();
             }
 
-            bestMove = deepener.evaluation.move();
+            bestMove = deepener.evaluation.getMove();
 
             currentGame = new GameModel(game);
             transpositionTable.printEvaluation(currentGame, bestMove, deepener.depth,
-                                               deepener.evaluation.score());
+                                               deepener.evaluation.getScore());
         } else {
-            Searcher.Evaluation eval = searcher.getBestMove(currentGame, minDepth);
-            bestMove = eval.move();
+            Evaluation eval = searcher.getBestMove(currentGame, minDepth);
+            bestMove = eval.getMove();
 
             currentGame = new GameModel(game);
-            transpositionTable.printEvaluation(currentGame, bestMove, minDepth, eval.score());
+            transpositionTable.printEvaluation(currentGame, bestMove, minDepth, eval.getScore());
         }
 
 
@@ -126,7 +126,7 @@ public class ChessAI {
         private int depth;
         private int maxDepth;
         private volatile boolean canceled;
-        private volatile Searcher.Evaluation evaluation;
+        private volatile Evaluation evaluation;
 
         public IterativeDeepener(GameModel game, Searcher searcher, int startDepth, int maxDepth) {
             this.game = game;
@@ -151,8 +151,8 @@ public class ChessAI {
         @Override
         public void run() {
             while (!canceled && (maxDepth < 0 || depth <= maxDepth)) {
-                Searcher.Evaluation evaluation = searcher.getBestMove(game, depth++);
-                if (!canceled && evaluation != null && evaluation.move() != null) {
+                Evaluation evaluation = searcher.getBestMove(game, depth++);
+                if (!canceled && evaluation != null && evaluation.getMove() != null) {
                     this.evaluation = evaluation;
                 }
             }

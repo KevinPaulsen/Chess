@@ -7,12 +7,13 @@ import chess.model.moves.Movable;
 import java.util.List;
 
 import static chess.model.GameModel.IN_PROGRESS;
+import static chess.model.chessai.Evaluation.WORST_EVALUATION;
 import static chess.model.chessai.TranspositionTable.*;
 
 public class Searcher {
 
-    private static final int WORST_EVAL = Integer.MIN_VALUE + 1;
-    private static final int BEST_EVAL = Integer.MAX_VALUE;
+    private static final int WORST_SCORE = Integer.MIN_VALUE + 1;
+    private static final int BEST_SCORE = Integer.MAX_VALUE;
 
     private final TranspositionTable transpositionTable;
     private final Evaluator evaluator;
@@ -25,52 +26,27 @@ public class Searcher {
     }
 
     public Evaluation getBestMove(GameModel game, int depth) {
-        int alpha = WORST_EVAL;
-        Movable bestMove = null;
-
-        List<Movable> sortedMoves = evaluator.getSortedMoves(game, null);
-        for (Movable move : sortedMoves) {
-            game.move(move);
-            int eval = -search(game, depth - 1, WORST_EVAL, -alpha);
-            game.undoLastMove();
-
-            if (eval == WORST_EVAL) {
-                break;
-            }
-
-            if (eval > alpha) {
-                alpha = eval;
-                bestMove = move;
-            }
-        }
-
-        if (canceled) {
-            return null;
-        }
-
-        transpositionTable.recordHash(game.getZobristWithTimesMoved(), bestMove, depth, alpha,
-                                      EXACT);
-        return new Evaluation(bestMove, alpha);
+        return search(game, depth, WORST_SCORE, BEST_SCORE);
     }
 
     public void cancel() {
         canceled = true;
     }
 
-    private int search(GameModel game, int depth, int alpha, int beta) {
+    private Evaluation search(GameModel game, int depth, int alpha, int beta) {
         if (canceled) {
-            return WORST_EVAL;
+            return WORST_EVALUATION;
         }
 
         long hashValue = game.getZobristWithTimesMoved();
         int evaluation = transpositionTable.probeHash(hashValue, depth, alpha, beta);
 
         if (evaluation != UNKNOWN) {
-            return evaluation;
+            return new Evaluation(transpositionTable.bestMove(hashValue), null, evaluation, depth);
         } else if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
             evaluation = evaluator.evaluate(game);
             transpositionTable.recordHash(hashValue, null, 0, evaluation, EXACT);
-            return evaluation;
+            return new Evaluation(null, null, evaluation, 0);
         }
 
         byte hashFlag = ALPHA;
@@ -80,27 +56,26 @@ public class Searcher {
 
         for (Movable move : sortedMoves) {
             game.move(move);
-            int eval = -search(game, depth - 1, -beta, -alpha);
+            Evaluation eval = search(game, depth - 1, -beta, -alpha);
             game.undoLastMove();
 
             // Means a cancellation happened
             if (canceled) {
-                return WORST_EVAL;
+                return WORST_EVALUATION;
             }
 
-            if (eval >= beta) {
+            int score = -eval.getScore();
+            if (score >= beta) {
                 transpositionTable.recordHash(hashValue, move, depth, beta, BETA);
-                return beta;
-            } else if (eval > alpha) {
+                return new Evaluation(move, null, beta, depth);
+            } else if (score > alpha) {
                 hashFlag = EXACT;
-                alpha = eval;
+                alpha = score;
                 bestMove = move;
             }
         }
 
         transpositionTable.recordHash(hashValue, bestMove, depth, alpha, hashFlag);
-        return alpha;
+        return new Evaluation(bestMove, null, alpha, depth);
     }
-
-    public record Evaluation(Movable move, int score) {}
 }
