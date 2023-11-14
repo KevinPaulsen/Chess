@@ -75,7 +75,7 @@ public class ChessController extends Application {
                                      return gameModel.getLastMove();
                                  }
                              });
-        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true, true);
+        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
     }

@@ -2,9 +2,7 @@ package chess.model.chessai;
 
 import chess.model.GameModel;
 import chess.model.moves.Movable;
-import chess.util.MaxSizeLRUCache;
 
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +23,7 @@ public class ChessAI {
      * evaluation. This may result in speed up due to transpositions
      * to the same position.
      */
-    private final Map<Long, Evaluation> transpositionTable;
+    private final TranspositionTable transpositionTable;
 
     /**
      * The evaluator this class uses to evaluate positions, and moves.
@@ -37,10 +35,7 @@ public class ChessAI {
      */
     private final GameModel game;
 
-    private final boolean useTranspositionTable;
     private final boolean useIterativeDeepening;
-
-    private final long positionsEvaluated;
 
     /**
      * Simple constructor that makes a new ChessAI with the given
@@ -49,14 +44,11 @@ public class ChessAI {
      * @param evaluator the evaluator this AI uses.
      * @param game      the game this AI is in.
      */
-    public ChessAI(Evaluator evaluator, GameModel game, boolean useIterativeDeepening,
-                   boolean useTranspositionTable) {
+    public ChessAI(Evaluator evaluator, GameModel game, boolean useIterativeDeepening) {
         this.evaluator = evaluator;
         this.game = game;
         this.useIterativeDeepening = useIterativeDeepening;
-        this.useTranspositionTable = useTranspositionTable;
-        this.transpositionTable = new MaxSizeLRUCache<>(1_000_000);
-        positionsEvaluated = 0;
+        this.transpositionTable = new TranspositionTable(999_983);
     }
 
     /**
@@ -78,13 +70,14 @@ public class ChessAI {
      */
     public Movable getBestMove(int minDepth, int timeCutoff) {
         GameModel currentGame = new GameModel(this.game);
+        Searcher searcher = new Searcher(evaluator, transpositionTable);
 
         Movable bestMove;
 
         if (useIterativeDeepening) {
             long start, end;
 
-            IterativeDeepener deepener = new IterativeDeepener(currentGame, 1, minDepth);
+            IterativeDeepener deepener = new IterativeDeepener(currentGame, searcher, 1, minDepth);
             // Do minimax iteratively up to minDepth
             start = System.nanoTime();
             deepener.run();
@@ -111,22 +104,28 @@ public class ChessAI {
 
             bestMove = deepener.bestMove;
         } else {
-            bestMove = new Searcher(currentGame, evaluator).getBestMove(minDepth);
+            bestMove = searcher.getBestMove(currentGame, minDepth);
         }
+
+        currentGame = new GameModel(game);
+        currentGame.move(bestMove);
+        transpositionTable.printEvaluation(currentGame.getZobristHash(), currentGame);
 
         return bestMove;
     }
 
-    private class IterativeDeepener implements Runnable {
+    private static class IterativeDeepener implements Runnable {
 
+        private final GameModel game;
         private final Searcher searcher;
         private int startDepth;
         private int maxDepth;
         private volatile boolean canceled;
         private volatile Movable bestMove;
 
-        public IterativeDeepener(GameModel game, int startDepth, int maxDepth) {
-            this.searcher = new Searcher(game, evaluator);
+        public IterativeDeepener(GameModel game, Searcher searcher, int startDepth, int maxDepth) {
+            this.game = game;
+            this.searcher = searcher;
             this.canceled = false;
             this.bestMove = null;
             this.startDepth = startDepth;
@@ -148,12 +147,11 @@ public class ChessAI {
         public void run() {
             int count = startDepth;
             while (!canceled && (maxDepth < 0 || count <= maxDepth)) {
-                Movable move = searcher.getBestMove(count++);
+                Movable move = searcher.getBestMove(game, count++);
                 if (move != null) {
                     bestMove = move;
                 }
             }
-            System.out.println(bestMove);
         }
 
         public void shutdown() {

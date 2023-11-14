@@ -94,6 +94,12 @@ public class PositionEvaluator implements Evaluator {
         if (legalMoves.size() <= SORT_MOVE) {
             // If the list is small or equal to the required size, no sorting needed
             legalMoves.sort(((o1, o2) -> evaluateMove(o2) - evaluateMove(o1)));
+
+            if (hashMove != null) {
+                legalMoves.remove(hashMove);
+                legalMoves.add(0, hashMove);
+            }
+
             return legalMoves;
         }
 
@@ -102,8 +108,14 @@ public class PositionEvaluator implements Evaluator {
             moveEvaluations[index] = evaluateMove(legalMoves.get(index));
         }
 
+        int index = 0;
+        if (hashMove != null) {
+            legalMoves.remove(hashMove);
+            legalMoves.add(0, hashMove);
+            index = 1;
+        }
 
-        for (int index = 0; index < SORT_MOVE; index++) {
+        for (; index < SORT_MOVE; index++) {
             int maxIndex = index;
             int maxEval = moveEvaluations[maxIndex];
 
