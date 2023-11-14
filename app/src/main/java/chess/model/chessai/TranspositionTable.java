@@ -3,6 +3,8 @@ package chess.model.chessai;
 import chess.model.GameModel;
 import chess.model.moves.Movable;
 
+import static chess.model.GameModel.WHITE;
+
 public class TranspositionTable {
 
     public static final int UNKNOWN = Integer.MIN_VALUE;
@@ -68,30 +70,27 @@ public class TranspositionTable {
         return null;
     }
 
-    public void printEvaluation(long zobristHash, GameModel game) {
-        TableEntry current = getHash(zobristHash);
+    public void printEvaluation(GameModel game, Movable bestMove, int depth, int evaluation) {
+        evaluation *= bestMove.getMovingPiece().getColor() == WHITE ? 1 : -1;
+        System.out.printf("%2d ply = %-5d | %-5s", depth--, evaluation,
+                          game.getMoveString(bestMove));
 
-        if (current == null) {
-            return;
-        } else if (current.bestMove == null) {
-            System.out.printf("%2d ply = %-5d | No move\n", current.depth, current.evaluation);
-            return;
-        }
+        game.move(bestMove);
+        TableEntry current = getHash(game.getZobristWithTimesMoved());
 
-        System.out.printf("%2d ply = %-5d | %s", current.depth, current.evaluation,
-                          current.bestMove);
-        game.move(current.bestMove);
-        current = getHash(game.getZobristHash());
+        while (current != null && game.getGameOverStatus() == GameModel.IN_PROGRESS &&
+                depth-- > 0) {
 
-        while (current != null && current.bestMove != null &&
-                game.getLegalMoves().toList().contains(current.bestMove)) {
-            System.out.printf(" -> %s", current.bestMove);
-            game.move(current.bestMove);
-            current = getHash(game.getZobristHash());
-
-            if (game.getGameOverStatus() != GameModel.IN_PROGRESS) {
+            if (current.bestMove == null) {
+                System.out.print(" -> null ");
+                break;
+            } else if (!game.getLegalMoves().toList().contains(current.bestMove)) {
                 break;
             }
+
+            System.out.printf(" -> %-5s", game.getMoveString(current.bestMove));
+            game.move(current.bestMove);
+            current = getHash(game.getZobristWithTimesMoved());
         }
 
         System.out.println();

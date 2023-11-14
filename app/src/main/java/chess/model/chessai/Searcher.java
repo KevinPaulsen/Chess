@@ -24,7 +24,7 @@ public class Searcher {
         this.transpositionTable = transpositionTable;
     }
 
-    public Movable getBestMove(GameModel game, int depth) {
+    public Evaluation getBestMove(GameModel game, int depth) {
         int alpha = WORST_EVAL;
         Movable bestMove = null;
 
@@ -48,7 +48,9 @@ public class Searcher {
             return null;
         }
 
-        return bestMove;
+        transpositionTable.recordHash(game.getZobristWithTimesMoved(), bestMove, depth, alpha,
+                                      EXACT);
+        return new Evaluation(bestMove, alpha);
     }
 
     public void cancel() {
@@ -60,7 +62,7 @@ public class Searcher {
             return WORST_EVAL;
         }
 
-        long hashValue = game.getZobristHash();
+        long hashValue = game.getZobristWithTimesMoved();
         int evaluation = transpositionTable.probeHash(hashValue, depth, alpha, beta);
 
         if (evaluation != UNKNOWN) {
@@ -99,4 +101,6 @@ public class Searcher {
         transpositionTable.recordHash(hashValue, bestMove, depth, alpha, hashFlag);
         return alpha;
     }
+
+    public record Evaluation(Movable move, int score) {}
 }

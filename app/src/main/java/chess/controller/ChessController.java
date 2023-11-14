@@ -75,7 +75,7 @@ public class ChessController extends Application {
                                      return gameModel.getLastMove();
                                  }
                              });
-        chessAI = new ChessAI(new PositionEvaluator(gameModel), gameModel, true);
+        chessAI = new ChessAI(new PositionEvaluator(), gameModel, true);
         aiExecutor = Executors.newSingleThreadExecutor();
         finishGameExecutor = Executors.newSingleThreadExecutor();
     }
@@ -136,7 +136,8 @@ public class ChessController extends Application {
 
         // Calculate the next best move, and make that move
         futureAIMove = CompletableFuture.runAsync(
-                        () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)), aiExecutor)
+                        () -> gameModel.move(chessAI.getBestMove(MINIMUM_DEPTH, SEARCH_TIME)),
+                        aiExecutor)
                 .thenRun(this::printAndUpdate).exceptionally((ex) -> {
                     ex.printStackTrace();
                     return null;

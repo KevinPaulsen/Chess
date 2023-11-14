@@ -1,8 +1,10 @@
 package chess.model;
 
 import chess.ChessCoordinate;
+import chess.model.moves.EnPassantMove;
 import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
+import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 import chess.util.FastMap;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static chess.ChessCoordinate.*;
+import static chess.model.MoveGenerator.FILE_MASKS;
 import static chess.model.pieces.Piece.*;
 
 /**
@@ -665,24 +668,6 @@ public class GameModel {
         return IN_PROGRESS;
     }
 
-    /*public void printTimes() {
-        System.out.printf("Average if Time:                      %dns\n", ifTime / countIf);
-        System.out.printf("Average Board Move Time:              %dns\n",
-                          boardMoveTime / countBoardMove);
-        System.out.printf("Average Move History Add Time:        %dns\n",
-                          moveHistoryAddTime / countMoveHistoryAdd);
-        System.out.printf("Average State History Add Time:       %dns\n",
-                          stateHistoryAddTime / countStateHistoryAdd);
-        System.out.printf("Average Position Tracker Add if Time: %dns\n",
-                          positionTrackerAddTime / countPositionTrackerAdd);
-        System.out.printf("Average Generate Move Time:           %dns\n",
-                          generateMovesTime / countGenerateMove);
-        System.out.printf("Average Previous Move Add Time:       %dns\n",
-                          previousMovesAddTime / countPreviousMoveAdd);
-        System.out.printf("Average Check Game Over Time:         %dns\n",
-                          checkGameOverTime / countCheckGameOver);
-    }//*/
-
     /**
      * Undoes the given move. The state will be exactly the same
      * as if this move never happened. If no move has happened yet,
@@ -716,6 +701,175 @@ public class GameModel {
             // Undo the move on the board
             hashValue ^= board.undoMove();
         }
+    }
+
+    /**
+     * Tests weather the given move would align with the king. This is only valid if the moving
+     * piece is a queen, rook, or bishop. If the moving piece is not, then false is returned. This
+     * assumes that the move is valid in this current game, if it is not, then the result is not
+     * defined.
+     *
+     * @param move the move to test
+     * @return weather the move causes an alignment with the king in the following position.
+     */
+    public boolean alignsWithKing(Movable move) {
+        ChessCoordinate endCoordinate = move.getEndCoordinate();
+        ChessCoordinate enemyKing;
+        if (getTurn() == WHITE) {
+            enemyKing = board.getBlackKingCoord();
+        } else {
+            enemyKing = board.getWhiteKingCoord();
+        }
+
+        return switch (move.getMovingPiece()) {
+            case WHITE_QUEEN, BLACK_QUEEN -> Directions.areAligned(endCoordinate, enemyKing);
+            case WHITE_BISHOP, BLACK_BISHOP -> Directions.areDiagonallyAligned(endCoordinate,
+                                                                               enemyKing);
+            case WHITE_ROOK, BLACK_ROOK -> Directions.areStraightlyAligned(endCoordinate,
+                                                                           enemyKing);
+            default -> false;
+        };
+    }
+
+    /**
+     * Get the FIDE notation for the given move.
+     *
+     * @param move the move to convert to a String
+     * @return the move in FIDE string notation.
+     */
+    public String getMoveString(Movable move) {
+        StringBuilder builder = new StringBuilder();
+        ChessCoordinate start = move.getStartCoordinate();
+        ChessCoordinate end = move.getEndCoordinate();
+        Piece movingPiece = move.getMovingPiece();
+
+        if (movingPiece != WHITE_PAWN && movingPiece != BLACK_PAWN) {
+            builder.append(movingPiece.getStringRep());
+        } else if (capturesPiece(move)) {
+            builder.append(start.getCharFile());
+        }
+
+        if (capturesPiece(move)) {
+            builder.append("x");
+        }
+
+        builder.append(end.toString());
+
+        if (move instanceof PromotionMove promotionMove) {
+            builder.append("=");
+            builder.append(promotionMove.getPromotedPiece().getStringRep());
+        }
+
+        if (causesCheck(move)) {
+            builder.append("+");
+        }
+
+        return builder.toString();
+    }
+
+    /**
+     * Tests weather the given move captures a piece. This assumes that the move is valid in this
+     * current game, if it is not, then the result is not defined.
+     *
+     * @param move the move to test.
+     * @return weather the move causes captures a pice.
+     */
+    public boolean capturesPiece(Movable move) {
+        return move instanceof EnPassantMove || board.getPieceOn(move.getEndCoordinate()) != null;
+    }
+
+    /**
+     * Tests weather the given move would cause check. This assumes that the move is valid in this
+     * current game, if it is not, then the result is not defined.
+     *
+     * @param move the move to test
+     * @return weather the move causes a check in the following position.
+     */
+    public boolean causesCheck(Movable move) {
+        Piece movingPiece;
+        if (move instanceof PromotionMove promotionMove) {
+            movingPiece = promotionMove.getPromotedPiece();
+        } else {
+            movingPiece = move.getMovingPiece();
+        }
+
+        ChessCoordinate endCoord = move.getEndCoordinate();
+
+        ChessCoordinate enemyKing;
+        if (movingPiece.getColor() == WHITE) {
+            enemyKing = board.getBlackKingCoord();
+        } else {
+            enemyKing = board.getWhiteKingCoord();
+        }
+
+        // TODO: Add in discovered check
+        return switch (movingPiece) {
+            case WHITE_QUEEN, BLACK_QUEEN -> {
+                if (Directions.areAligned(enemyKing, endCoord)) {
+                    yield isEmptyBetween(enemyKing, endCoord,
+                                         move.getStartCoordinate().getBitMask());
+                } else {
+                    yield false;
+                }
+            }
+            case WHITE_ROOK, BLACK_ROOK -> {
+                if (Directions.areStraightlyAligned(enemyKing, endCoord)) {
+                    yield isEmptyBetween(enemyKing, endCoord,
+                                         move.getStartCoordinate().getBitMask());
+                } else {
+                    yield false;
+                }
+            }
+            case WHITE_BISHOP, BLACK_BISHOP -> {
+                if (Directions.areDiagonallyAligned(enemyKing, endCoord)) {
+                    yield isEmptyBetween(enemyKing, endCoord,
+                                         move.getStartCoordinate().getBitMask());
+                } else {
+                    yield false;
+                }
+            }
+            case WHITE_KNIGHT, BLACK_KNIGHT -> {
+                long attackingSquares = MoveGenerator.getKnightAttackSquares(endCoord);
+                yield (attackingSquares & enemyKing.getBitMask()) != 0;
+            }
+            case WHITE_PAWN -> {
+                long pawnBit = endCoord.getBitMask();
+                long kingBit = enemyKing.getBitMask();
+
+                if (((pawnBit & ~FILE_MASKS[7]) << 9) == kingBit) {
+                    yield true;
+                } else {
+                    yield ((pawnBit & ~FILE_MASKS[0]) << 7) == kingBit;
+                }
+            }
+            case BLACK_PAWN -> {
+                long pawnBit = endCoord.getBitMask();
+                long kingBit = enemyKing.getBitMask();
+
+                if (((pawnBit & ~FILE_MASKS[7]) >>> 7) == kingBit) {
+                    yield true;
+                } else {
+                    yield ((pawnBit & ~FILE_MASKS[0]) >>> 9) == kingBit;
+                }
+            }
+            default -> false;
+        };
+    }
+
+    /**
+     * Returns weather the squares between the given two coordinates are empty.
+     *
+     * @param coordinate1 the first coordinate
+     * @param coordinate2 the second coordinate
+     * @return weather the bits between are empty
+     */
+    private boolean isEmptyBetween(ChessCoordinate coordinate1, ChessCoordinate coordinate2,
+                                   long bitsToRemove) {
+        long bit1 = coordinate1.getBitMask();
+        long bit2 = coordinate2.getBitMask();
+        long ray = MoveGenerator.getBitsBetweenInclusive(bit1, bit2);
+
+        return ((ray & board.getOccupancyMap()) & ~(bit1 | bit2 | bitsToRemove)) == 0;
     }
 
     @Override

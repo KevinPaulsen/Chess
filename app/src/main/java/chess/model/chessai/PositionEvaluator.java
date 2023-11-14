@@ -3,10 +3,8 @@ package chess.model.chessai;
 import chess.ChessCoordinate;
 import chess.model.BoardModel;
 import chess.model.GameModel;
-import chess.model.MoveGenerator;
 import chess.model.moves.Movable;
 import chess.model.moves.PromotionMove;
-import chess.model.pieces.Directions;
 import chess.model.pieces.Piece;
 
 import java.util.Collections;
@@ -19,10 +17,8 @@ public class PositionEvaluator implements Evaluator {
 
     private static final int WIN_SCORE = 1_000_000;
     private static final int SORT_MOVE = 5;
-    private final GameModel game;
 
-    public PositionEvaluator(GameModel game) {
-        this.game = game;
+    public PositionEvaluator() {
     }
 
     /**
@@ -93,7 +89,7 @@ public class PositionEvaluator implements Evaluator {
 
         if (legalMoves.size() <= SORT_MOVE) {
             // If the list is small or equal to the required size, no sorting needed
-            legalMoves.sort(((o1, o2) -> evaluateMove(o2) - evaluateMove(o1)));
+            legalMoves.sort(((o1, o2) -> evaluateMove(o2, game) - evaluateMove(o1, game)));
 
             if (hashMove != null) {
                 legalMoves.remove(hashMove);
@@ -105,7 +101,7 @@ public class PositionEvaluator implements Evaluator {
 
         int[] moveEvaluations = new int[legalMoves.size()];
         for (int index = 0; index < moveEvaluations.length; index++) {
-            moveEvaluations[index] = evaluateMove(legalMoves.get(index));
+            moveEvaluations[index] = evaluateMove(legalMoves.get(index), game);
         }
 
         int index = 0;
@@ -134,7 +130,7 @@ public class PositionEvaluator implements Evaluator {
         return legalMoves;
     }
 
-    private int evaluateMove(Movable move) {
+    private int evaluateMove(Movable move, GameModel game) {
         int score = 0;
         BoardModel board = game.getBoard();
 
@@ -148,33 +144,7 @@ public class PositionEvaluator implements Evaluator {
                     capturedPiece)) - Evaluator.getValue(movingPiece);
         }
 
-        ChessCoordinate enemyKing = movingPiece.getColor() == WHITE ? board.getBlackKingCoord() :
-                board.getWhiteKingCoord();
-        ChessCoordinate end = move.getEndCoordinate();
-        score += switch (movingPiece) {
-            case WHITE_ROOK, BLACK_ROOK -> {
-                if (!Directions.areStraightlyAligned(enemyKing, end)) {
-                    yield 0;
-                }
-
-                yield getCheckAndPinScore(board, enemyKing, end);
-            }
-            case WHITE_BISHOP, BLACK_BISHOP -> {
-                if (!Directions.areDiagonallyAligned(enemyKing, end)) {
-                    yield 0;
-                }
-
-                yield getCheckAndPinScore(board, enemyKing, end);
-            }
-            case BLACK_QUEEN, WHITE_QUEEN -> {
-                if (!Directions.areAligned(enemyKing, end)) {
-                    yield 0;
-                }
-
-                yield getCheckAndPinScore(board, enemyKing, end);
-            }
-            default -> 0;
-        };
+        score += getCheckAndPinScore(game, move);
 
         if (move instanceof PromotionMove) {
             switch (((PromotionMove) move).getPromotedPiece()) {
@@ -197,17 +167,13 @@ public class PositionEvaluator implements Evaluator {
         moveEvaluations[maxIndex] = temp;
     }
 
-    private int getCheckAndPinScore(BoardModel board, ChessCoordinate enemyKing,
-                                    ChessCoordinate end) {
-        long kingBit = enemyKing.getBitMask();
-        long endBit = end.getBitMask();
-        long ray = MoveGenerator.getBitsBetweenInclusive(end.getBitMask(), kingBit);
-
-        long blockers = (ray & board.getOccupancyMap()) & ~(kingBit | endBit);
-        if (blockers == 0) {
+    private int getCheckAndPinScore(GameModel game, Movable move) {
+        if (game.causesCheck(move)) {
             return 10_000;
+        } else if (game.alignsWithKing(move)) {
+            return 400;
         } else {
-            return 300 * Long.bitCount(blockers);
+            return 0;
         }
     }
 }

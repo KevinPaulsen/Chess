@@ -23,6 +23,16 @@ public class MoveGenerator {
      * coordinateToMask[posIdx][direction.ordinal]
      */
     protected static final long[][] SLIDING_ATTACK_MASKS;
+    static final long[] FILE_MASKS = {
+            0x0101010101010101L,
+            0x0202020202020202L,
+            0x0404040404040404L,
+            0x0808080808080808L,
+            0x1010101010101010L,
+            0x2020202020202020L,
+            0x4040404040404040L,
+            0x8080808080808080L,
+    };
     private static final int BITS_IN_BYTE = 8;
     private static final long[] ROOK_MOVE_MASKS;
     private static final long[] BISHOP_MOVE_MASKS;
@@ -37,16 +47,6 @@ public class MoveGenerator {
     private static final long BLACK_QUEEN_CASTLE_MASK = 0x1E00000000000000L;
     private static final long WHITE_QUEEN_ATTACK_CASTLE_MASK = 0x000000000000001CL;
     private static final long BLACK_QUEEN_ATTACK_CASTLE_MASK = 0x1C00000000000000L;
-    private static final long[] FILE_MASKS = {
-            0x0101010101010101L,
-            0x0202020202020202L,
-            0x0404040404040404L,
-            0x0808080808080808L,
-            0x1010101010101010L,
-            0x2020202020202020L,
-            0x4040404040404040L,
-            0x8080808080808080L,
-    };
     private static final long[] ROW_MASKS = {
             0x00000000000000FFL,
             0x000000000000FF00L,
@@ -575,6 +575,10 @@ public class MoveGenerator {
         }
 
         return kingMoveMasks;
+    }
+
+    public static long getKnightAttackSquares(ChessCoordinate coordinate) {
+        return KNIGHT_MOVE_MASKS[coordinate.getOndDimIndex()];
     }
 
     public MoveList generateMoves() {

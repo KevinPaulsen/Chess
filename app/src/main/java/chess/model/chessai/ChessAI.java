@@ -88,7 +88,7 @@ public class ChessAI {
             if (totalTimeMills < timeCutoff) {
                 // Continue search starting at minDepth + 1, until timeout
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-                deepener.startDepth = minDepth + 1;
+                deepener.depth = minDepth + 1;
                 deepener.maxDepth = -1;
 
                 try {
@@ -102,14 +102,19 @@ public class ChessAI {
                 executor.shutdown();
             }
 
-            bestMove = deepener.bestMove;
+            bestMove = deepener.evaluation.move();
+
+            currentGame = new GameModel(game);
+            transpositionTable.printEvaluation(currentGame, bestMove, deepener.depth,
+                                               deepener.evaluation.score());
         } else {
-            bestMove = searcher.getBestMove(currentGame, minDepth);
+            Searcher.Evaluation eval = searcher.getBestMove(currentGame, minDepth);
+            bestMove = eval.move();
+
+            currentGame = new GameModel(game);
+            transpositionTable.printEvaluation(currentGame, bestMove, minDepth, eval.score());
         }
 
-        currentGame = new GameModel(game);
-        currentGame.move(bestMove);
-        transpositionTable.printEvaluation(currentGame.getZobristHash(), currentGame);
 
         return bestMove;
     }
@@ -118,17 +123,17 @@ public class ChessAI {
 
         private final GameModel game;
         private final Searcher searcher;
-        private int startDepth;
+        private int depth;
         private int maxDepth;
         private volatile boolean canceled;
-        private volatile Movable bestMove;
+        private volatile Searcher.Evaluation evaluation;
 
         public IterativeDeepener(GameModel game, Searcher searcher, int startDepth, int maxDepth) {
             this.game = game;
             this.searcher = searcher;
             this.canceled = false;
-            this.bestMove = null;
-            this.startDepth = startDepth;
+            this.evaluation = null;
+            this.depth = startDepth;
             this.maxDepth = maxDepth;
         }
 
@@ -145,13 +150,15 @@ public class ChessAI {
          */
         @Override
         public void run() {
-            int count = startDepth;
-            while (!canceled && (maxDepth < 0 || count <= maxDepth)) {
-                Movable move = searcher.getBestMove(game, count++);
-                if (move != null) {
-                    bestMove = move;
+            while (!canceled && (maxDepth < 0 || depth <= maxDepth)) {
+                Searcher.Evaluation evaluation = searcher.getBestMove(game, depth++);
+                if (!canceled && evaluation != null && evaluation.move() != null) {
+                    this.evaluation = evaluation;
                 }
             }
+
+            if (canceled)
+                depth--;
         }
 
         public void shutdown() {
