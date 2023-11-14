@@ -20,7 +20,7 @@ public class TranspositionTable {
         this.size = size;
     }
 
-    public int probeHash(long hash, int depth, int alpha, int beta) {
+    public Evaluation probeHash(long hash, int depth, int alpha, int beta) {
         TableEntry transposition = getHash(hash);
 
         if (transposition != null && transposition.hash == hash) {
@@ -29,25 +29,25 @@ public class TranspositionTable {
                     return transposition.evaluation;
                 }
 
-                if (transposition.flag == ALPHA && transposition.evaluation <= alpha) {
-                    return alpha;
+                if (transposition.flag == ALPHA && transposition.evaluation.getScore() <= alpha) {
+                    return new Evaluation(alpha, 0);
                 }
 
-                if (transposition.flag == BETA && transposition.evaluation >= beta) {
-                    return beta;
+                if (transposition.flag == BETA && transposition.evaluation.getScore() >= beta) {
+                    return new Evaluation(beta, 0);
                 }
             }
         }
 
-        return Integer.MIN_VALUE;
+        return null;
     }
 
     private TableEntry getHash(long hash) {
         return transpositionTable[Math.abs((int) (hash % size))];
     }
 
-    public void recordHash(long hash, Movable move, int depth, int evaluation, byte flag) {
-        recordHash(new TableEntry(hash, move, evaluation, flag, depth));
+    public void recordHash(long hash, Evaluation evaluation, byte flag) {
+        recordHash(new TableEntry(hash, evaluation, flag, evaluation.getDepth()));
     }
 
     private void recordHash(TableEntry transposition) {
@@ -64,7 +64,7 @@ public class TranspositionTable {
         TableEntry transposition = getHash(hash);
 
         if (transposition != null && transposition.hash == hash) {
-            return transposition.bestMove;
+            return transposition.evaluation().getMove();
         }
 
         return null;
@@ -81,20 +81,20 @@ public class TranspositionTable {
         while (current != null && game.getGameOverStatus() == GameModel.IN_PROGRESS &&
                 depth-- > 0) {
 
-            if (current.bestMove == null) {
+            if (current.evaluation().getMove() == null) {
                 System.out.print(" -> null ");
                 break;
-            } else if (!game.getLegalMoves().toList().contains(current.bestMove)) {
+            } else if (!game.getLegalMoves().toList().contains(current.evaluation().getMove())) {
                 break;
             }
 
-            System.out.printf(" -> %-5s", game.getMoveString(current.bestMove));
-            game.move(current.bestMove);
+            System.out.printf(" -> %-5s", game.getMoveString(current.evaluation().getMove()));
+            game.move(current.evaluation().getMove());
             current = getHash(game.getZobristWithTimesMoved());
         }
 
         System.out.println();
     }
 
-    private record TableEntry(long hash, Movable bestMove, int evaluation, byte flag, int depth) {}
+    private record TableEntry(long hash, Evaluation evaluation, byte flag, int depth) {}
 }

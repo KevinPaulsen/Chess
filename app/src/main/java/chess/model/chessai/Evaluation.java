@@ -1,6 +1,9 @@
 package chess.model.chessai;
 
+import chess.model.GameModel;
 import chess.model.moves.Movable;
+
+import static chess.model.GameModel.WHITE;
 
 public class Evaluation {
 
@@ -27,19 +30,35 @@ public class Evaluation {
         this(move, null, score, -1);
     }
 
-    public Movable getMove() {
-        return move;
-    }
-
-    public Evaluation getChild() {
-        return child;
-    }
-
     public int getScore() {
         return score;
     }
 
     public int getDepth() {
         return depth;
+    }
+
+    public void print(GameModel game) {
+        int evaluation = score * (move.getMovingPiece().getColor() == WHITE ? 1 : -1);
+        System.out.printf("%2d ply = %-5d | %-5s", depth, evaluation, game.getMoveString(move));
+
+        game.move(move);
+
+        Evaluation current = child;
+        while (current != null && current.getMove() != null) {
+            System.out.printf(" -> %-6s", game.getMoveString(current.getMove()));
+            game.move(current.getMove());
+            current = current.getChild();
+        }
+
+        System.out.println();
+    }
+
+    public Movable getMove() {
+        return move;
+    }
+
+    public Evaluation getChild() {
+        return child;
     }
 }

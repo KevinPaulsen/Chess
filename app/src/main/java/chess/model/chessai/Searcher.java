@@ -39,18 +39,20 @@ public class Searcher {
         }
 
         long hashValue = game.getZobristWithTimesMoved();
-        int evaluation = transpositionTable.probeHash(hashValue, depth, alpha, beta);
+        Evaluation evaluation = transpositionTable.probeHash(hashValue, depth, alpha, beta);
 
-        if (evaluation != UNKNOWN) {
-            return new Evaluation(transpositionTable.bestMove(hashValue), null, evaluation, depth);
+        if (evaluation != null) {
+            return new Evaluation(transpositionTable.bestMove(hashValue), evaluation,
+                                  evaluation.getScore(), depth);
         } else if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
             evaluation = evaluator.evaluate(game);
-            transpositionTable.recordHash(hashValue, null, 0, evaluation, EXACT);
-            return new Evaluation(null, null, evaluation, 0);
+            transpositionTable.recordHash(hashValue, evaluation, EXACT);
+            return new Evaluation(null, evaluation, evaluation.getScore(), 0);
         }
 
         byte hashFlag = ALPHA;
         Movable bestMove = null;
+        Evaluation bestEval = null;
         List<Movable> sortedMoves = evaluator.getSortedMoves(game, transpositionTable.bestMove(
                 hashValue));
 
@@ -66,16 +68,19 @@ public class Searcher {
 
             int score = -eval.getScore();
             if (score >= beta) {
-                transpositionTable.recordHash(hashValue, move, depth, beta, BETA);
-                return new Evaluation(move, null, beta, depth);
+                Evaluation result = new Evaluation(move, eval, beta, depth);
+                transpositionTable.recordHash(hashValue, result, BETA);
+                return result;
             } else if (score > alpha) {
                 hashFlag = EXACT;
                 alpha = score;
                 bestMove = move;
+                bestEval = eval;
             }
         }
 
-        transpositionTable.recordHash(hashValue, bestMove, depth, alpha, hashFlag);
-        return new Evaluation(bestMove, null, alpha, depth);
+        Evaluation result = new Evaluation(bestMove, bestEval, alpha, depth);
+        transpositionTable.recordHash(hashValue, result, hashFlag);
+        return result;
     }
 }

@@ -143,8 +143,9 @@ public class ChessAITest {
                 "7b/2q1p1PR/3r1pp1/6k1/3p4/3p1KPp/2n3pP/2r2bB1 w - - 0 1");
         ChessAI testAI = new ChessAI(new PositionEvaluator(), testGame, true);
 
+        int depth = 16;
         while (testGame.getGameOverStatus() == GameModel.IN_PROGRESS) {
-            Movable actualMove = testAI.getBestMove(10, 0);
+            Movable actualMove = testAI.getBestMove(depth--, 0);
             testGame.move(actualMove);
         }
 

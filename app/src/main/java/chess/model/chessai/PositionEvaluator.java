@@ -29,15 +29,15 @@ public class PositionEvaluator implements Evaluator {
      * @return the evaluation of this game.
      */
     @Override
-    public int evaluate(GameModel game) {
+    public Evaluation evaluate(GameModel game) {
         int whiteScore = 0;
         int blackScore = 0;
 
         game.getLegalMoves();
         if (game.getGameOverStatus() == GameModel.LOSER) {
-            return -WIN_SCORE + game.moveNum();
+            return new Evaluation(-WIN_SCORE + game.moveNum(), 0);
         } else if (game.getGameOverStatus() == GameModel.DRAW) {
-            return 0;
+            return new Evaluation(0, 0);
         }
 
         for (ChessCoordinate coordinate : ChessCoordinate.values()) {
@@ -54,7 +54,8 @@ public class PositionEvaluator implements Evaluator {
                 }
             }
         }
-        return game.getTurn() == WHITE ? whiteScore - blackScore : blackScore - whiteScore;
+        return new Evaluation(
+                game.getTurn() == WHITE ? whiteScore - blackScore : blackScore - whiteScore, 0);
     }
 
     private static double readTable(Piece piece, ChessCoordinate coordinate) {

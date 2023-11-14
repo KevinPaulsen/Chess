@@ -104,15 +104,15 @@ public class ChessAI {
 
             bestMove = deepener.evaluation.getMove();
 
-            currentGame = new GameModel(game);
-            transpositionTable.printEvaluation(currentGame, bestMove, deepener.depth,
-                                               deepener.evaluation.getScore());
+            /*currentGame = new GameModel(game);
+            deepener.evaluation.print(currentGame);//*/
+            System.out.println(deepener.depth);
         } else {
             Evaluation eval = searcher.getBestMove(currentGame, minDepth);
             bestMove = eval.getMove();
 
             currentGame = new GameModel(game);
-            transpositionTable.printEvaluation(currentGame, bestMove, minDepth, eval.getScore());
+            eval.print(currentGame);
         }
 
 
