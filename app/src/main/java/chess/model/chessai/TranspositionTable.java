@@ -71,6 +71,13 @@ public class TranspositionTable {
     public void printEvaluation(long zobristHash, GameModel game) {
         TableEntry current = getHash(zobristHash);
 
+        if (current == null) {
+            return;
+        } else if (current.bestMove == null) {
+            System.out.printf("%2d ply = %-5d | No move\n", current.depth, current.evaluation);
+            return;
+        }
+
         System.out.printf("%2d ply = %-5d | %s", current.depth, current.evaluation,
                           current.bestMove);
         game.move(current.bestMove);
@@ -81,6 +88,10 @@ public class TranspositionTable {
             System.out.printf(" -> %s", current.bestMove);
             game.move(current.bestMove);
             current = getHash(game.getZobristHash());
+
+            if (game.getGameOverStatus() != GameModel.IN_PROGRESS) {
+                break;
+            }
         }
 
         System.out.println();
