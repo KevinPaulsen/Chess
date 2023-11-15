@@ -36,10 +36,6 @@ public class MoveList implements Iterable<Movable> {
         this.potentialPromotions = new ArrayDeque<>(moveList.potentialPromotions);
     }
 
-    public void add(Piece movingPiece, long coordinate, long moveMap, Status status) {
-        moveData.add(new MoveData(movingPiece, coordinate, moveMap, status));
-    }
-
     @Override
     public @NonNull Iterator<Movable> iterator() {
         return new MoveIterator();
@@ -53,6 +49,36 @@ public class MoveList implements Iterable<Movable> {
         List<Movable> moves = new ArrayList<>();
         this.forEach(moves::add);
         return moves;
+    }
+
+    public MoveList getCaptures() {
+        MoveList moveList = new MoveList(board);
+
+        for (MoveData data : moveData) {
+            switch (data.status) {
+                case PAWN_TAKE_LEFT, PAWN_TAKE_RIGHT, PAWN_PROMOTE_LEFT, PAWN_PROMOTE_RIGHT,
+                        EN_PASSANT_RIGHT, EN_PASSANT_LEFT ->
+                        moveList.add(data);
+                case NORMAL -> {
+                    long captures = data.moveMap & board.getOccupancyMap();
+                    if (captures == 0) {
+                        continue;
+                    }
+
+                    moveList.add(data.movingPiece, data.coordinate, captures, data.status);
+                }
+            }
+        }
+
+        return moveList;
+    }
+
+    private void add(MoveData data) {
+        moveData.add(data);
+    }
+
+    public void add(Piece movingPiece, long coordinate, long moveMap, Status status) {
+        add(new MoveData(movingPiece, coordinate, moveMap, status));
     }
 
     public int size() {

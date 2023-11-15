@@ -1011,4 +1011,8 @@ public class GameModel {
     public boolean hasEPTarget() {
         return getGameState().getMap() >> 7 != 0;
     }
+
+    public MoveList getLegalCaptures() {
+        return getLegalMoves().getCaptures();
+    }
 }

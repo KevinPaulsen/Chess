@@ -44,10 +44,14 @@ public class Searcher {
         if (evaluation != null) {
             return new Evaluation(transpositionTable.bestMove(hashValue), evaluation.getChild(),
                                   evaluation.getScore(), depth);
-        } else if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
+        } else if (depth == 0) {
+            evaluation = quiesce(game, alpha, beta);
+            transpositionTable.recordHash(hashValue, evaluation, EXACT);
+            return evaluation;
+        } else if (game.getGameOverStatus() != IN_PROGRESS) {
             evaluation = evaluator.evaluate(game);
             transpositionTable.recordHash(hashValue, evaluation, EXACT);
-            return new Evaluation(null, evaluation, evaluation.getScore(), 0);
+            return evaluation;
         }
 
         byte hashFlag = ALPHA;
@@ -82,5 +86,30 @@ public class Searcher {
         Evaluation result = new Evaluation(bestMove, bestEval, alpha, depth);
         transpositionTable.recordHash(hashValue, result, hashFlag);
         return result;
+    }
+
+    private Evaluation quiesce(GameModel game, int alpha, int beta) {
+        Evaluation standPat = evaluator.evaluate(game);
+
+        if (standPat.getScore() >= beta) {
+            return new Evaluation(beta, 0);
+        } else if (standPat.getScore() > alpha) {
+            alpha = standPat.getScore();
+        }
+
+        for (Movable move : game.getLegalCaptures()) {
+            game.move(move);
+            Evaluation eval = quiesce(game, -beta, -alpha);
+            game.undoLastMove();
+
+            int score = -eval.getScore();
+            if (score >= beta) {
+                return new Evaluation(beta, 0);
+            } else if (score > alpha) {
+                alpha = score;
+            }
+        }
+
+        return new Evaluation(alpha, 0);
     }
 }
