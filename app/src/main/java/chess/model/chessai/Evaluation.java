@@ -26,10 +26,6 @@ public class Evaluation {
         this.depth = depth;
     }
 
-    public Evaluation(Movable move, int score) {
-        this(move, null, score, -1);
-    }
-
     public int getScore() {
         return score;
     }

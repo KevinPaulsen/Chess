@@ -42,7 +42,7 @@ public class Searcher {
         Evaluation evaluation = transpositionTable.probeHash(hashValue, depth, alpha, beta);
 
         if (evaluation != null) {
-            return new Evaluation(transpositionTable.bestMove(hashValue), evaluation,
+            return new Evaluation(transpositionTable.bestMove(hashValue), evaluation.getChild(),
                                   evaluation.getScore(), depth);
         } else if (depth == 0 || game.getGameOverStatus() != IN_PROGRESS) {
             evaluation = evaluator.evaluate(game);

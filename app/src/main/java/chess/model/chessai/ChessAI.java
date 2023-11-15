@@ -104,9 +104,8 @@ public class ChessAI {
 
             bestMove = deepener.evaluation.getMove();
 
-            /*currentGame = new GameModel(game);
-            deepener.evaluation.print(currentGame);//*/
-            System.out.println(deepener.depth);
+            currentGame = new GameModel(game);
+            deepener.evaluation.print(currentGame);
         } else {
             Evaluation eval = searcher.getBestMove(currentGame, minDepth);
             bestMove = eval.getMove();
