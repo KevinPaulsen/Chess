@@ -130,10 +130,6 @@ public class BoardModel {
         return color == WHITE ? getState().white : getState().black;
     }
 
-    public long getPieceMap(Piece piece) {
-        return getState().pieceMaps[piece.ordinal()];
-    }
-
     public long getHashValue() {
         return hashValue;
     }
@@ -183,12 +179,23 @@ public class BoardModel {
                 black |= squareMask;
             }
 
-            hashValue = Zobrist.flipPiece(piece, ChessCoordinate.getChessCoordinate(squareIdx),
-                                          hashValue);
+            hashValue = Zobrist.flipPiece(piece, squareIdx, hashValue);
 
             pieceIdx--;
         }
         stateHistory.add(new BoardState(pieceMaps, white, black, white | black, hashValue));
+    }
+
+    public long getRooks(char color) {
+        if (color == WHITE) {
+            return getPieceMap(WHITE_ROOK);
+        } else {
+            return getPieceMap(BLACK_ROOK);
+        }
+    }
+
+    public long getPieceMap(Piece piece) {
+        return getState().pieceMaps[piece.ordinal()];
     }
 
     public record BoardState(long[] pieceMaps, long white, long black, long occupied,

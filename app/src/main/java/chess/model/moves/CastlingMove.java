@@ -48,10 +48,10 @@ public enum CastlingMove implements Movable {
 
         long deltaHash = 0x0L;
 
-        deltaHash = Zobrist.flipPiece(king, kingStart, deltaHash);
-        deltaHash = Zobrist.flipPiece(king, kingEnd, deltaHash);
-        deltaHash = Zobrist.flipPiece(rook, rookStart, deltaHash);
-        deltaHash = Zobrist.flipPiece(rook, rookEnd, deltaHash);
+        deltaHash = Zobrist.flipPiece(king, kingStart.getOndDimIndex(), deltaHash);
+        deltaHash = Zobrist.flipPiece(king, kingEnd.getOndDimIndex(), deltaHash);
+        deltaHash = Zobrist.flipPiece(rook, rookStart.getOndDimIndex(), deltaHash);
+        deltaHash = Zobrist.flipPiece(rook, rookEnd.getOndDimIndex(), deltaHash);
 
         switch (this) {
             case WHITE_KING_SIDE_CASTLE, WHITE_QUEEN_SIDE_CASTLE -> white ^= occupancyMoveMask;

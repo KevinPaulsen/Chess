@@ -44,7 +44,7 @@ public class NormalMove implements Movable {
         if (capturedPiece != null) { // This move captures a piece
 
             pieceMaps[capturedPiece.ordinal()] &= ~end;
-            deltaHash = Zobrist.flipPiece(capturedPiece, ChessCoordinate.getChessCoordinate(end),
+            deltaHash = Zobrist.flipPiece(capturedPiece, Long.numberOfTrailingZeros(end),
                                           deltaHash);
 
             if (isWhite)
@@ -63,8 +63,8 @@ public class NormalMove implements Movable {
             black ^= moveMask;
 
         pieceMaps[moving.ordinal()] ^= moveMask;
-        deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(start), deltaHash);
-        deltaHash = Zobrist.flipPiece(moving, ChessCoordinate.getChessCoordinate(end), deltaHash);
+        deltaHash = Zobrist.flipPiece(moving, Long.numberOfTrailingZeros(start), deltaHash);
+        deltaHash = Zobrist.flipPiece(moving, Long.numberOfTrailingZeros(end), deltaHash);
 
         return new BoardModel.BoardState(pieceMaps, white, black, occupied, deltaHash);
     }

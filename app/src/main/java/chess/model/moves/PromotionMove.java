@@ -35,7 +35,7 @@ public class PromotionMove implements Movable {
 
         if (capturedPiece != null) { // This move captures a piece
             pieceMaps[capturedPiece.ordinal()] &= ~end;
-            deltaHash = Zobrist.flipPiece(capturedPiece, ChessCoordinate.getChessCoordinate(end),
+            deltaHash = Zobrist.flipPiece(capturedPiece, Long.numberOfTrailingZeros(end),
                                           deltaHash);
 
             if (isWhite)
@@ -54,10 +54,9 @@ public class PromotionMove implements Movable {
             black ^= moveMask;
 
         pieceMaps[pawn.ordinal()] ^= start;
-        deltaHash = Zobrist.flipPiece(pawn, ChessCoordinate.getChessCoordinate(start), deltaHash);
+        deltaHash = Zobrist.flipPiece(pawn, Long.numberOfTrailingZeros(start), deltaHash);
         pieceMaps[promotedPiece.ordinal()] ^= end;
-        deltaHash = Zobrist.flipPiece(promotedPiece, ChessCoordinate.getChessCoordinate(end),
-                                      deltaHash);
+        deltaHash = Zobrist.flipPiece(promotedPiece, Long.numberOfTrailingZeros(end), deltaHash);
 
         return new BoardModel.BoardState(pieceMaps, white, black, occupied, deltaHash);
     }

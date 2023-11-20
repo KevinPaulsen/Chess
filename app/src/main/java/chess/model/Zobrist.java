@@ -76,8 +76,8 @@ public abstract class Zobrist {
         return hashValue ^ stateHashValue;
     }
 
-    public static long flipPiece(Piece piece, ChessCoordinate coordinate, long hashValue) {
-        return hashValue ^ zobristHashTable[coordinate.getOndDimIndex()][piece.getUniqueIdx()];
+    public static long flipPiece(Piece piece, int squareIndex, long hashValue) {
+        return hashValue ^ zobristHashTable[squareIndex][piece.getUniqueIdx()];
     }
 
     public static long getGameStateHash(FastMap gameState) {

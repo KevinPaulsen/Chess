@@ -549,7 +549,7 @@ public class GameModel {
         FastMap newState = new FastMap();
         newState.merge(getGameState());
 
-        checkCastling(newState, board.getWhiteKingCoord(), board.getBlackKingCoord());
+        checkCastling(newState);
         Movable lastMove = getLastMove();
         checkEnPassant(newState, lastMove, board.isPawn(lastMove.getEndCoordinate()));
         newState.flip(WHITE_TO_MOVE_MASK);
@@ -596,21 +596,21 @@ public class GameModel {
      * @param whiteKingCoord the coordinate of the white king
      * @param blackKingCoord the coordinate of the black king
      */
-    private void checkCastling(FastMap state, long whiteKingCoord, long blackKingCoord) {
-        if (canKingSideCastle(WHITE) && !(board.getPieceOn(H1) == WHITE_ROOK &&
-                whiteKingCoord == E1.getBitMask())) {
+    private void checkCastling(FastMap state) {
+        if (canKingSideCastle(WHITE) && !((board.getRooks(WHITE) & H1.getBitMask()) != 0 &&
+                board.getWhiteKingCoord() == E1.getBitMask())) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
-        if (canQueenSideCastle(WHITE) && !(board.getPieceOn(A1) == WHITE_ROOK &&
-                whiteKingCoord == E1.getBitMask())) {
+        if (canQueenSideCastle(WHITE) && !((board.getRooks(WHITE) & A1.getBitMask()) != 0 &&
+                board.getWhiteKingCoord() == E1.getBitMask())) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
-        if (canKingSideCastle(BLACK) && !(board.getPieceOn(H8) == BLACK_ROOK &&
-                blackKingCoord == E8.getBitMask())) {
+        if (canKingSideCastle(BLACK) && !((board.getRooks(BLACK) & H8.getBitMask()) != 0 &&
+                board.getBlackKingCoord() == E8.getBitMask())) {
             state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
-        if (canQueenSideCastle(BLACK) && !(board.getPieceOn(A8) == BLACK_ROOK &&
-                blackKingCoord == E8.getBitMask())) {
+        if (canQueenSideCastle(BLACK) && !((board.getRooks(BLACK) & A8.getBitMask()) != 0 &&
+                board.getBlackKingCoord() == E8.getBitMask())) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
     }
