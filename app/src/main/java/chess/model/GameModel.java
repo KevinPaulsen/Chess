@@ -579,9 +579,9 @@ public class GameModel {
             currentState.mergeMask(DRAW_MASK);
         } else if (legalMoves.isEmpty()) {
             // If this position has no legal moves, then the game is over
-            ChessCoordinate kingToMove =
+            long kingToMove =
                     getTurn() == WHITE ? board.getWhiteKingCoord() : board.getBlackKingCoord();
-            if ((moveGenerator.getOpponentAttackMap() & kingToMove.getBitMask()) != 0) {
+            if ((moveGenerator.getOpponentAttackMap() & kingToMove) != 0) {
                 currentState.mergeMask(LOSER_MASK);
             } else {
                 currentState.mergeMask(DRAW_MASK);
@@ -596,22 +596,21 @@ public class GameModel {
      * @param whiteKingCoord the coordinate of the white king
      * @param blackKingCoord the coordinate of the black king
      */
-    private void checkCastling(FastMap state, ChessCoordinate whiteKingCoord,
-                               ChessCoordinate blackKingCoord) {
+    private void checkCastling(FastMap state, long whiteKingCoord, long blackKingCoord) {
         if (canKingSideCastle(WHITE) && !(board.getPieceOn(H1) == WHITE_ROOK &&
-                whiteKingCoord.equals(E1))) {
+                whiteKingCoord == E1.getBitMask())) {
             state.flip(WHITE_KING_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle(WHITE) && !(board.getPieceOn(A1) == WHITE_ROOK &&
-                whiteKingCoord.equals(E1))) {
+                whiteKingCoord == E1.getBitMask())) {
             state.flip(WHITE_QUEEN_SIDE_CASTLE_MASK);
         }
         if (canKingSideCastle(BLACK) && !(board.getPieceOn(H8) == BLACK_ROOK &&
-                blackKingCoord.equals(E8))) {
+                blackKingCoord == E8.getBitMask())) {
             state.flip(BLACK_KING_SIDE_CASTLE_MASK);
         }
         if (canQueenSideCastle(BLACK) && !(board.getPieceOn(A8) == BLACK_ROOK &&
-                blackKingCoord.equals(E8))) {
+                blackKingCoord == E8.getBitMask())) {
             state.flip(BLACK_QUEEN_SIDE_CASTLE_MASK);
         }
     }
@@ -716,9 +715,9 @@ public class GameModel {
         ChessCoordinate endCoordinate = move.getEndCoordinate();
         ChessCoordinate enemyKing;
         if (getTurn() == WHITE) {
-            enemyKing = board.getBlackKingCoord();
+            enemyKing = ChessCoordinate.getChessCoordinate(board.getBlackKingCoord());
         } else {
-            enemyKing = board.getWhiteKingCoord();
+            enemyKing = ChessCoordinate.getChessCoordinate(board.getWhiteKingCoord());
         }
 
         return switch (move.getMovingPiece()) {
@@ -797,9 +796,9 @@ public class GameModel {
 
         ChessCoordinate enemyKing;
         if (movingPiece.getColor() == WHITE) {
-            enemyKing = board.getBlackKingCoord();
+            enemyKing = ChessCoordinate.getChessCoordinate(board.getBlackKingCoord());
         } else {
-            enemyKing = board.getWhiteKingCoord();
+            enemyKing = ChessCoordinate.getChessCoordinate(board.getWhiteKingCoord());
         }
 
         // TODO: Add in discovered check

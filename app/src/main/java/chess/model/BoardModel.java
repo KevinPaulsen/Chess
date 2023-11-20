@@ -63,17 +63,15 @@ public class BoardModel {
     /**
      * @return the reference to the white king.
      */
-    public ChessCoordinate getWhiteKingCoord() {
-        return ChessCoordinate.getChessCoordinate(
-                Long.numberOfTrailingZeros(getState().pieceMaps[WHITE_KING.ordinal()]));
+    public long getWhiteKingCoord() {
+        return getState().pieceMaps[WHITE_KING.ordinal()];
     }
 
     /**
      * @return the reference to the black king.
      */
-    public ChessCoordinate getBlackKingCoord() {
-        return ChessCoordinate.getChessCoordinate(
-                Long.numberOfTrailingZeros(getState().pieceMaps[BLACK_KING.ordinal()]));
+    public long getBlackKingCoord() {
+        return getState().pieceMaps[BLACK_KING.ordinal()];
     }
 
     @Override

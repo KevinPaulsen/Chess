@@ -92,10 +92,9 @@ public class PositionEvaluator implements Evaluator {
             // If the list is small or equal to the required size, no sorting needed
             legalMoves.sort(((o1, o2) -> evaluateMove(o2, game) - evaluateMove(o1, game)));
 
-            if (hashMove != null) {
-                legalMoves.remove(hashMove);
+            if (hashMove != null && legalMoves.remove(hashMove)) {
                 legalMoves.add(0, hashMove);
-            }
+            }//*/
 
             return legalMoves;
         }
