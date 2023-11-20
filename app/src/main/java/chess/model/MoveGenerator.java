@@ -863,7 +863,7 @@ public class MoveGenerator {
 
         // Set Pawn ep bit
         pawns = board.getPieceMap(friendlyPieceGroup.pawn);
-        if (game.hasEPTarget() && (epTarget = game.getEnPassantTarget().getBitMask()) != 0) {
+        if (game.hasEPTarget() && (epTarget = game.getEnPassantTarget()) != 0) {
             long eplPawn, eprPawn, epRank, epTargetPawn;
             if (friendlyPieceGroup.color == WHITE) {
                 epRank = ROW_MASKS[4];

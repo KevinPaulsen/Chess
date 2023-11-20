@@ -266,7 +266,8 @@ public class GameModel {
     public String getFEN() {
         return getFEN(board.getPieceArray(), getTurn(), canKingSideCastle(WHITE),
                       canQueenSideCastle(WHITE), canKingSideCastle(BLACK),
-                      canQueenSideCastle(BLACK), getEnPassantTarget(), moveHistory.size());
+                      canQueenSideCastle(BLACK),
+                      ChessCoordinate.getChessCoordinate(getEnPassantTarget()), moveHistory.size());
     }
 
     /**
@@ -366,11 +367,10 @@ public class GameModel {
      *
      * @return the enPassantTarget in the current position
      */
-    public ChessCoordinate getEnPassantTarget() {
-        long stateRep = getGameState().getMap();
-        stateRep = stateRep >> 7;
+    public long getEnPassantTarget() {
+        long stateRep = getGameState().getMap() >> 7;
 
-        return stateRep == 0 ? null : ChessCoordinate.getChessCoordinate((int) stateRep);
+        return 1L << stateRep;
     }
 
     /**
@@ -676,10 +676,6 @@ public class GameModel {
         if (!moveHistory.isEmpty()) {
             long hash = getZobristHash();
 
-            // Decrement the position tracker of the current position by 1
-            if (!positionTracker.containsKey(hash)) {
-                System.out.println("oof");
-            }
             positionTracker.merge(hash, -1, Integer::sum);
             if (positionTracker.get(hash) == 0) {
                 positionTracker.remove(hash);
@@ -982,7 +978,7 @@ public class GameModel {
         }
 
         // Add EnPassant Data
-        ChessCoordinate enPassantTarget = getEnPassantTarget();
+        ChessCoordinate enPassantTarget = getChessCoordinate(getEnPassantTarget());
         if (enPassantTarget != null) {
             result = result.shiftLeft(maxCoordSize).add(
                     BigInteger.valueOf(enPassantTarget.getOndDimIndex()));

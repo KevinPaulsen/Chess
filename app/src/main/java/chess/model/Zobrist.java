@@ -64,7 +64,7 @@ public abstract class Zobrist {
 
         long stateHashValue = 0x0L;
 
-        ChessCoordinate enPassant = game.getEnPassantTarget();
+        ChessCoordinate enPassant = ChessCoordinate.getChessCoordinate(game.getEnPassantTarget());
         int addedEnPassantTarget =
                 enPassant == null ? 16 : enPassant.getFile() + (enPassant.getRank() == 2 ? 0 : 8);
         stateHashValue ^= enPassantCoordTable[addedEnPassantTarget];
